@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j-local
+    restart: always
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/var/lib/neo4j/data
+      - neo4j_logs:/var/lib/neo4j/logs
+    environment:
+      - NEO4J_AUTH=neo4j/password123
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
