@@ -1,0 +1,54 @@
+services:
+  eureka-service:
+    build: ./backend/eureka-service
+    container_name: eureka-service
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+
+  payment-service:
+    build: ./backend/payment-service
+    container_name: payment-service
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+  travel-service:
+    build: ./backend/travel-service
+    container_name: travel-service
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+  user-service:
+    build: ./backend/user-service
+    container_name: user-service
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+  apigateway-service:
+    build: ./backend/apigateway-service
+    container_name: apigateway-service
+    ports:
+      - "8443:8443"
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+networks:
+  microservices-network:
+    driver: bridge
