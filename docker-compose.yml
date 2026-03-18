@@ -1,4 +1,14 @@
 services:
+  frontend-service:
+    build: ./frontend/travel-orch
+    container_name: frontend-service
+    ports:
+      - "4200:2122"
+    depends_on:
+      - apigateway-service
+    networks:
+      - microservices-network
+
   eureka-service:
     build: ./backend/eureka-service
     container_name: eureka-service

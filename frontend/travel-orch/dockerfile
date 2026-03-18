@@ -1,0 +1,32 @@
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# copy package files
+COPY package*.json ./
+RUN npm ci
+
+# copy source code
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine
+
+WORKDIR /app
+
+# copy built files from builder stage
+COPY --from=builder /app/dist/frontend/browser .
+
+# install serve
+RUN npm install -g serve
+
+# copy SSL certificates for frontend HTTPS
+COPY certs/angular-dev.crt /app/certs/
+COPY certs/angular-dev.key /app/certs/
+
+# configure Node.js to trust the API Gateway certificate
+ENV NODE_EXTRA_CA_CERTS=/app/certs/angular-dev.crt
+
+EXPOSE 2122
+
+CMD ["serve", "-s", ".", "-l", "2122", "--ssl-cert", "certs/angular-dev.crt", "--ssl-key", "certs/angular-dev.key"]
