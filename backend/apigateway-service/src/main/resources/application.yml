@@ -50,7 +50,8 @@ spring.cloud.gateway:
       enabled: true
       lower-case-service-id: true
 
+# Rate Limiting Configuration (optional, defaults provided)
 rate:
   limit:
-    capacity: 10
-    duration: 60
+    capacity: ${RATE_LIMIT_CAPACITY:10}
+    duration: ${RATE_LIMIT_DURATION:60}

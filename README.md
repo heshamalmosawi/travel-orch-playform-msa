@@ -15,6 +15,10 @@
 The easiest way to run the entire application is using Docker Compose:
 
 ```bash
+# (Optional) Customize environment variables
+cp .env.example .env
+# Edit .env to customize rate limiting or other settings
+
 # Build and start all services
 docker compose up --build
 
