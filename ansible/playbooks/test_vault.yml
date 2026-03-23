@@ -1,0 +1,8 @@
+---
+- name: Test Vault Role
+  hosts: localhost
+  connection: local
+  become: true
+
+  roles:
+    - vault

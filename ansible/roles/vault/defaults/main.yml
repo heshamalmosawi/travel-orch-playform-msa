@@ -1,0 +1,25 @@
+---
+# Vault Configuration
+vault_address: "http://127.0.0.1:8200"
+vault_config_path: "{{ ansible_env.HOME }}/.vault-token"
+vault_token_file: "{{ ansible_env.HOME }}/.vault-token"
+
+# Vault initialization (if not initialized)
+vault_init: false
+vault_keys_path: "{{ ansible_env.HOME }}/.vault-keys"
+
+# KV secrets engine
+vault_kv_path: "secret"
+vault_kv_mount: "travel-system"
+
+# Secrets to store in Vault
+vault_secrets:
+  postgres_password: "mysecretpassword"
+  neo4j_password: "mysecretpassword"
+  jwt_secret: "{{ lookup('password', 'length=32 chars=ascii_letters,digits') }}"
+  stripe_api_key: "{{ vault_stripe_api_key | default('') }}"
+  paypal_client_id: "{{ vault_paypal_client_id | default('') }}"
+  paypal_client_secret: "{{ vault_paypal_client_secret | default('') }}"
+
+# Vault health check
+vault_health_endpoint: "http://127.0.0.1:8200/v1/sys/health"

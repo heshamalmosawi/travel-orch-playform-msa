@@ -1,0 +1,174 @@
+---
+# Vault Role Tasks
+# Configures HashiCorp Vault for secrets management
+
+- name: Check if Vault is running
+  ansible.builtin.uri:
+    url: "{{ vault_health_endpoint }}"
+    method: GET
+    status_code: [200, 429, 500, 503]
+  register: vault_health
+  failed_when: false
+
+- name: Display Vault health status
+  ansible.builtin.debug:
+    msg: "Vault health status: {{ vault_health.status }}"
+
+- name: Check if Vault is initialized
+  ansible.builtin.stat:
+    path: "{{ vault_keys_path }}"
+  register: vault_init_status
+
+- name: Display Vault initialization status
+  ansible.builtin.debug:
+    msg: "Vault initialization status: {{ vault_init_status.stat.exists }}"
+
+- name: Warn if Vault is not initialized
+  ansible.builtin.debug:
+    msg: "WARNING: Vault is not initialized. Please initialize Vault first using 'vault operator init'. Skipping secrets management tasks."
+  when: not vault_init_status.stat.exists
+
+- name: Fail if Vault is not running
+  ansible.builtin.fail:
+    msg: "Vault is not running. Please start Vault service first."
+  when: vault_health.status not in [200, 429]
+
+- name: Read Vault unseal keys (if initialized)
+  ansible.builtin.slurp:
+    src: "{{ vault_keys_path }}/unseal-keys.txt"
+  register: vault_keys
+  when: vault_init_status.stat.exists
+  failed_when: false
+
+- name: Unseal Vault if needed
+  ansible.builtin.shell: |
+    for i in {1..3}; do
+      echo "{{ vault_keys.content | split('\n') | nth(i) }}" | vault operator unseal -address={{ vault_address }}
+    done
+  when:
+    - vault_init_status.stat.exists
+    - "'Sealed: true' in (vault_keys.content | default(''))"
+  become: true
+
+- name: Verify Vault is unsealed
+  ansible.builtin.uri:
+    url: "{{ vault_health_endpoint }}"
+    method: GET
+    return_content: yes
+    status_code: [200, 429, 500, 503]
+  register: vault_status_after
+  until: vault_status_after.json.sealed is defined and not vault_status_after.json.sealed
+  retries: 5
+  delay: 2
+  when: vault_init_status.stat.exists
+
+- name: Display Vault unseal status
+  ansible.builtin.debug:
+    msg: "Vault is {{ (vault_status_after.json.sealed | default(true)) | ternary('sealed', 'unsealed') }}"
+  when: vault_init_status.stat.exists
+
+- name: Login to Vault (get token)
+  ansible.builtin.shell: |
+    echo "{{ vault_keys.content | split('\n') | nth(4) }}" > {{ vault_token_file }}
+  when:
+    - vault_init_status.stat.exists
+    - not stat.stat.path.exists | default(false)
+  register: vault_token_saved
+  changed_when: vault_token_saved is changed
+
+- name: Set VAULT_TOKEN environment variable
+  ansible.builtin.set_fact:
+    vault_token: "{{ vault_keys.content | split('\n') | nth(4) }}"
+  when: vault_init_status.stat.exists
+
+- name: Enable KV secrets engine v2
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/sys/mounts/{{ vault_kv_path }}"
+    method: POST
+    body_format: json
+    body:
+      type: "kv"
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200, 204]
+  when: vault_token is defined
+
+- name: Create KV path if it doesn't exist
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}"
+    method: POST
+    body_format: json
+    body:
+      data:
+        dummy: "initial"
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200, 204]
+  when: vault_token is defined
+
+- name: Store PostgreSQL password in Vault
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}/postgres"
+    method: POST
+    body_format: json
+    body:
+      data:
+        password: "{{ vault_secrets.postgres_password }}"
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200, 204]
+  when: vault_token is defined
+
+- name: Store Neo4j password in Vault
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}/neo4j"
+    method: POST
+    body_format: json
+    body:
+      data:
+        password: "{{ vault_secrets.neo4j_password }}"
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200, 204]
+  when: vault_token is defined
+
+- name: Generate and store JWT secret in Vault
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}/jwt"
+    method: POST
+    body_format: json
+    body:
+      data:
+        secret: "{{ vault_secrets.jwt_secret }}"
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200, 204]
+  when: vault_token is defined
+
+- name: Display secret storage confirmation
+  ansible.builtin.debug:
+    msg: "Secrets stored in Vault at path: {{ vault_kv_mount }}"
+  when: vault_token is defined
+
+- name: Verify secrets in Vault
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/{{ vault_kv_path }}/metadata/{{ vault_kv_mount }}?list=true"
+    method: LIST
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200]
+  register: vault_secrets_list
+  when: vault_token is defined
+
+- name: Display secrets stored in Vault
+  ansible.builtin.debug:
+    msg: "Secrets in Vault: {{ vault_secrets_list.json.data.keys | default([]) }}"
+  when: vault_token is defined
+
+- name: Export VAULT_TOKEN to environment file
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: 'export VAULT_TOKEN="{{ vault_token | default('') }}"'
+    create: yes
+    state: present
+  when: vault_token is defined
