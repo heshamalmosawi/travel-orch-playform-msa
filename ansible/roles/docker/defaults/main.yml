@@ -1,0 +1,17 @@
+---
+# Docker Configuration
+docker_required_packages:
+  - docker.io
+  - docker-compose
+
+# Docker service
+docker_service_name: docker
+docker_service_state: started
+
+# Docker user group
+docker_group: docker
+docker_users:
+  - "{{ ansible_env.USER }}"
+
+# Docker Compose plugin check
+docker_compose_v2_plugin: "docker compose"

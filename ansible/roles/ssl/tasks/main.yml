@@ -1,0 +1,127 @@
+---
+# SSL Role Tasks
+# Manages TLS certificates for Travel Management System
+
+- name: Check if SSL source certificates exist
+  ansible.builtin.stat:
+    path: "{{ ssl_source_cert_path }}"
+  register: ssl_cert_source
+
+- name: Check if SSL source key exists
+  ansible.builtin.stat:
+    path: "{{ ssl_source_key_path }}"
+  register: ssl_key_source
+
+- name: Fail if SSL certificates are missing
+  ansible.builtin.fail:
+    msg: |
+      SSL certificates not found in source location.
+      Expected: {{ ssl_source_cert_path }}
+      Expected: {{ ssl_source_key_path }}
+      Please ensure certificates exist in frontend/travel-orch/certs/
+  when: not ssl_cert_source.stat.exists or not ssl_key_source.stat.exists
+
+- name: Display SSL certificate source found
+  ansible.builtin.debug:
+    msg: "SSL certificate source found: {{ ssl_source_cert_path }}"
+
+- name: Display SSL key source found
+  ansible.builtin.debug:
+    msg: "SSL key source found: {{ ssl_source_key_path }}"
+
+- name: Ensure certs directory exists
+  ansible.builtin.file:
+    path: "{{ ssl_certs_path }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ ssl_owner }}"
+    group: "{{ ssl_group }}"
+
+- name: Copy SSL certificate
+  ansible.builtin.copy:
+    src: "{{ ssl_source_cert_path }}"
+    dest: "{{ ssl_cert_file }}"
+    mode: "{{ ssl_cert_mode }}"
+    owner: "{{ ssl_owner }}"
+    group: "{{ ssl_group }}"
+    remote_src: false
+
+- name: Copy SSL key
+  ansible.builtin.copy:
+    src: "{{ ssl_source_key_path }}"
+    dest: "{{ ssl_key_file }}"
+    mode: "{{ ssl_key_mode }}"
+    owner: "{{ ssl_owner }}"
+    group: "{{ ssl_group }}"
+    remote_src: false
+
+- name: Verify SSL certificate was copied
+  ansible.builtin.stat:
+    path: "{{ ssl_cert_file }}"
+  register: ssl_cert_dest
+
+- name: Verify SSL key was copied
+  ansible.builtin.stat:
+    path: "{{ ssl_key_file }}"
+  register: ssl_key_dest
+
+- name: Display SSL certificate destination
+  ansible.builtin.debug:
+    msg: "SSL certificate copied to: {{ ssl_cert_file }}"
+
+- name: Display SSL key destination
+  ansible.builtin.debug:
+    msg: "SSL key copied to: {{ ssl_key_file }}"
+
+- name: Check SSL certificate expiry (requires openssl)
+  ansible.builtin.shell: |
+    openssl x509 -enddate -noout -in {{ ssl_cert_file }} | cut -d= -f2
+  register: ssl_expiry_date
+  changed_when: false
+  failed_when: false
+  when: ssl_cert_dest.stat.exists
+
+- name: Convert expiry date to timestamp
+  ansible.builtin.shell: |
+    date -d "{{ ssl_expiry_date.stdout }}" +%s
+  register: ssl_expiry_timestamp
+  changed_when: false
+  failed_when: false
+  when: ssl_expiry_date.stdout is defined
+
+- name: Get current timestamp
+  ansible.builtin.shell: date +%s
+  register: current_timestamp
+  changed_when: false
+  when: ssl_expiry_timestamp.stdout is defined
+
+- name: Calculate days until expiry
+  ansible.builtin.set_fact:
+    days_until_expiry: "{{ ((current_timestamp.stdout | int) - (ssl_expiry_timestamp.stdout | int)) / 86400 | int | abs }}"
+  when: ssl_expiry_timestamp.stdout is defined
+
+- name: Display SSL certificate expiry
+  ansible.builtin.debug:
+    msg: "SSL certificate expires in {{ days_until_expiry }} days"
+  when: ssl_expiry_timestamp.stdout is defined
+
+- name: Warn if certificate expires soon
+  ansible.builtin.debug:
+    msg: |
+      WARNING: SSL certificate expires in {{ days_until_expiry }} days (less than {{ ssl_expiry_warning_days }})
+      Please renew before expiry.
+  when: ssl_expiry_timestamp.stdout is defined and days_until_expiry | int < ssl_expiry_warning_days | int
+
+- name: Display certificate details
+  ansible.builtin.shell: |
+    openssl x509 -noout -in {{ ssl_cert_file }} -subject | grep -oP '^subject=\KCN=.*'
+  register: ssl_subject
+  changed_when: false
+  failed_when: false
+  when: ssl_cert_dest.stat.exists
+
+- name: Display certificate subject
+  ansible.builtin.debug:
+    msg: "SSL certificate subject: {{ ssl_subject.stdout }}"
+  when: ssl_subject.stdout is defined
+

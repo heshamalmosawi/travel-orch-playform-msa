@@ -12,4 +12,4 @@ RUN ./mvnw clean package -DskipTests
 
 EXPOSE 8761
 
-CMD ["java", "-jar", "target/eurekaserver-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "target/eureka-service-0.0.1-SNAPSHOT.jar"]

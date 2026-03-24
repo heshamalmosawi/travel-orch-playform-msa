@@ -1,0 +1,31 @@
+---
+galaxy_info:
+  author: sayed-hesham
+  description: SSL certificate management role for Travel Management System
+  company: solo
+  license: MIT
+
+  min_ansible_version: "2.9"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - buster
+        - bullseye
+        - bookworm
+    - name: EL
+      versions:
+        - 8
+        - 9
+
+  galaxy_tags:
+    - ssl
+    - tls
+    - certificates
+    - security
+

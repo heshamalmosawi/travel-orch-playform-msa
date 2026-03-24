@@ -1,0 +1,40 @@
+---
+# Microservices role default variables
+
+# Project settings
+project_name: "travel-management-system"
+project_root: "{{ ansible_env.HOME }}/travel-orch-playform-msa"
+
+# Project paths
+microservices_project_root: "{{ project_root }}"
+microservices_compose_file: "{{ microservices_project_root }}/docker-compose.yml"
+
+# Docker Compose options
+microservices_state: present  # present, absent, restarted, stopped
+microservices_build: policy   # always, never, policy
+microservices_pull: policy    # always, missing, never, policy
+microservices_remove_orphans: true
+microservices_remove_volumes: false  # Only used when state=absent
+
+# Environment files
+microservices_env_files:
+  - "{{ microservices_project_root }}/.env"
+
+# Services to deploy (empty = all services)
+microservices_services: []
+
+# Health check settings
+microservices_health_check_enabled: true
+microservices_health_check_delay: 10
+microservices_health_check_timeout: 120
+
+# Service ports for health checks
+microservices_eureka_port: 8761
+microservices_gateway_port: 8443
+microservices_frontend_port: 4200
+
+# Network settings
+microservices_network: "microservices-network"
+
+# Logging
+microservices_debug: false

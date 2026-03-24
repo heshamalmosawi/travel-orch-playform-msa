@@ -1,0 +1,22 @@
+---
+# SSL Certificate Configuration
+ssl_certs_path: "{{ playbook_dir }}/../files/certs"
+
+# Certificate files
+ssl_cert_file: "{{ ssl_certs_path }}/{{ ssl_certs.cert }}"
+ssl_key_file: "{{ ssl_certs_path }}/{{ ssl_certs.key }}"
+
+# Certificate permissions (restrictive for security)
+ssl_cert_mode: "0644"
+ssl_key_mode: "0600"
+
+# Certificate ownership
+ssl_owner: "{{ ansible_user }}"
+ssl_group: "{{ ansible_user }}"
+
+# Source certificates (from frontend project)
+ssl_source_cert_path: "{{ project_root }}/frontend/travel-orch/certs/{{ ssl_certs.cert }}"
+ssl_source_key_path: "{{ project_root }}/frontend/travel-orch/certs/{{ ssl_certs.key }}"
+
+# Verify certificate expiry (days before warning)
+ssl_expiry_warning_days: 30
