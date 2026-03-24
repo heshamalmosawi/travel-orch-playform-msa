@@ -1,0 +1,59 @@
+---
+# Databases Deployment Playbook
+# Deploys PostgreSQL and Neo4j containers only
+# Use this for database maintenance, upgrades, or redeployment
+
+- name: Deploy Databases for Travel Management System
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Display databases deployment start message
+      ansible.builtin.debug:
+        msg: |
+          ============================================
+          Starting Databases Deployment
+          ============================================
+          Project: {{ project_name | default('Travel Management System') }}
+          Host: {{ ansible_hostname }}
+          Timestamp: {{ ansible_date_time.iso8601_basic_short }}
+          ============================================
+
+    - name: Display databases plan
+      ansible.builtin.debug:
+        msg: |
+          Databases Deployment Plan:
+          1. PostgreSQL    - Relational database (port {{ postgres_port | default(5432) }})
+          2. Neo4j        - Graph database (HTTP: {{ neo4j_http_port | default(7474) }}, Bolt: {{ neo4j_bolt_port | default(7687) }})
+
+  roles:
+    - role: databases
+      tags: ['databases', 'infrastructure']
+
+  post_tasks:
+    - name: Display databases deployment complete message
+      ansible.builtin.debug:
+        msg: |
+          ============================================
+          Databases Deployment Complete!
+          ============================================
+          Databases:
+          - PostgreSQL:      localhost:{{ postgres_port | default(5432) }}
+          - Neo4j HTTP:      http://localhost:{{ neo4j_http_port | default(7474) }}
+          - Neo4j Bolt:      localhost:{{ neo4j_bolt_port | default(7687) }}
+          - Data Directory:  {{ db_data_root | default('/opt/travel-system/db') }}
+          ============================================
+
+          Test Connections:
+          PostgreSQL:
+            docker exec -it {{ postgres_container_name | default('postgres-db') }} psql -U {{ postgres_user | default('myuser') }} -d {{ postgres_database | default('mydatabase') }}
+
+          Neo4j Browser:
+            Open: http://localhost:{{ neo4j_http_port | default(7474) }}
+            User: {{ neo4j_user | default('neo4j') }}
+          ============================================

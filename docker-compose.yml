@@ -56,6 +56,8 @@ services:
       - eureka-service
     networks:
       - microservices-network
+    env_file:
+      - .env
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
 

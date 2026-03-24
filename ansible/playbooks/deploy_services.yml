@@ -1,0 +1,75 @@
+---
+# Services Deployment Playbook
+# Deploys microservices only (assumes infrastructure is ready)
+# Use this for application updates or redeployment
+
+- name: Deploy Microservices for Travel Management System
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Display services deployment start message
+      ansible.builtin.debug:
+        msg: |
+          ============================================
+          Starting Microservices Deployment
+          ============================================
+          Project: {{ project_name | default('Travel Management System') }}
+          Host: {{ ansible_hostname }}
+          Timestamp: {{ ansible_date_time.iso8601_basic_short }}
+          ============================================
+
+    - name: Display services plan
+      ansible.builtin.debug:
+        msg: |
+          Microservices Deployment Plan:
+          - Eureka Service     (port 8761)
+          - API Gateway        (port 8443)
+          - User Service       (internal)
+          - Travel Service     (internal)
+          - Payment Service    (internal)
+          - Frontend Service   (port 4200)
+
+    - name: Warning - Infrastructure prerequisite check
+      ansible.builtin.debug:
+        msg: |
+          ⚠️  WARNING: This playbook assumes infrastructure is already deployed.
+          Ensure these are running before proceeding:
+          - Docker
+          - Databases (PostgreSQL + Neo4j)
+          - Vault (configured with secrets)
+
+          If infrastructure is not ready, run:
+          ansible-playbook ansible/playbooks/setup_infrastructure.yml
+
+  roles:
+    - role: microservices
+      tags: ['microservices', 'services']
+
+  post_tasks:
+    - name: Display services deployment complete message
+      ansible.builtin.debug:
+        msg: |
+          ============================================
+          Microservices Deployment Complete!
+          ============================================
+          Services:
+          - Eureka Server:   http://localhost:{{ microservices_eureka_port | default(8761) }}
+          - API Gateway:     https://localhost:{{ microservices_gateway_port | default(8443) }}
+          - Frontend:        http://localhost:{{ microservices_frontend_port | default(4200) }}
+          ============================================
+
+          Health Checks:
+          - Eureka Dashboard:  http://localhost:{{ microservices_eureka_port | default(8761) }}
+          - API Gateway:       https://localhost:{{ microservices_gateway_port | default(8443) }}/actuator/health
+          - Frontend:          http://localhost:{{ microservices_frontend_port | default(4200) }}
+          ============================================
+
+          View Running Containers:
+          docker ps
+          ============================================

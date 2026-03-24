@@ -1,0 +1,59 @@
+---
+project_name: "travel-management-system"
+project_root: "/home/hesham/travel-orch-playform-msa"
+ansible_user: "hesham"
+
+# Docker Configuration
+docker_users:
+  - hesham
+
+# Database Configuration
+postgres:
+  version: "16"
+  port: 5432
+  database: "mydatabase"
+  user: "myuser"
+  container_name: "postgres_container"
+
+neo4j:
+  version: "5.0"
+  ports:
+    http: 7474
+    bolt: 7687
+  container_name: "neo4j-local"
+
+# Microservices Configuration
+microservices:
+  replicas: 3
+  image_tag: "{{ lookup('env', 'IMAGE_TAG') | default('latest', true) }}"
+  services:
+    eureka:
+      name: "eureka-service"
+      port: 8761
+    gateway:
+      name: "apigateway-service"
+      port: 8443
+    user:
+      name: "user-service"
+      port: 8082
+    travel:
+      name: "travel-service"
+      port: 8083
+    payment:
+      name: "payment-service"
+      port: 8084
+
+# Vault Configuration
+vault:
+  address: "http://localhost:8200"
+  token: "{{ lookup('env', 'VAULT_TOKEN') | default('', true) }}"
+  secrets_path: "secret/data/travel-system"
+
+# SSL Configuration
+ssl_cert_path: "{{ playbook_dir }}/../files/certs"
+ssl_certs:
+  cert: "angular-dev.crt"
+  key: "angular-dev.key"
+
+# Network Configuration
+network_name: "microservices-network"

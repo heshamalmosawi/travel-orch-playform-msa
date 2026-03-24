@@ -1,0 +1,154 @@
+---
+# Microservices Role Tasks
+# Deploys the Travel Management System microservices using Docker Compose v2
+
+- name: Display deployment message
+  ansible.builtin.debug:
+    msg: "Starting microservices deployment for {{ project_name }}"
+
+# Pre-flight checks
+- name: Check if docker-compose.yml exists
+  ansible.builtin.stat:
+    path: "{{ microservices_compose_file }}"
+  register: compose_file_check
+
+- name: Fail if docker-compose.yml is missing
+  ansible.builtin.fail:
+    msg: |
+      docker-compose.yml not found at: {{ microservices_compose_file }}
+      Please ensure the file exists in your project root.
+  when: not compose_file_check.stat.exists
+
+- name: Check if .env file exists
+  ansible.builtin.stat:
+    path: "{{ microservices_project_root }}/.env"
+  register: env_file_check
+
+- name: Create .env from example if missing
+  ansible.builtin.copy:
+    src: "{{ microservices_project_root }}/.env.example"
+    dest: "{{ microservices_project_root }}/.env"
+    mode: "0600"
+  when: not env_file_check.stat.exists
+
+# Stop services if state is absent
+- name: Stop and remove microservices
+  community.docker.docker_compose_v2:
+    project_src: "{{ microservices_project_root }}"
+    state: absent
+    remove_orphans: "{{ microservices_remove_orphans }}"
+    remove_volumes: "{{ microservices_remove_volumes }}"
+  register: compose_down_result
+  when: microservices_state == 'absent'
+
+- name: Display stop result
+  ansible.builtin.debug:
+    var: compose_down_result
+  when: 
+    - microservices_state == 'absent'
+    - microservices_debug | bool
+
+# Deploy services
+- name: Deploy microservices with Docker Compose v2
+  community.docker.docker_compose_v2:
+    project_src: "{{ microservices_project_root }}"
+    state: "{{ microservices_state }}"
+    build: "{{ microservices_build }}"
+    pull: "{{ microservices_pull }}"
+    remove_orphans: "{{ microservices_remove_orphans }}"
+    services: "{{ microservices_services | default(omit) if microservices_services | length > 0 else omit }}"
+  register: compose_result
+  when: microservices_state in ['present', 'restarted']
+
+- name: Display deployment result
+  ansible.builtin.debug:
+    var: compose_result
+  when: 
+    - microservices_state in ['present', 'restarted']
+    - microservices_debug | bool
+
+# Health checks
+- name: Wait for Eureka service to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ microservices_eureka_port }}/actuator/health"
+    method: GET
+    status_code: [200]
+  register: eureka_health
+  until: eureka_health.status == 200
+  retries: "{{ (microservices_health_check_timeout / 5) | int }}"
+  delay: 5
+  when: 
+    - microservices_health_check_enabled | bool
+    - microservices_state in ['present', 'restarted']
+  failed_when: false
+
+- name: Display Eureka health status
+  ansible.builtin.debug:
+    msg: "Eureka service: {{ 'HEALTHY' if eureka_health.status | default(0) == 200 else 'NOT READY' }}"
+  when: microservices_state in ['present', 'restarted']
+
+- name: Wait for API Gateway to be ready
+  ansible.builtin.wait_for:
+    host: localhost
+    port: "{{ microservices_gateway_port }}"
+    delay: "{{ microservices_health_check_delay }}"
+    timeout: "{{ microservices_health_check_timeout }}"
+  when: 
+    - microservices_health_check_enabled | bool
+    - microservices_state in ['present', 'restarted']
+  failed_when: false
+  register: gateway_health
+
+- name: Display Gateway health status
+  ansible.builtin.debug:
+    msg: "API Gateway: {{ 'HEALTHY' if gateway_health.state | default('') == 'started' else 'NOT READY' }}"
+  when: microservices_state in ['present', 'restarted']
+
+- name: Wait for Frontend to be ready
+  ansible.builtin.wait_for:
+    host: localhost
+    port: "{{ microservices_frontend_port }}"
+    delay: "{{ microservices_health_check_delay }}"
+    timeout: "{{ microservices_health_check_timeout }}"
+  when: 
+    - microservices_health_check_enabled | bool
+    - microservices_state in ['present', 'restarted']
+  failed_when: false
+  register: frontend_health
+
+- name: Display Frontend health status
+  ansible.builtin.debug:
+    msg: "Frontend: {{ 'HEALTHY' if frontend_health.state | default('') == 'started' else 'NOT READY' }}"
+  when: microservices_state in ['present', 'restarted']
+
+# Get container status
+- name: Get running containers
+  ansible.builtin.command: "docker ps --format '{{ '{{' }}.Names{{ '}}' }}: {{ '{{' }}.Status{{ '}}' }}'"
+  register: running_containers
+  changed_when: false
+  when: microservices_state in ['present', 'restarted']
+
+- name: Display running containers
+  ansible.builtin.debug:
+    msg: "{{ running_containers.stdout_lines }}"
+  when: 
+    - microservices_state in ['present', 'restarted']
+    - running_containers.stdout_lines | length > 0
+
+# Summary
+- name: Display deployment summary
+  ansible.builtin.debug:
+    msg: |
+      Microservices Deployment Summary
+      ================================
+      State: {{ microservices_state }}
+      Project: {{ project_name }}
+      Compose file: {{ microservices_compose_file }}
+      
+      Services:
+      - Eureka: http://localhost:{{ microservices_eureka_port }}
+      - API Gateway: https://localhost:{{ microservices_gateway_port }}
+      - Frontend: http://localhost:{{ microservices_frontend_port }}
+      
+      Network: {{ microservices_network }}
+  when: microservices_state in ['present', 'restarted']
