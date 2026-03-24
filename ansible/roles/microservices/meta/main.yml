@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  author: sayed-hesham
+  description: Deploy Travel Management System microservices using Docker Compose v2
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+
+  galaxy_tags:
+    - docker
+    - microservices
+    - compose
+    - deployment
+
+dependencies:
+  - role: docker

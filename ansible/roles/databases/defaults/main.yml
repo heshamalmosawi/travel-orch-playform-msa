@@ -1,0 +1,33 @@
+---
+# Database Configuration
+db_docker_compose_path: "{{ project_root }}/db/docker-compose.yml"
+
+# Network
+db_network_name: "{{ network_name }}"
+
+# Data volumes
+db_data_root: "{{ project_root }}/db/data"
+
+# PostgreSQL Configuration
+postgres_container_name: "{{ postgres.container_name }}"
+postgres_image: "{{ postgres.version }}"
+postgres_port: "{{ postgres.port }}"
+postgres_database: "{{ postgres.database }}"
+postgres_user: "{{ postgres.user }}"
+postgres_password_secret_path: "secret/data/travel-system/postgres"
+
+# Neo4j Configuration
+neo4j_container_name: "{{ neo4j.container_name }}"
+neo4j_image: "neo4j:{{ neo4j.version }}"
+neo4j_http_port: "{{ neo4j.ports.http }}"
+neo4j_bolt_port: "{{ neo4j.ports.bolt }}"
+neo4j_auth: "neo4j/password123"
+neo4j_password_secret_path: "secret/data/travel-system/neo4j"
+
+# Health Check Settings
+db_health_check_retries: 10
+db_health_check_delay: 5
+
+# Wait for Services
+db_startup_wait_timeout: 60
+

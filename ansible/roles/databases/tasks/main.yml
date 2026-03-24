@@ -1,0 +1,156 @@
+---
+# Databases Role Tasks
+# Deploys PostgreSQL and Neo4j containers using Docker Compose
+
+- name: Display database deployment message
+  ansible.builtin.debug:
+    msg: "Starting database deployment for Travel Management System"
+
+- name: Check if db/docker-compose.yml exists
+  ansible.builtin.stat:
+    path: "{{ db_docker_compose_path }}"
+  register: db_compose_file
+
+- name: Fail if db/docker-compose.yml is missing
+  ansible.builtin.fail:
+    msg: |
+      db/docker-compose.yml not found at: {{ db_docker_compose_path }}
+      Please ensure the file exists in your project root.
+  when: not db_compose_file.stat.exists
+
+- name: Display Docker Compose file location
+  ansible.builtin.debug:
+    msg: "Using Docker Compose file: {{ db_docker_compose_path }}"
+
+- name: Ensure data directory exists
+  ansible.builtin.file:
+    path: "{{ db_data_root }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Display data directory location
+  ansible.builtin.debug:
+    msg: "Database data directory: {{ db_data_root }}"
+
+- name: Check if Vault is accessible
+  ansible.builtin.uri:
+    url: "{{ vault.address }}/v1/sys/health"
+    method: GET
+    status_code: [200, 429]
+  register: vault_health
+  failed_when: false
+
+- name: Retrieve PostgreSQL password from Vault
+  ansible.builtin.uri:
+    url: "{{ vault.address }}/v1/{{ vault.secrets_path }}/{{ vault.kv_mount }}/postgres"
+    method: GET
+    return_content: yes
+    headers:
+      X-Vault-Token: "{{ vault.token | default('') }}"
+    status_code: [200, 204]
+  register: vault_postgres_password
+  when: vault_health.status == 200
+  failed_when: false
+
+- name: Retrieve Neo4j password from Vault
+  ansible.builtin.uri:
+    url: "{{ vault.address }}/v1/{{ vault.secrets_path }}/{{ vault.kv_mount }}/neo4j"
+    method: GET
+    return_content: yes
+    headers:
+      X-Vault-Token: "{{ vault.token | default('') }}"
+    status_code: [200, 204]
+  register: vault_neo4j_password
+  when: vault_health.status == 200
+  failed_when: false
+
+- name: Set PostgreSQL password from Vault
+  ansible.builtin.set_fact:
+    postgres_password: "{{ vault_postgres_password.json.data.data.password | default(postgres_password) }}"
+  when: vault_health.status == 200
+
+- name: Set Neo4j password from Vault
+  ansible.builtin.set_fact:
+    neo4j_password: "{{ vault_neo4j_password.json.data.data.password | default(neo4j_auth | regex_replace('neo4j/', '')) }}"
+  when: vault_health.status == 200
+
+- name: Use default PostgreSQL password if Vault unavailable
+  ansible.builtin.set_fact:
+    postgres_password: "{{ postgres_password_secret_path | default('mysecretpassword') }}"
+  when: vault_health.status != 200
+
+- name: Use default Neo4j password if Vault unavailable
+  ansible.builtin.set_fact:
+    neo4j_password: "{{ neo4j_password_secret_path | default('password123') }}"
+  when: vault_health.status != 200
+
+- name: Display PostgreSQL password source
+  ansible.builtin.debug:
+    msg: "PostgreSQL password from: {{ 'Vault' if vault_health.status == 200 else 'default' }}"
+
+- name: Display Neo4j password source
+  ansible.builtin.debug:
+    msg: "Neo4j password from: {{ 'Vault' if vault_health.status == 200 else 'default' }}"
+
+- name: Deploy databases using Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ db_docker_compose_path | dirname }}"
+    state: present
+  register: docker_compose_result
+
+- name: Display Docker Compose result
+  ansible.builtin.debug:
+    msg: "Docker Compose deployment: {{ docker_compose_result }}"
+
+- name: Wait for PostgreSQL to be ready
+  ansible.builtin.wait_for:
+    host: localhost
+    port: "{{ postgres_port }}"
+    delay: 5
+    timeout: "{{ db_startup_wait_timeout }}"
+  when: docker_compose_result is defined
+
+- name: Display PostgreSQL readiness
+  ansible.builtin.debug:
+    msg: "PostgreSQL is ready on port {{ postgres_port }}"
+
+- name: Wait for Neo4j to be ready
+  ansible.builtin.wait_for:
+    host: localhost
+    port: "{{ neo4j_http_port }}"
+    delay: 5
+    timeout: "{{ db_startup_wait_timeout }}"
+  when: docker_compose_result is defined
+
+- name: Display Neo4j readiness
+  ansible.builtin.debug:
+    msg: "Neo4j is ready on port {{ neo4j_http_port }}"
+
+- name: Verify PostgreSQL container is running
+  ansible.builtin.docker_container_info:
+    name: "{{ postgres_container_name }}"
+  register: postgres_container_status
+
+- name: Display PostgreSQL container status
+  ansible.builtin.debug:
+    msg: "PostgreSQL container status: {{ postgres_container_status.container[0].State.Status }}"
+
+- name: Verify Neo4j container is running
+  ansible.builtin.docker_container_info:
+    name: "{{ neo4j_container_name }}"
+  register: neo4j_container_status
+
+- name: Display Neo4j container status
+  ansible.builtin.debug:
+    msg: "Neo4j container status: {{ neo4j_container_status.container[0].State.Status }}"
+
+- name: Display deployed databases summary
+  ansible.builtin.debug:
+    msg: |
+      Database deployment complete:
+      - PostgreSQL: {{ postgres_container_name }} ({{ postgres_port }})
+      - Neo4j: {{ neo4j_container_name }} ({{ neo4j_http_port }})
+      - Network: {{ db_network_name }}
+      - Data directory: {{ db_data_root }}

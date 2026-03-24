@@ -1,0 +1,43 @@
+---
+# Test playbook for microservices role
+# Usage: ansible-playbook playbooks/test_microservices.yml
+
+- name: Test Microservices Deployment
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  vars:
+    # Override defaults for testing
+    microservices_debug: true
+    microservices_health_check_timeout: 60
+
+  tasks:
+    - name: Include microservices role - Deploy
+      ansible.builtin.include_role:
+        name: microservices
+      vars:
+        microservices_state: present
+        microservices_build: always
+
+    - name: Verify all services are running
+      ansible.builtin.command: docker compose ps --format json
+      args:
+        chdir: "{{ project_root }}"
+      register: compose_ps
+      changed_when: false
+
+    - name: Display service status
+      ansible.builtin.debug:
+        msg: "{{ compose_ps.stdout }}"
+
+    # Optional: Stop services after test
+    # Uncomment the block below to stop services after testing
+    - name: Include microservices role - Stop
+      ansible.builtin.include_role:
+        name: microservices
+      vars:
+        microservices_state: absent
