@@ -98,10 +98,20 @@ npm start
 
 The Angular application will be available at https://localhost:4200
 
+## Ansible Deployment
+
+For automated infrastructure deployment using Ansible, see [ANSIBLE.md](ANSIBLE.md).
+
+```bash
+# Quick start - deploy everything
+ansible-playbook ansible/playbooks/site.yml
+```
+
 ## Project Structure
 
 ```
 travel-orch-playform-msa/
+├── ansible/              # Infrastructure as Code (see ANSIBLE.md)
 ├── backend/
 │   ├── eureka-service/
 │   ├── apigateway-service/
