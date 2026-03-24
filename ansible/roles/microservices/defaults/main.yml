@@ -3,7 +3,7 @@
 
 # Project settings
 project_name: "travel-management-system"
-project_root: "/home/hesham/travel-orch-playform-msa"
+project_root: "{{ ansible_env.HOME }}/travel-orch-playform-msa"
 
 # Project paths
 microservices_project_root: "{{ project_root }}"
