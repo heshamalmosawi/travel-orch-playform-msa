@@ -27,4 +27,4 @@ galaxy_info:
     - infrastructure
 
 dependencies:
-  - community.docker.docker_compose_v2
+  - role: docker
