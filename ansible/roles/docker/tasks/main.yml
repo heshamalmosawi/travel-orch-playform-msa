@@ -6,28 +6,34 @@
   ansible.builtin.command: docker --version
   register: docker_version
   changed_when: false
-  failed_when: false
 
 - name: Display Docker version
   ansible.builtin.debug:
     msg: "Docker version found: {{ docker_version.stdout }} version"
+  when: docker_version.rc == 0
 
-- name: Check if docker service is running
+- name: Ensure Docker service is running
   ansible.builtin.systemd:
     name: "{{ docker_service_name }}"
+    state: started
+    enabled: true
   register: docker_service_status
+  when: docker_version.rc == 0
 
 - name: Display Docker service status
   ansible.builtin.debug:
     msg: "Docker service is {{ docker_service_status.status.ActiveState }}"
+  when: docker_version.rc == 0
 
 - name: Ensure Docker group exists
   ansible.builtin.group:
     name: "{{ docker_group }}"
     state: present
+  when: docker_version.rc == 0
 - name: Get list of users to add to docker group
   ansible.builtin.debug:
     msg: "Users to add to docker group: {{ docker_users }}"
+  when: docker_version.rc == 0
 
 - name: Add users to docker group
   ansible.builtin.user:
@@ -36,28 +42,34 @@
     append: yes
   loop: "{{ docker_users }}"
   become: true
+  when: docker_version.rc == 0
 
 - name: Verify docker group membership
   ansible.builtin.command: "groups {{ item }}"
   register: user_groups
   changed_when: false
   loop: "{{ docker_users }}"
+  when: docker_version.rc == 0
 
 - name: Display user groups
   ansible.builtin.debug:
     msg: "User {{ item.item }} is in groups: {{ item.stdout }}"
   loop: "{{ user_groups.results }}"
+  when: docker_version.rc == 0
 
 - name: Check if user can run Docker without sudo
   ansible.builtin.shell: "groups {{ ansible_env.USER }} | grep -q {{ docker_group }}"
   register: docker_access
   changed_when: false
   failed_when: false
+  when: docker_version.rc == 0
 
 - name: Notify user to log out and back in for group changes
   ansible.builtin.debug:
     msg: |
       IMPORTANT: User {{ ansible_env.USER }} has been added to {{ docker_group }} group.
       Please log out and log back in for changes to take effect.
-  when: docker_group in (user_groups.results | map(attribute='stdout') | join(' '))
+  when:
+    - docker_version.rc == 0
+    - docker_group in (user_groups.results | map(attribute='stdout') | join(' '))
 

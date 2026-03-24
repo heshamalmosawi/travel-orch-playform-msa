@@ -44,7 +44,7 @@
 
 - name: Retrieve PostgreSQL password from Vault
   ansible.builtin.uri:
-    url: "{{ vault.address }}/v1/{{ vault.secrets_path }}/{{ vault.kv_mount }}/postgres"
+    url: "{{ vault.address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}/postgres"
     method: GET
     return_content: yes
     headers:
@@ -56,7 +56,7 @@
 
 - name: Retrieve Neo4j password from Vault
   ansible.builtin.uri:
-    url: "{{ vault.address }}/v1/{{ vault.secrets_path }}/{{ vault.kv_mount }}/neo4j"
+    url: "{{ vault.address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}/neo4j"
     method: GET
     return_content: yes
     headers:
@@ -78,13 +78,17 @@
 
 - name: Use default PostgreSQL password if Vault unavailable
   ansible.builtin.set_fact:
-    postgres_password: "{{ postgres_password_secret_path | default('mysecretpassword') }}"
-  when: vault_health.status != 200
+    postgres_password: "{{ postgres_password | default('mysecretpassword') }}"
+  when:
+    - vault_health.status != 200
+    - postgres_password is defined
 
 - name: Use default Neo4j password if Vault unavailable
   ansible.builtin.set_fact:
-    neo4j_password: "{{ neo4j_password_secret_path | default('password123') }}"
-  when: vault_health.status != 200
+    neo4j_password: "{{ neo4j_auth | regex_replace('neo4j/', '') | default('password123') }}"
+  when:
+    - vault_health.status != 200
+    - neo4j_auth is defined
 
 - name: Display PostgreSQL password source
   ansible.builtin.debug:
