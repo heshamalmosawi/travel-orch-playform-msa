@@ -86,6 +86,7 @@ pipeline {
                         script {
                             echo "Deploying new image tag: ${env.IMAGE_TAG}"
                             sh "IMAGE_TAG=${env.IMAGE_TAG} docker compose down || true"
+                            sh 'cp .env.example .env || echo "RATE_LIMIT_CAPACITY=10\nRATE_LIMIT_DURATION=60" > .env'
                             sh "IMAGE_TAG=${env.IMAGE_TAG} docker compose up -d --remove-orphans"
 
                             echo "Docker deployment completed successfully"
@@ -101,6 +102,7 @@ pipeline {
                         if (env.PREV_IMAGE_TAG) {
                             echo "Deployment failed. Rolling back to previous image tag: ${env.PREV_IMAGE_TAG}"
                             sh "IMAGE_TAG=${env.PREV_IMAGE_TAG} docker compose down || true"
+                            sh 'cp .env.example .env || echo "RATE_LIMIT_CAPACITY=10\nRATE_LIMIT_DURATION=60" > .env'
                             sh "IMAGE_TAG=${env.PREV_IMAGE_TAG} docker compose up -d --remove-orphans"
                             env.ROLLEDBACK = 'true'
                             echo "Rollback to previous image tag ${env.PREV_IMAGE_TAG} completed successfully"
