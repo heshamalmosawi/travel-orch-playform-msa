@@ -19,6 +19,44 @@
     mode: "0600"
   when: not env_file_check.stat.exists
 
+# Merge replicas configuration with defaults to prevent undefined variables
+- name: Merge replicas configuration with defaults
+  ansible.builtin.set_fact:
+    microservices_replicas_merged: "{{ microservices_replicas | default({}) | combine(microservices_role_replicas_defaults | default({}), recursive=True) }}"
+  vars:
+    microservices_role_replicas_defaults:
+      frontend: 1
+      eureka: 1
+      gateway: 1
+      user: 1
+      travel: 1
+      payment: 1
+
+# Validate that fixed-port services have replicas == 1
+- name: Assert frontend replicas is 1 (has fixed host port 4200:2122)
+  ansible.builtin.assert:
+    that:
+      - microservices_replicas_merged.frontend == 1
+    fail_msg: "Frontend service has fixed host port 4200:2122 and cannot be scaled. Set microservices_replicas.frontend=1"
+    success_msg: "Frontend replicas configuration is valid"
+  when: microservices_replicas_merged.frontend is defined
+
+- name: Assert eureka replicas is 1 (has fixed host port 8761:8761)
+  ansible.builtin.assert:
+    that:
+      - microservices_replicas_merged.eureka == 1
+    fail_msg: "Eureka service has fixed host port 8761:8761 and cannot be scaled. Set microservices_replicas.eureka=1"
+    success_msg: "Eureka replicas configuration is valid"
+  when: microservices_replicas_merged.eureka is defined
+
+- name: Assert gateway replicas is 1 (has fixed host port 8443:8443)
+  ansible.builtin.assert:
+    that:
+      - microservices_replicas_merged.gateway == 1
+    fail_msg: "API Gateway service has fixed host port 8443:8443 and cannot be scaled. Set microservices_replicas.gateway=1"
+    success_msg: "Gateway replicas configuration is valid"
+  when: microservices_replicas_merged.gateway is defined
+
 # Generate docker-compose.yml from template
 - name: Generate docker-compose.yml with replica configuration
   ansible.builtin.template:
@@ -27,18 +65,20 @@
     mode: "0644"
     backup: true
   register: compose_template_result
+  vars:
+    microservices_replicas: "{{ microservices_replicas_merged }}"
 
 - name: Display template generation result
   ansible.builtin.debug:
     msg: |
       Generated docker-compose.yml at: {{ microservices_compose_file }}
       Replicas configuration:
-      - Frontend: {{ microservices_replicas.frontend }}
-      - Eureka: {{ microservices_replicas.eureka }}
-      - Gateway: {{ microservices_replicas.gateway }}
-      - User Service: {{ microservices_replicas.user }}
-      - Travel Service: {{ microservices_replicas.travel }}
-      - Payment Service: {{ microservices_replicas.payment }}
+      - Frontend: {{ microservices_replicas_merged.frontend | default(1) }}
+      - Eureka: {{ microservices_replicas_merged.eureka | default(1) }}
+      - Gateway: {{ microservices_replicas_merged.gateway | default(1) }}
+      - User Service: {{ microservices_replicas_merged.user | default(1) }}
+      - Travel Service: {{ microservices_replicas_merged.travel | default(1) }}
+      - Payment Service: {{ microservices_replicas_merged.payment | default(1) }}
   when: microservices_debug | bool
 
 # Stop services if state is absent

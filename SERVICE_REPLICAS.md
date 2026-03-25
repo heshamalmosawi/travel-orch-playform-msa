@@ -25,14 +25,13 @@ The replica configuration uses Docker Compose's deploy mode to scale services. S
 Defines the default replica count for all services:
 
 ```yaml
-microservices:
-  replicas:
-    frontend: 1
-    eureka: 1
-    gateway: 1
-    user: 3
-    travel: 3
-    payment: 3
+microservices_replicas:
+  frontend: 1
+  eureka: 1
+  gateway: 1
+  user: 3
+  travel: 3
+  payment: 3
 ```
 
 ### 2. Role Defaults (`ansible/roles/microservices/defaults/main.yml`)
@@ -134,14 +133,13 @@ ansible-playbook ansible/playbooks/deploy_services.yml \
 
 Edit `ansible/group_vars/all.yml`:
 ```yaml
-microservices:
-  replicas:
-    frontend: 1
-    eureka: 1
-    gateway: 1
-    user: 5
-    travel: 5
-    payment: 5
+microservices_replicas:
+  frontend: 1
+  eureka: 1
+  gateway: 1
+  user: 5
+  travel: 5
+  payment: 5
 ```
 
 Then deploy:
@@ -168,7 +166,7 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 
 #### Development Environment
 ```yaml
-replicas:
+microservices_replicas:
   frontend: 1
   eureka: 1
   gateway: 1
@@ -179,7 +177,7 @@ replicas:
 
 #### Staging Environment
 ```yaml
-replicas:
+microservices_replicas:
   frontend: 1
   eureka: 1
   gateway: 1
@@ -190,7 +188,7 @@ replicas:
 
 #### Production Environment
 ```yaml
-replicas:
+microservices_replicas:
   frontend: 1
   eureka: 1
   gateway: 1
@@ -218,10 +216,10 @@ docker ps | grep payment-service
 After deployment, you can scale using Docker Compose:
 
 ```bash
-cd /home/hesham/travel-orch-playform-msa
+cd <project_root>
 docker compose up -d --scale user-service=5
 docker compose up -d --scale travel-service=5
-docker compose up -d --scale-payment-service=5
+docker compose up -d --scale payment-service=5
 ```
 
 ### View Logs for Replicated Services
@@ -309,7 +307,7 @@ To revert to a previous configuration:
 
 1. Restore the backup docker-compose.yml:
 ```bash
-cd /home/hesham/travel-orch-playform-msa
+cd <project_root>
 mv docker-compose.yml.backup docker-compose.yml
 ```
 
