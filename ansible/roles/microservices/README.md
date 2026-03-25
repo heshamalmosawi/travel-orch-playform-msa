@@ -146,7 +146,7 @@ ansible-playbook playbooks/test_microservices.yml \
 
 # Deploy with custom replica configuration
 ansible-playbook playbooks/test_microservices.yml \
-  -e "microservices_replicas='{\"user\":3,\"travel\":3,\"payment\":3}'"
+  -e "microservices_replicas='{\"frontend\":1,\"eureka\":1,\"gateway\":1,\"user\":3,\"travel\":3,\"payment\":3}'"
 ```
 
 ## Tasks

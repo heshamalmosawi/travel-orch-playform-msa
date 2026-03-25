@@ -1,9 +1,9 @@
 services:
   frontend-service:
     build: ./frontend/travel-orch
-{% if microservices_replicas.frontend > 1 %}
+{% if microservices_replicas.get('frontend', 1) > 1 %}
     deploy:
-      replicas: {{ microservices_replicas.frontend }}
+      replicas: {{ microservices_replicas.get('frontend', 1) }}
 {% else %}
     container_name: frontend-service
 {% endif %}
@@ -16,9 +16,9 @@ services:
 
   eureka-service:
     build: ./backend/eureka-service
-{% if microservices_replicas.eureka > 1 %}
+{% if microservices_replicas.get('eureka', 1) > 1 %}
     deploy:
-      replicas: {{ microservices_replicas.eureka }}
+      replicas: {{ microservices_replicas.get('eureka', 1) }}
 {% else %}
     container_name: eureka-service
 {% endif %}
@@ -29,9 +29,9 @@ services:
 
   payment-service:
     build: ./backend/payment-service
-{% if microservices_replicas.payment > 1 %}
+{% if microservices_replicas.get('payment', 1) > 1 %}
     deploy:
-      replicas: {{ microservices_replicas.payment }}
+      replicas: {{ microservices_replicas.get('payment', 1) }}
 {% else %}
     container_name: payment-service
 {% endif %}
@@ -44,9 +44,9 @@ services:
 
   travel-service:
     build: ./backend/travel-service
-{% if microservices_replicas.travel > 1 %}
+{% if microservices_replicas.get('travel', 1) > 1 %}
     deploy:
-      replicas: {{ microservices_replicas.travel }}
+      replicas: {{ microservices_replicas.get('travel', 1) }}
 {% else %}
     container_name: travel-service
 {% endif %}
@@ -59,9 +59,9 @@ services:
 
   user-service:
     build: ./backend/user-service
-{% if microservices_replicas.user > 1 %}
+{% if microservices_replicas.get('user', 1) > 1 %}
     deploy:
-      replicas: {{ microservices_replicas.user }}
+      replicas: {{ microservices_replicas.get('user', 1) }}
 {% else %}
     container_name: user-service
 {% endif %}
@@ -74,9 +74,9 @@ services:
 
   apigateway-service:
     build: ./backend/apigateway-service
-{% if microservices_replicas.gateway > 1 %}
+{% if microservices_replicas.get('gateway', 1) > 1 %}
     deploy:
-      replicas: {{ microservices_replicas.gateway }}
+      replicas: {{ microservices_replicas.get('gateway', 1) }}
 {% else %}
     container_name: apigateway-service
 {% endif %}
