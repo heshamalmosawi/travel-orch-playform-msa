@@ -11,6 +11,7 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 ```bash
 ansible-playbook ansible/playbooks/deploy_services.yml \
   -e "microservices_replicas={'frontend':1,'eureka':1,'gateway':1,'user':5,'travel':5,'payment':5}"
+  -e "microservices_replicas={'frontend':1,'eureka':1,'gateway':1,'user':5,'travel':5,'payment':5}"
 ```
 
 ### Check Configuration
@@ -59,7 +60,7 @@ curl http://localhost:8761/eureka/apps
 ## Scale Manually
 
 ```bash
-cd /home/hesham/travel-orch-playform-msa
+cd <project_root>
 docker compose up -d --scale user-service=5
 docker compose up -d --scale travel-service=5
 docker compose up -d --scale payment-service=5
@@ -76,5 +77,3 @@ For complete details, see: `SERVICE_REPLICAS.md`
 3. Configured per-service replica settings in group_vars
 4. Added comprehensive documentation and validation script
 5. Updated README with replica configuration examples
-
-**These changes are included in the current repository version.**
