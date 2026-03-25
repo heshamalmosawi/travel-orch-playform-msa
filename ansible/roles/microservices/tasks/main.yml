@@ -7,18 +7,6 @@
     msg: "Starting microservices deployment for {{ project_name }}"
 
 # Pre-flight checks
-- name: Check if docker-compose.yml exists
-  ansible.builtin.stat:
-    path: "{{ microservices_compose_file }}"
-  register: compose_file_check
-
-- name: Fail if docker-compose.yml is missing
-  ansible.builtin.fail:
-    msg: |
-      docker-compose.yml not found at: {{ microservices_compose_file }}
-      Please ensure the file exists in your project root.
-  when: not compose_file_check.stat.exists
-
 - name: Check if .env file exists
   ansible.builtin.stat:
     path: "{{ microservices_project_root }}/.env"
@@ -30,6 +18,28 @@
     dest: "{{ microservices_project_root }}/.env"
     mode: "0600"
   when: not env_file_check.stat.exists
+
+# Generate docker-compose.yml from template
+- name: Generate docker-compose.yml with replica configuration
+  ansible.builtin.template:
+    src: docker-compose.j2
+    dest: "{{ microservices_compose_file }}"
+    mode: "0644"
+    backup: true
+  register: compose_template_result
+
+- name: Display template generation result
+  ansible.builtin.debug:
+    msg: |
+      Generated docker-compose.yml at: {{ microservices_compose_file }}
+      Replicas configuration:
+      - Frontend: {{ microservices_replicas.frontend }}
+      - Eureka: {{ microservices_replicas.eureka }}
+      - Gateway: {{ microservices_replicas.gateway }}
+      - User Service: {{ microservices_replicas.user }}
+      - Travel Service: {{ microservices_replicas.travel }}
+      - Payment Service: {{ microservices_replicas.payment }}
+  when: microservices_debug | bool
 
 # Stop services if state is absent
 - name: Stop and remove microservices

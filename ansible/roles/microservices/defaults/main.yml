@@ -38,3 +38,14 @@ microservices_network: "microservices-network"
 
 # Logging
 microservices_debug: false
+
+# Service Replicas Configuration
+# Set to 1 for services that should not be scaled (uses container_name)
+# Set to > 1 to enable replicas (removes container_name, uses deploy.replicas)
+microservices_replicas:
+  frontend: 1
+  eureka: 1
+  gateway: 1
+  user: 1
+  travel: 1
+  payment: 1
