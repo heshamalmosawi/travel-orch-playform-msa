@@ -1,0 +1,96 @@
+services:
+  frontend-service:
+    build: ./frontend/travel-orch
+{% if microservices_replicas.frontend > 1 %}
+    deploy:
+      replicas: {{ microservices_replicas.frontend }}
+{% else %}
+    container_name: frontend-service
+{% endif %}
+    ports:
+      - "4200:2122"
+    depends_on:
+      - apigateway-service
+    networks:
+      - microservices-network
+
+  eureka-service:
+    build: ./backend/eureka-service
+{% if microservices_replicas.eureka > 1 %}
+    deploy:
+      replicas: {{ microservices_replicas.eureka }}
+{% else %}
+    container_name: eureka-service
+{% endif %}
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+
+  payment-service:
+    build: ./backend/payment-service
+{% if microservices_replicas.payment > 1 %}
+    deploy:
+      replicas: {{ microservices_replicas.payment }}
+{% else %}
+    container_name: payment-service
+{% endif %}
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+  travel-service:
+    build: ./backend/travel-service
+{% if microservices_replicas.travel > 1 %}
+    deploy:
+      replicas: {{ microservices_replicas.travel }}
+{% else %}
+    container_name: travel-service
+{% endif %}
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+  user-service:
+    build: ./backend/user-service
+{% if microservices_replicas.user > 1 %}
+    deploy:
+      replicas: {{ microservices_replicas.user }}
+{% else %}
+    container_name: user-service
+{% endif %}
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+  apigateway-service:
+    build: ./backend/apigateway-service
+{% if microservices_replicas.gateway > 1 %}
+    deploy:
+      replicas: {{ microservices_replicas.gateway }}
+{% else %}
+    container_name: apigateway-service
+{% endif %}
+    ports:
+      - "8443:8443"
+    depends_on:
+      - eureka-service
+    networks:
+      - microservices-network
+    env_file:
+      - .env
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-service:8761/eureka/
+
+networks:
+  microservices-network:
+    driver: bridge

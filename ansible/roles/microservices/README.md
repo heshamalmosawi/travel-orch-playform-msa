@@ -32,6 +32,19 @@ Deploys the Travel Management System microservices using Docker Compose v2.
 | `microservices_network` | `microservices-network` | Docker network name |
 | `microservices_debug` | `false` | Enable debug output |
 
+### Service Replicas Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `microservices_replicas.frontend` | `1` | Number of frontend replicas |
+| `microservices_replicas.eureka` | `1` | Number of eureka replicas |
+| `microservices_replicas.gateway` | `1` | Number of gateway replicas |
+| `microservices_replicas.user` | `1` | Number of user-service replicas |
+| `microservices_replicas.travel` | `1` | Number of travel-service replicas |
+| `microservices_replicas.payment` | `1` | Number of payment-service replicas |
+
+**Note**: Services with replicas > 1 will use Docker's deploy mode and will not have a fixed container_name. Services with replicas = 1 will use a fixed container_name.
+
 ### Environment Files
 
 | Variable | Default | Description |
@@ -92,6 +105,24 @@ Deploys the Travel Management System microservices using Docker Compose v2.
         microservices_state: absent
 ```
 
+### Deploy with Service Replicas
+
+```yaml
+---
+- hosts: localhost
+  become: true
+  roles:
+    - role: microservices
+      vars:
+        microservices_replicas:
+          frontend: 1
+          eureka: 1
+          gateway: 1
+          user: 3
+          travel: 3
+          payment: 3
+```
+
 ### Standalone Execution
 
 ```bash
@@ -112,6 +143,10 @@ ansible-playbook playbooks/test_microservices.yml -e "microservices_state=absent
 ansible-playbook playbooks/test_microservices.yml \
   -e "microservices_state=absent" \
   -e "microservices_remove_volumes=true"
+
+# Deploy with custom replica configuration
+ansible-playbook playbooks/test_microservices.yml \
+  -e "microservices_replicas='{\"user\":3,\"travel\":3,\"payment\":3}'"
 ```
 
 ## Tasks
