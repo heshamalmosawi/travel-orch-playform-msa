@@ -10,7 +10,7 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 ### Deploy with Custom Replicas
 ```bash
 ansible-playbook ansible/playbooks/deploy_services.yml \
-  -e "microservices_replicas={'user':5,'travel':5,'payment':5}"
+  -e "microservices_replicas={'frontend':1,'eureka':1,'gateway':1,'user':5,'travel':5,'payment':5}"
 ```
 
 ### Check Configuration
