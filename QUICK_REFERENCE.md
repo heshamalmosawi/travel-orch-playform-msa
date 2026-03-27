@@ -72,7 +72,7 @@ For complete details, see: `SERVICE_REPLICAS.md`
 
 ## Changes Made
 
-1. Created Jinja2 template for docker-compose with replica support
+1. Created Jinja2 template for docker compose with replica support
 2. Updated microservices role to generate compose file from template
 3. Configured per-service replica settings in group_vars
 4. Added comprehensive documentation and validation script
