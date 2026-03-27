@@ -29,7 +29,6 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-cloud.version>2025.1.0</spring-cloud.version>
-		<loki-logback-appender.version>1.5.2</loki-logback-appender.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -52,12 +51,6 @@
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
 
-		<!-- Loki Logback Appender -->
-		<dependency>
-			<groupId>com.github.loki4j</groupId>
-			<artifactId>loki-logback-appender</artifactId>
-			<version>${loki-logback-appender.version}</version>
-		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
