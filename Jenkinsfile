@@ -8,7 +8,6 @@ pipeline {
     environment {
         ROLLEDBACK = 'false'
         SONARQUBE_ENV = 'local-sonar'
-        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
@@ -58,7 +57,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir('backend') {
-                    withSonarQubeEnv('local-sonar') {
+                    withSonarQubeEnv(env.SONARQUBE_ENV) {
                         sh './mvnw sonar:sonar -Dsonar.projectKey=travel-orch-platform'
                     }
                 }
