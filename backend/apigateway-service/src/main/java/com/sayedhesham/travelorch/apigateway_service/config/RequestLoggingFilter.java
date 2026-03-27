@@ -47,27 +47,30 @@ public class RequestLoggingFilter implements WebFilter {
                 getClientIp(request)
         );
 
-        log.debug("[{}] Headers - Content-Type: {}, User-Agent: {}, Authorization: {}",
-                requestId,
-                request.getHeaders().getContentType(),
-                request.getHeaders().getFirst("User-Agent"),
-                request.getHeaders().getFirst("Authorization") != null ? "***" : "none"
-        );
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] Headers - Content-Type: {}, User-Agent: {}, Authorization: {}",
+                    requestId,
+                    request.getHeaders().getContentType(),
+                    request.getHeaders().getFirst("User-Agent"),
+                    request.getHeaders().getFirst("Authorization") != null ? "***" : "none"
+            );
+        }
     }
 
     private void logResponse(ServerHttpRequest request, ServerHttpResponse response, String requestId, Duration duration) {
+        var statusCode = response.getStatusCode();
         log.info("[{}] OUTGOING RESPONSE - Status: {}, Method: {}, Path: {}, Duration: {}ms",
                 requestId,
-                response.getStatusCode(),
+                statusCode != null ? statusCode : "unknown",
                 request.getMethod(),
                 request.getPath(),
                 duration.toMillis()
         );
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
+        if (statusCode != null && !statusCode.is2xxSuccessful()) {
             log.warn("[{}] Non-successful response - Status: {}, Path: {}",
                     requestId,
-                    response.getStatusCode(),
+                    statusCode,
                     request.getPath()
             );
         }
@@ -84,9 +87,11 @@ public class RequestLoggingFilter implements WebFilter {
             return xRealIp;
         }
 
-        return request.getRemoteAddress() != null
-                ? request.getRemoteAddress().getAddress().getHostAddress()
-                : "unknown";
+        var remoteAddress = request.getRemoteAddress();
+        if (remoteAddress != null && remoteAddress.getAddress() != null) {
+            return remoteAddress.getAddress().getHostAddress();
+        }
+        return "unknown";
     }
 
     private String generateRequestId() {

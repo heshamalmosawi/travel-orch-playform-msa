@@ -17,7 +17,7 @@ public class ApigatewayServiceApplication {
 
 	@GetMapping("/ping")
 	public String ping(){
-		return String.format("200 OK");
+		return "200 OK";
 	}
 
 }
