@@ -45,3 +45,8 @@ AGENTS.md
 
 *_PLAN.md
 *_TASKS.md
+
+### SonarQube ###
+.scannerwork/
+.sonar/
+.sonar-creds
