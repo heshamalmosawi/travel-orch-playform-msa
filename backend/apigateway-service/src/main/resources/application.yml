@@ -55,3 +55,6 @@ rate:
   limit:
     capacity: ${RATE_LIMIT_CAPACITY:10}
     duration: ${RATE_LIMIT_DURATION:60}
+
+logging:
+  config: classpath:logback-spring.xml
