@@ -5,9 +5,6 @@ spring:
 server:
   port: 0
 
-logging:
-  config: classpath:logback-spring.xml
-
 eureka:
   client:
     service-url:
