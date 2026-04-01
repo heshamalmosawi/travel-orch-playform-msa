@@ -2,8 +2,12 @@ package com.sayedhesham.travelorch.user_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
+@EntityScan("com.sayedhesham.travelorch.common.entity")
+@EnableJpaRepositories("com.sayedhesham.travelorch.common.repository")
 public class UserServiceApplication {
 
 	public static void main(String[] args) {
