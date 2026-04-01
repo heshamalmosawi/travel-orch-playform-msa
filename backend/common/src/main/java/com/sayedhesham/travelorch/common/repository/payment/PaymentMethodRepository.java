@@ -15,5 +15,5 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, Lo
     
     List<PaymentMethod> findByIsTestMode(Boolean isTestMode);
     
-    Optional<PaymentMethod> findByProvider(PaymentProvider provider, Boolean isTestMode);
+    Optional<PaymentMethod> findByProviderAndIsTestMode(PaymentProvider provider, Boolean isTestMode);
 }
