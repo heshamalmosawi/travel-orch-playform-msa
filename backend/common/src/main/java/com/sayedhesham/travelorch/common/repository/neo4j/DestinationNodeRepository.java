@@ -43,21 +43,21 @@ public interface DestinationNodeRepository extends Neo4jRepository<DestinationNo
      * Find all directly connected destinations from a given destination
      */
     @Query("MATCH (d:Destination {postgresId: $postgresId})-[r:CONNECTS_TO]->(target:Destination) " +
-           "RETURN target, r")
+           "RETURN target")
     List<DestinationNode> findDirectConnectionsFrom(@Param("postgresId") Long postgresId);
 
     /**
      * Find all destinations that connect to a given destination
      */
     @Query("MATCH (source:Destination)-[r:CONNECTS_TO]->(d:Destination {postgresId: $postgresId}) " +
-           "RETURN source, r")
+           "RETURN source")
     List<DestinationNode> findDirectConnectionsTo(@Param("postgresId") Long postgresId);
 
     /**
      * Find the shortest path between two destinations (up to specified depth)
      */
     @Query("MATCH path = shortestPath((start:Destination {postgresId: $startId})-[r:CONNECTS_TO*1..$maxHops]->(end:Destination {postgresId: $endId})) " +
-           "RETURN path")
+           "RETURN nodes(path) AS nodes")
     List<DestinationNode> findShortestPath(
         @Param("startId") Long startId,
         @Param("endId") Long endId,
@@ -68,7 +68,7 @@ public interface DestinationNodeRepository extends Neo4jRepository<DestinationNo
      * Find all paths between two destinations (limited by max hops)
      */
     @Query("MATCH path = (start:Destination {postgresId: $startId})-[r:CONNECTS_TO*1..$maxHops]->(end:Destination {postgresId: $endId}) " +
-           "RETURN path LIMIT $limit")
+           "RETURN nodes(path) AS nodes LIMIT $limit")
     List<DestinationNode> findAllPaths(
         @Param("startId") Long startId,
         @Param("endId") Long endId,
@@ -91,7 +91,7 @@ public interface DestinationNodeRepository extends Neo4jRepository<DestinationNo
      */
     @Query("MATCH (start:Destination {postgresId: $postgresId})-[r:CONNECTS_TO]->(d:Destination) " +
            "WHERE $transportMode IN r.transportModes " +
-           "RETURN d, r")
+           "RETURN d")
     List<DestinationNode> findByTransportMode(
         @Param("postgresId") Long postgresId,
         @Param("transportMode") String transportMode
@@ -102,7 +102,7 @@ public interface DestinationNodeRepository extends Neo4jRepository<DestinationNo
      */
     @Query("MATCH (start:Destination {postgresId: $postgresId})-[r:CONNECTS_TO]->(d:Destination) " +
            "WHERE r.distanceKm >= $minDistance AND r.distanceKm <= $maxDistance " +
-           "RETURN d, r")
+           "RETURN d")
     List<DestinationNode> findWithinDistanceRange(
         @Param("postgresId") Long postgresId,
         @Param("minDistance") Double minDistance,
