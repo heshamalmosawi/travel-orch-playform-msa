@@ -2,6 +2,34 @@ spring:
   application:
     name: user-service
 
+  # Vault Configuration
+  cloud:
+    vault:
+      enabled: ${VAULT_ENABLED:false}
+      uri: ${VAULT_URI:http://localhost:8200}
+      token: ${VAULT_TOKEN}
+      scheme: http
+      kv:
+        enabled: true
+        backend: secret
+        application-name: ${spring.application.name}
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://${db_host:localhost}:${db_port:5432}/${db_name:mydatabase}
+    username: ${db_user:myuser}
+    password: ${db_password:mypassword}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
 server:
   port: 0
 
