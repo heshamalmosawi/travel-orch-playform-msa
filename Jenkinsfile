@@ -7,6 +7,7 @@ pipeline {
 
     environment {
         ROLLEDBACK = 'false'
+        SONARQUBE_ENV = 'local-sonar'
     }
 
     stages {
@@ -49,6 +50,24 @@ pipeline {
                     // sh 'npm test'
                     sh 'npm run build -- --configuration production'
                     echo "Frontend build and tests completed successfully"
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('backend') {
+                    withSonarQubeEnv(env.SONARQUBE_ENV) {
+                        sh './mvnw sonar:sonar -Dsonar.projectKey=travel-orch-platform'
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }

@@ -43,7 +43,7 @@ public class RateLimiterFilter implements WebFilter {
         String ip = getClientIp(exchange.getRequest());
         log.debug("Processing request from IP: {}", ip);
         
-        Bucket bucket = buckets.computeIfAbsent(ip, (key) -> createBucket());
+        Bucket bucket = buckets.computeIfAbsent(ip, key -> createBucket());
         log.debug("Bucket for IP {}: available tokens={}", ip, bucket.getAvailableTokens());
 
         if (bucket.tryConsume(1)) {
@@ -71,9 +71,11 @@ public class RateLimiterFilter implements WebFilter {
             return xRealIp;
         }
         
-        return request.getRemoteAddress() != null 
-            ? request.getRemoteAddress().getAddress().getHostAddress() 
-            : "unknown";
+        var remoteAddress = request.getRemoteAddress();
+        if (remoteAddress != null && remoteAddress.getAddress() != null) {
+            return remoteAddress.getAddress().getHostAddress();
+        }
+        return "unknown";
     }
 
     private Bucket createBucket() {
