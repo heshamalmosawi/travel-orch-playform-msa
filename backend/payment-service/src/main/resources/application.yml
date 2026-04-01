@@ -16,9 +16,9 @@ spring:
 
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://${db_host:localhost}:${db_port:5432}/${db_name:mydatabase}
-    username: ${db_user:myuser}
-    password: ${db_password:mypassword}
+    url: jdbc:postgresql://${db.host:localhost}:${db.port:5432}/${db.name:mydatabase}
+    username: ${db.user:myuser}
+    password: ${db.password:mypassword}
     driver-class-name: org.postgresql.Driver
 
   jpa:
