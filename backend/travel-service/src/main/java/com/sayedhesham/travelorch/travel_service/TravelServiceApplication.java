@@ -7,22 +7,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 
 @SpringBootApplication
-@EntityScan(basePackages = {
-	"com.sayedhesham.travelorch.common.entity.user",
-	"com.sayedhesham.travelorch.common.entity.travel",
-	"com.sayedhesham.travelorch.common.entity.accommodation",
-	"com.sayedhesham.travelorch.common.entity.activity",
-	"com.sayedhesham.travelorch.common.entity.transportation",
-	"com.sayedhesham.travelorch.common.entity.payment"
-})
-@EnableJpaRepositories(basePackages = {
-	"com.sayedhesham.travelorch.common.repository.user",
-	"com.sayedhesham.travelorch.common.repository.travel",
-	"com.sayedhesham.travelorch.common.repository.accommodation",
-	"com.sayedhesham.travelorch.common.repository.activity",
-	"com.sayedhesham.travelorch.common.repository.transportation",
-	"com.sayedhesham.travelorch.common.repository.payment"
-})
+@EntityScan("com.sayedhesham.travelorch.common.entity")
+@EnableJpaRepositories("com.sayedhesham.travelorch.common.repository")
 @EnableNeo4jRepositories("com.sayedhesham.travelorch.common.repository.neo4j")
 public class TravelServiceApplication {
 
