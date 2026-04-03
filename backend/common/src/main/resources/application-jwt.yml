@@ -1,0 +1,8 @@
+# JWT Configuration
+# The secret-key MUST be sourced from HashiCorp Vault in production.
+# Vault path: secret/travel-system/jwt (key: "secret")
+# For local development without Vault, set JWT_SECRET_KEY environment variable.
+jwt:
+  secret-key: ${JWT_SECRET_KEY:}
+  access-token-expiration-ms: 900000    # 15 minutes (900000 ms)
+  refresh-token-expiration-ms: 604800000 # 7 days (604800000 ms)

@@ -3,6 +3,7 @@ spring:
     name: user-service
 
   # Vault Configuration
+  # JWT secret is sourced from Vault at: secret/travel-system/jwt
   cloud:
     vault:
       enabled: ${VAULT_ENABLED:false}
@@ -12,7 +13,12 @@ spring:
       kv:
         enabled: true
         backend: secret
-        application-name: ${spring.application.name}
+        default-context: travel-system
+        profiles:
+          - jwt
+
+  config:
+    import: optional:vault://
 
   # Database Configuration
   datasource:
