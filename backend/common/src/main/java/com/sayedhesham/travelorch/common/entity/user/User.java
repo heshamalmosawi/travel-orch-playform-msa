@@ -1,11 +1,10 @@
 package com.sayedhesham.travelorch.common.entity.user;
 
 import com.sayedhesham.travelorch.common.entity.base.BaseEntity;
-import com.sayedhesham.travelorch.common.enums.UserRole;
+import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,10 +13,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User entity for the travel platform.
- * Uses a simple role enum instead of complex RBAC tables.
+ * Uses RBAC with roles and permissions tables.
  */
 @Entity
 @Table(name = "users", indexes = {
@@ -63,16 +64,37 @@ public class User extends BaseEntity {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     @Builder.Default
-    private UserRole role = UserRole.USER;
+    private Set<Role> roles = new HashSet<>();
 
     /**
      * Check if user has admin privileges
      */
     public boolean isAdmin() {
-        return UserRole.ADMIN.equals(this.role);
+        return roles.stream()
+            .anyMatch(role -> "admin".equalsIgnoreCase(role.getName()));
+    }
+
+    /**
+     * Check if user has a specific role
+     */
+    public boolean hasRole(String roleName) {
+        return roles.stream()
+            .anyMatch(role -> roleName.equalsIgnoreCase(role.getName()));
+    }
+
+    /**
+     * Check if user has a specific permission
+     */
+    public boolean hasPermission(String permissionName) {
+        return roles.stream()
+            .flatMap(role -> role.getPermissions().stream())
+            .anyMatch(permission -> permissionName.equalsIgnoreCase(permission.getName()));
     }
 }

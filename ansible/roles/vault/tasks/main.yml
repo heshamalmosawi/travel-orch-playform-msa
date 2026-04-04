@@ -139,7 +139,8 @@
     body_format: json
     body:
       data:
-        secret: "{{ vault_secrets.jwt_secret }}"
+        # Maps to jwt.secret-key in Spring Boot applications
+        jwt.secret-key: "{{ vault_secrets.jwt_secret }}"
     headers:
       X-Vault-Token: "{{ vault_token | default('') }}"
     status_code: [200, 204]
