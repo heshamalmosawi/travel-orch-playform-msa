@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Nested;
 
 import java.util.Date;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -171,30 +170,22 @@ class JwtUtilTest {
 
         @Test
         @DisplayName("Should detect expired token")
-        void shouldDetectExpiredToken() throws InterruptedException {
-            Set<String> roles = Set.of("USER");
+        void shouldDetectExpiredToken() {
+            // Generate a token that is already expired (expiration in the past)
+            Date now = new Date();
+            Date pastExpiration = new Date(now.getTime() - 1000); // Expired 1 second ago
             
-            JwtUtil shortLivedJwtUtil = new JwtUtil(SECRET_KEY) {
-                @Override
-                public String generateToken(String username, Set<String> r, boolean isService) {
-                    Date now = new Date();
-                    Date expiryDate = new Date(now.getTime() + 100); // 100ms expiry
-                    return io.jsonwebtoken.Jwts.builder()
-                            .subject(username)
-                            .claim("roles", r)
-                            .claim("service", isService)
-                            .issuedAt(now)
-                            .expiration(expiryDate)
-                            .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                            .compact();
-                }
-            };
-            
-            String token = shortLivedJwtUtil.generateToken("testuser", roles, false);
-            Thread.sleep(150); // Wait for token to expire
+            String expiredToken = io.jsonwebtoken.Jwts.builder()
+                    .subject("testuser")
+                    .claim("roles", Set.of("USER"))
+                    .claim("service", false)
+                    .issuedAt(new Date(now.getTime() - 2000)) // Issued 2 seconds ago
+                    .expiration(pastExpiration)
+                    .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                    .compact();
 
-            assertTrue(jwtUtil.isTokenExpired(token));
-            assertFalse(jwtUtil.validateToken(token));
+            assertTrue(jwtUtil.isTokenExpired(expiredToken));
+            assertFalse(jwtUtil.validateToken(expiredToken));
         }
 
         @Test
