@@ -1,6 +1,6 @@
 # JWT Configuration
 # The secret-key MUST be sourced from HashiCorp Vault in production.
-# Vault path: secret/travel-system/jwt (key: "secret")
+# Vault path: secret/travel-system/jwt (key: "jwt.secret-key")
 # For local development without Vault, set JWT_SECRET_KEY environment variable.
 jwt:
   secret-key: ${JWT_SECRET_KEY:}
