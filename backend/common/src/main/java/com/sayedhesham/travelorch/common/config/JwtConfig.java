@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
  * key is not properly configured.
  * 
  * Vault path: secret/travel-system/jwt
- * Expected key in Vault: "secret"
+ * Expected key in Vault: "jwt.secret-key"
  * Maps to property: jwt.secret-key
  */
 @Configuration

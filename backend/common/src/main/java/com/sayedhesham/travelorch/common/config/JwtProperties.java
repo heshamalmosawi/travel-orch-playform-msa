@@ -8,9 +8,17 @@ import org.springframework.stereotype.Component;
 public class JwtProperties {
 
     /**
-     * JWT signing secret key. Must be at least 256 bits (32 characters) for HS512.
-     * This value should be injected from HashiCorp Vault via Spring Cloud Vault.
-     * In production, this MUST be set - the application will fail to start without it.
+     * JWT signing secret key. Must be at least 512 bits (64 characters) for HS512.
+     * 
+     * In production, this value is injected from HashiCorp Vault via Spring Cloud Vault:
+     *   Vault path: secret/travel-system/jwt
+     *   Vault key: jwt.secret-key
+     * 
+     * For local/non-Vault usage, set via:
+     *   - Environment variable: JWT_SECRET_KEY
+     *   - Property: jwt.secret-key in application-local.yml
+     * 
+     * The application will fail to start if this is not configured.
      */
     private String secretKey;
 
