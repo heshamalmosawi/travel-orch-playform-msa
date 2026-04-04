@@ -110,8 +110,11 @@ public class JwtUtil {
 
     public boolean validateToken(String token, String username) {
         try {
-            String extractedUsername = extractUsername(token);
-            return extractedUsername.equals(username) && !isTokenExpired(token);
+            Claims claims = getClaims(token);
+            String extractedUsername = claims.getSubject();
+            Date expiration = claims.getExpiration();
+            return extractedUsername.equals(username) && 
+                   (expiration == null || !expiration.before(new Date()));
         } catch (Exception e) {
             return false;
         }
@@ -119,8 +122,9 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            parseToken(token);
-            return !isTokenExpired(token);
+            Claims claims = getClaims(token);
+            Date expiration = claims.getExpiration();
+            return expiration == null || !expiration.before(new Date());
         } catch (Exception e) {
             return false;
         }
