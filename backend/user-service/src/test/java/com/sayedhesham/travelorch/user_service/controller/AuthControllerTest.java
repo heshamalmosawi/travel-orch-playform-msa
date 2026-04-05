@@ -1,6 +1,5 @@
 package com.sayedhesham.travelorch.user_service.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sayedhesham.travelorch.user_service.dto.AuthResponse;
 import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
 import com.sayedhesham.travelorch.user_service.service.AuthService;
@@ -11,13 +10,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
@@ -28,15 +25,13 @@ class AuthControllerTest {
     @InjectMocks
     private AuthController authController;
 
-    private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
+    private WebTestClient webTestClient;
     private RegistrationRequest registrationRequest;
     private AuthResponse authResponse;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
-        objectMapper = new ObjectMapper();
+        webTestClient = WebTestClient.bindToController(authController).build();
 
         registrationRequest = RegistrationRequest.builder()
                 .username("testuser")
@@ -56,34 +51,44 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_Success() throws Exception {
+    void register_Success() {
         when(authService.register(any(RegistrationRequest.class)))
-                .thenReturn(authResponse);
+                .thenReturn(Mono.just(authResponse));
 
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registrationRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.message").value("User registered successfully"))
-                .andExpect(jsonPath("$.username").value("testuser"))
-                .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(registrationRequest)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assert response.getMessage().equals("User registered successfully");
+                    assert response.getUsername().equals("testuser");
+                    assert response.getEmail().equals("test@example.com");
+                    assert response.getToken().equals("jwt-token");
+                });
     }
 
     @Test
-    void register_UsernameExists() throws Exception {
+    void register_UsernameExists() {
         when(authService.register(any(RegistrationRequest.class)))
-                .thenThrow(new IllegalArgumentException("Username already exists"));
+                .thenReturn(Mono.error(new IllegalArgumentException("Username already exists")));
 
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registrationRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Username already exists"));
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(registrationRequest)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assert response.getMessage().equals("Username already exists");
+                });
     }
 
     @Test
-    void register_InvalidRequest_MissingUsername() throws Exception {
+    void register_InvalidRequest_MissingUsername() {
         RegistrationRequest invalidRequest = RegistrationRequest.builder()
                 .email("test@example.com")
                 .password("password123")
@@ -91,14 +96,16 @@ class AuthControllerTest {
                 .lastName("Doe")
                 .build();
 
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test
-    void register_InvalidRequest_ShortPassword() throws Exception {
+    void register_InvalidRequest_ShortPassword() {
         RegistrationRequest invalidRequest = RegistrationRequest.builder()
                 .username("testuser")
                 .email("test@example.com")
@@ -107,14 +114,16 @@ class AuthControllerTest {
                 .lastName("Doe")
                 .build();
 
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test
-    void register_InvalidRequest_InvalidEmail() throws Exception {
+    void register_InvalidRequest_InvalidEmail() {
         RegistrationRequest invalidRequest = RegistrationRequest.builder()
                 .username("testuser")
                 .email("invalid-email")
@@ -123,9 +132,11 @@ class AuthControllerTest {
                 .lastName("Doe")
                 .build();
 
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 }

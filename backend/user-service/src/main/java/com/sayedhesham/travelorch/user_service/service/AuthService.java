@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,16 +28,18 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     @Transactional
-    public AuthResponse register(RegistrationRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
-        }
+    public Mono<AuthResponse> register(RegistrationRequest request) {
+        return Mono.fromCallable(() -> {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new IllegalArgumentException("Username already exists");
+            }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
-        }
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new IllegalArgumentException("Email already exists");
+            }
 
-        return createUserAndGenerateToken(request);
+            return createUserAndGenerateToken(request);
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
     private AuthResponse createUserAndGenerateToken(RegistrationRequest request) {

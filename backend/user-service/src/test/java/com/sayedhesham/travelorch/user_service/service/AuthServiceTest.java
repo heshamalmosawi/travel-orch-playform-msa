@@ -1,31 +1,31 @@
 package com.sayedhesham.travelorch.user_service.service;
 
-import com.sayedhesham.travelorch.common.entity.rbac.Role;
-import com.sayedhesham.travelorch.common.entity.user.User;
-import com.sayedhesham.travelorch.common.repository.user.UserRepository;
-import com.sayedhesham.travelorch.common.repository.rbac.RoleRepository;
-import com.sayedhesham.travelorch.common.util.jwt.JwtUtil;
-import com.sayedhesham.travelorch.user_service.dto.AuthResponse;
-import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.HashSet;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.sayedhesham.travelorch.common.entity.rbac.Role;
+import com.sayedhesham.travelorch.common.entity.user.User;
+import com.sayedhesham.travelorch.common.repository.rbac.RoleRepository;
+import com.sayedhesham.travelorch.common.repository.user.UserRepository;
+import com.sayedhesham.travelorch.common.util.jwt.JwtUtil;
+import com.sayedhesham.travelorch.user_service.dto.AuthResponse;
+import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
+
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -85,25 +85,30 @@ class AuthServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtUtil.generateToken(anyString(), anySet(), anyBoolean())).thenReturn("jwt-token");
 
-        AuthResponse result = authService.register(registrationRequest);
+        Mono<AuthResponse> result = authService.register(registrationRequest);
 
-        assertThat(result.getMessage()).isEqualTo("User registered successfully");
-        assertThat(result.getUsername()).isEqualTo("testuser");
-        assertThat(result.getEmail()).isEqualTo("test@example.com");
-        assertThat(result.getToken()).isEqualTo("jwt-token");
-
-        verifyCalls();
+        StepVerifier.create(result)
+                .expectNextMatches(response ->
+                    response.getMessage().equals("User registered successfully") &&
+                    response.getUsername().equals("testuser") &&
+                    response.getEmail().equals("test@example.com") &&
+                    response.getToken().equals("jwt-token")
+                )
+                .verifyComplete();
     }
 
     @Test
     void register_UsernameExists() {
         when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.register(registrationRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Username already exists");
+        Mono<AuthResponse> result = authService.register(registrationRequest);
 
-        verify(userRepository).existsByUsername("testuser");
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable ->
+                    throwable instanceof IllegalArgumentException &&
+                    throwable.getMessage().equals("Username already exists")
+                )
+                .verify();
     }
 
     @Test
@@ -111,12 +116,14 @@ class AuthServiceTest {
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.register(registrationRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Email already exists");
+        Mono<AuthResponse> result = authService.register(registrationRequest);
 
-        verify(userRepository).existsByUsername("testuser");
-        verify(userRepository).existsByEmail("test@example.com");
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable ->
+                    throwable instanceof IllegalArgumentException &&
+                    throwable.getMessage().equals("Email already exists")
+                )
+                .verify();
     }
 
     @Test
@@ -125,17 +132,13 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
         when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> authService.register(registrationRequest))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Default USER role not found");
-    }
+        Mono<AuthResponse> result = authService.register(registrationRequest);
 
-    private void verifyCalls() {
-        verify(userRepository).existsByUsername("testuser");
-        verify(userRepository).existsByEmail("test@example.com");
-        verify(roleRepository).findByName("USER");
-        verify(passwordEncoder).encode("password123");
-        verify(userRepository).save(any(User.class));
-        verify(jwtUtil).generateToken(anyString(), anySet(), anyBoolean());
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable ->
+                    throwable instanceof IllegalStateException &&
+                    throwable.getMessage().equals("Default USER role not found")
+                )
+                .verify();
     }
 }
