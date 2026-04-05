@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
@@ -21,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class RateLimiterFilter implements WebFilter {
+public class RateLimiterFilter implements WebFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimiterFilter.class);
 
@@ -76,6 +77,11 @@ public class RateLimiterFilter implements WebFilter {
             return remoteAddress.getAddress().getHostAddress();
         }
         return "unknown";
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.LOWEST_PRECEDENCE - 1;
     }
 
     private Bucket createBucket() {
