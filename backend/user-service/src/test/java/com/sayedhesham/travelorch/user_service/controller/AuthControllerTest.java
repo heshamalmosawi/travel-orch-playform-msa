@@ -1,6 +1,7 @@
 package com.sayedhesham.travelorch.user_service.controller;
 
 import com.sayedhesham.travelorch.user_service.dto.AuthResponse;
+import com.sayedhesham.travelorch.user_service.dto.LoginRequest;
 import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
 import com.sayedhesham.travelorch.user_service.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +28,9 @@ class AuthControllerTest {
 
     private WebTestClient webTestClient;
     private RegistrationRequest registrationRequest;
+    private LoginRequest loginRequest;
     private AuthResponse authResponse;
+    private AuthResponse loginResponse;
 
     @BeforeEach
     void setUp() {
@@ -44,6 +47,18 @@ class AuthControllerTest {
 
         authResponse = AuthResponse.builder()
                 .message("User registered successfully")
+                .username("testuser")
+                .email("test@example.com")
+                .token("jwt-token")
+                .build();
+
+        loginRequest = LoginRequest.builder()
+                .username("testuser")
+                .password("password123")
+                .build();
+
+        loginResponse = AuthResponse.builder()
+                .message("Login successful")
                 .username("testuser")
                 .email("test@example.com")
                 .token("jwt-token")
@@ -134,6 +149,57 @@ class AuthControllerTest {
 
         webTestClient.post()
                 .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void login_Success() {
+        when(authService.login(any(LoginRequest.class)))
+                .thenReturn(Mono.just(loginResponse));
+
+        webTestClient.post()
+                .uri("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(loginRequest)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assert response.getMessage().equals("Login successful");
+                    assert response.getUsername().equals("testuser");
+                    assert response.getEmail().equals("test@example.com");
+                    assert response.getToken().equals("jwt-token");
+                });
+    }
+
+    @Test
+    void login_InvalidCredentials() {
+        when(authService.login(any(LoginRequest.class)))
+                .thenReturn(Mono.error(new IllegalArgumentException("Invalid credentials")));
+
+        webTestClient.post()
+                .uri("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(loginRequest)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assert response.getMessage().equals("Invalid credentials");
+                });
+    }
+
+    @Test
+    void login_InvalidRequest_MissingPassword() {
+        LoginRequest invalidRequest = LoginRequest.builder()
+                .username("testuser")
+                .build();
+
+        webTestClient.post()
+                .uri("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(invalidRequest)
                 .exchange()

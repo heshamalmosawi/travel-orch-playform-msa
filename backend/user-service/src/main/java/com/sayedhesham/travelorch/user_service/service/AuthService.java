@@ -6,6 +6,7 @@ import com.sayedhesham.travelorch.common.repository.user.UserRepository;
 import com.sayedhesham.travelorch.common.repository.rbac.RoleRepository;
 import com.sayedhesham.travelorch.common.util.jwt.JwtUtil;
 import com.sayedhesham.travelorch.user_service.dto.AuthResponse;
+import com.sayedhesham.travelorch.user_service.dto.LoginRequest;
 import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,6 +43,25 @@ public class AuthService {
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
+    @Transactional(readOnly = true)
+    public Mono<AuthResponse> login(LoginRequest request) {
+        return Mono.fromCallable(() -> {
+            User user = findUserByUsernameOrEmail(request.getUsername());
+
+            if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                throw new IllegalArgumentException("Invalid credentials");
+            }
+
+            return generateAuthResponse(user, user.getRoles(), "Login successful");
+        }).subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private User findUserByUsernameOrEmail(String username) {
+        return userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+    }
+
     private AuthResponse createUserAndGenerateToken(RegistrationRequest request) {
         Set<Role> roles = getDefaultRoles();
 
@@ -56,7 +76,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        return generateAuthResponse(savedUser, roles);
+        return generateAuthResponse(savedUser, roles, "User registered successfully");
     }
 
     private Set<Role> getDefaultRoles() {
@@ -68,7 +88,7 @@ public class AuthService {
         return roles;
     }
 
-    private AuthResponse generateAuthResponse(User user, Set<Role> roles) {
+    private AuthResponse generateAuthResponse(User user, Set<Role> roles, String message) {
         Set<String> roleNames = roles.stream()
                 .map(Role::getName)
                 .collect(Collectors.toSet());
@@ -76,7 +96,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getUsername(), roleNames, false);
 
         return AuthResponse.builder()
-                .message("User registered successfully")
+                .message(message)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .token(token)
