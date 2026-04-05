@@ -1,8 +1,9 @@
 package com.sayedhesham.travelorch.common.repository.user;
 
 import com.sayedhesham.travelorch.common.entity.user.User;
-import com.sayedhesham.travelorch.common.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,12 +20,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     boolean existsByEmail(String email);
     
-    List<User> findByRole(UserRole role);
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
+    List<User> findByRoles_Name(@Param("roleName") String roleName);
     
     /**
      * Find all admin users
      */
     default List<User> findAllAdmins() {
-        return findByRole(UserRole.ADMIN);
+        return findByRoles_Name("ADMIN");
     }
 }
