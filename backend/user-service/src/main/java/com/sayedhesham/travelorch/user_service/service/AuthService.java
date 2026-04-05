@@ -11,7 +11,7 @@ import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -27,10 +27,10 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final TransactionTemplate transactionTemplate;
 
-    @Transactional
     public Mono<AuthResponse> register(RegistrationRequest request) {
-        return Mono.fromCallable(() -> {
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
             if (userRepository.existsByUsername(request.getUsername())) {
                 throw new IllegalArgumentException("Username already exists");
             }
@@ -40,12 +40,11 @@ public class AuthService {
             }
 
             return createUserAndGenerateToken(request);
-        }).subscribeOn(Schedulers.boundedElastic());
+        })).subscribeOn(Schedulers.boundedElastic());
     }
 
-    @Transactional(readOnly = true)
     public Mono<AuthResponse> login(LoginRequest request) {
-        return Mono.fromCallable(() -> {
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
             User user = findUserByUsernameOrEmail(request.getUsername());
 
             if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -53,7 +52,7 @@ public class AuthService {
             }
 
             return generateAuthResponse(user, user.getRoles(), "Login successful");
-        }).subscribeOn(Schedulers.boundedElastic());
+        })).subscribeOn(Schedulers.boundedElastic());
     }
 
     private User findUserByUsernameOrEmail(String username) {

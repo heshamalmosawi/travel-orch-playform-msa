@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -78,10 +79,10 @@ class AuthControllerTest {
                 .expectStatus().isCreated()
                 .expectBody(AuthResponse.class)
                 .value(response -> {
-                    assert response.getMessage().equals("User registered successfully");
-                    assert response.getUsername().equals("testuser");
-                    assert response.getEmail().equals("test@example.com");
-                    assert response.getToken().equals("jwt-token");
+                    assertEquals("User registered successfully", response.getMessage());
+                    assertEquals("testuser", response.getUsername());
+                    assertEquals("test@example.com", response.getEmail());
+                    assertEquals("jwt-token", response.getToken());
                 });
     }
 
@@ -98,7 +99,7 @@ class AuthControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody(AuthResponse.class)
                 .value(response -> {
-                    assert response.getMessage().equals("Username already exists");
+                    assertEquals("Username already exists", response.getMessage());
                 });
     }
 
@@ -168,10 +169,10 @@ class AuthControllerTest {
                 .expectStatus().isOk()
                 .expectBody(AuthResponse.class)
                 .value(response -> {
-                    assert response.getMessage().equals("Login successful");
-                    assert response.getUsername().equals("testuser");
-                    assert response.getEmail().equals("test@example.com");
-                    assert response.getToken().equals("jwt-token");
+                    assertEquals("Login successful", response.getMessage());
+                    assertEquals("testuser", response.getUsername());
+                    assertEquals("test@example.com", response.getEmail());
+                    assertEquals("jwt-token", response.getToken());
                 });
     }
 
@@ -188,7 +189,7 @@ class AuthControllerTest {
                 .expectStatus().isUnauthorized()
                 .expectBody(AuthResponse.class)
                 .value(response -> {
-                    assert response.getMessage().equals("Invalid credentials");
+                    assertEquals("Invalid credentials", response.getMessage());
                 });
     }
 
