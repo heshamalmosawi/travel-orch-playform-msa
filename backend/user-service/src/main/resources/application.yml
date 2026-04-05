@@ -45,3 +45,9 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+# JWT Configuration
+jwt:
+  secret-key: ${JWT_SECRET_KEY:your-super-secret-jwt-key-must-be-at-least-512-bits-long-for-hs512-algorithm}
+  access-token-expiration-ms: 900000  # 15 minutes
+  refresh-token-expiration-ms: 604800000  # 7 days

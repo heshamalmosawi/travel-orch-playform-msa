@@ -1,0 +1,206 @@
+$dark: #141413;
+$light: #faf9f5;
+$mid-gray: #b0aea5;
+$light-gray: #e8e6dc;
+$accent-orange: #d97757;
+$accent-orange-hover: #c4623f;
+$accent-blue: #6a9bcc;
+$accent-green: #788c5d;
+$tab-hover-bg: #dbd9cf;
+$font-heading: 'Poppins', Arial, sans-serif;
+$font-body: 'Lora', Georgia, serif;
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: $dark;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  background-color: $light;
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-logo {
+  font-family: $font-heading;
+  font-size: 2rem;
+  font-weight: 700;
+  color: $dark;
+  letter-spacing: -0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.auth-subtitle {
+  font-family: $font-body;
+  font-size: 0.9rem;
+  color: $mid-gray;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid $light-gray;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  font-family: $font-heading;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  background-color: $light-gray;
+  color: $dark;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &.active {
+    background-color: $accent-orange;
+    color: $light;
+  }
+
+  &:hover:not(.active) {
+    background-color: $tab-hover-bg;
+  }
+}
+
+.auth-message {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  font-family: $font-body;
+
+  &.error {
+    background-color: #fde8e8;
+    color: #c53030;
+    border: 1px solid #feb2b2;
+  }
+
+  &.success {
+    background-color: #e6f4e6;
+    color: $accent-green;
+    border: 1px solid #9ae69a;
+  }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+
+  .form-group {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-family: $font-heading;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: $dark;
+  }
+
+  .optional {
+    font-weight: 400;
+    color: $mid-gray;
+    font-size: 0.75rem;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-family: $font-body;
+    font-size: 0.9rem;
+    border: 1px solid $light-gray;
+    border-radius: 6px;
+    background-color: #fff;
+    color: $dark;
+    outline: none;
+    transition: border-color 0.2s ease;
+
+    &::placeholder {
+      color: $mid-gray;
+    }
+
+    &:focus {
+      border-color: $accent-blue;
+      box-shadow: 0 0 0 2px rgba($accent-blue, 0.15);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #e53e3e;
+    }
+  }
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: #e53e3e;
+  font-family: $font-body;
+}
+
+.auth-submit {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $light;
+  background-color: $accent-orange;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: $accent-orange-hover;
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 500px) {
+  .auth-card {
+    padding: 2rem 1.25rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .auth-logo {
+    font-size: 1.6rem;
+  }
+}

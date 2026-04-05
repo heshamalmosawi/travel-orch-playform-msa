@@ -17,6 +17,36 @@ spring:
         profiles:
           - jwt
 
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - StripPrefix=2
+
+            - id: payment-service
+              uri: lb://payment-service
+              predicates:
+                - Path=/api/payment/**
+              filters:
+                - StripPrefix=2
+
+            - id: travel-service
+              uri: lb://travel-service
+              predicates:
+                - Path=/api/travel/**
+              filters:
+                - StripPrefix=2
+
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
   config:
     import: optional:vault://
 
@@ -38,38 +68,21 @@ eureka:
   instance:
     prefer-ip-address: true
 
-spring.cloud.gateway:
-  globalcors:
-    corsConfigurations:
-      '[/**]':
-        allow-credentials: true
-        allowed-origins: "https://*"
-        allowed-headers: "*"
-        allowed-methods: "*"
-
-  routes:
-    - id: payment-service
-      uri: lb://payment-service
-      predicates:
-        - Path=/api/payment/**
-
-    - id: travel-service
-      uri: lb://travel-service
-      predicates:
-        - Path=/api/travel/**
-
-    - id: user-service
-      uri: lb://user-service
-      predicates:
-        - Path=/api/user/**
-
-  discovery:
-    locator:
-      enabled: true
-      lower-case-service-id: true
-
 # Rate Limiting Configuration (optional, defaults provided)
 rate:
   limit:
     capacity: ${RATE_LIMIT_CAPACITY:10}
     duration: ${RATE_LIMIT_DURATION:60}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
