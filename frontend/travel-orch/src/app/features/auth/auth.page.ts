@@ -9,6 +9,7 @@ import {
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { AuthResponse } from './auth.model';
+import { ToastService } from '../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-auth-page',
@@ -21,10 +22,10 @@ export class AuthPage {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
   readonly mode = signal<'login' | 'register'>('login');
   readonly errorMessage = signal<string | null>(null);
-  readonly successMessage = signal<string | null>(null);
   readonly isLoading = signal(false);
 
   readonly loginForm: FormGroup = this.fb.group({
@@ -44,7 +45,6 @@ export class AuthPage {
   setMode(mode: 'login' | 'register'): void {
     this.mode.set(mode);
     this.errorMessage.set(null);
-    this.successMessage.set(null);
     this.loginForm.reset();
     this.registerForm.reset();
   }
@@ -62,7 +62,8 @@ export class AuthPage {
       next: (res: AuthResponse) => {
         this.isLoading.set(false);
         if (res.token) {
-          this.successMessage.set('Login successful!');
+          this.toastService.success('Login successful! Welcome back.');
+          this.router.navigate(['/']);
         } else {
           this.errorMessage.set(res.message || 'Login failed');
         }
@@ -89,7 +90,8 @@ export class AuthPage {
       next: (res: AuthResponse) => {
         this.isLoading.set(false);
         if (res.token) {
-          this.successMessage.set('Registration successful!');
+          this.toastService.success('Registration successful! Welcome aboard.');
+          this.router.navigate(['/']);
         } else {
           this.errorMessage.set(res.message || 'Registration failed');
         }
