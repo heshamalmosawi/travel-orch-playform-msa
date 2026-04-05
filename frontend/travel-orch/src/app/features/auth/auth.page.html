@@ -32,12 +32,6 @@
       </div>
     }
 
-    @if (successMessage()) {
-      <div class="auth-message success" role="status">
-        {{ successMessage() }}
-      </div>
-    }
-
     @if (mode() === 'login') {
       <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onLogin()">
         <div class="form-group">
