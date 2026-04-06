@@ -16,6 +16,8 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import com.sayedhesham.travelorch.common.entity.user.User;
@@ -44,6 +46,9 @@ class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     @InjectMocks
     private AuthService authService;
 
@@ -54,6 +59,11 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            TransactionCallback<?> callback = invocation.getArgument(0);
+            return callback.doInTransaction(null);
+        });
+
         registrationRequest = RegistrationRequest.builder()
                 .username("testuser")
                 .email("test@example.com")
@@ -96,11 +106,11 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.register(registrationRequest);
 
         StepVerifier.create(result)
-                .expectNextMatches(response ->
-                    response.getMessage().equals("User registered successfully") &&
-                    response.getUsername().equals("testuser") &&
-                    response.getEmail().equals("test@example.com") &&
-                    response.getToken().equals("jwt-token")
+                .expectNextMatches(response
+                        -> response.getMessage().equals("User registered successfully")
+                && response.getUsername().equals("testuser")
+                && response.getEmail().equals("test@example.com")
+                && response.getToken().equals("jwt-token")
                 )
                 .verifyComplete();
     }
@@ -112,9 +122,9 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.register(registrationRequest);
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable ->
-                    throwable instanceof IllegalArgumentException &&
-                    throwable.getMessage().equals("Username already exists")
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Username already exists")
                 )
                 .verify();
     }
@@ -127,9 +137,9 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.register(registrationRequest);
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable ->
-                    throwable instanceof IllegalArgumentException &&
-                    throwable.getMessage().equals("Email already exists")
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Email already exists")
                 )
                 .verify();
     }
@@ -143,9 +153,9 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.register(registrationRequest);
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable ->
-                    throwable instanceof IllegalStateException &&
-                    throwable.getMessage().equals("Default USER role not found")
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalStateException
+                && throwable.getMessage().equals("Default USER role not found")
                 )
                 .verify();
     }
@@ -163,11 +173,11 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.login(loginRequest);
 
         StepVerifier.create(result)
-                .expectNextMatches(response ->
-                    response.getMessage().equals("Login successful") &&
-                    response.getUsername().equals("testuser") &&
-                    response.getEmail().equals("test@example.com") &&
-                    response.getToken().equals("jwt-token")
+                .expectNextMatches(response
+                        -> response.getMessage().equals("Login successful")
+                && response.getUsername().equals("testuser")
+                && response.getEmail().equals("test@example.com")
+                && response.getToken().equals("jwt-token")
                 )
                 .verifyComplete();
     }
@@ -191,11 +201,11 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.login(emailLoginRequest);
 
         StepVerifier.create(result)
-                .expectNextMatches(response ->
-                    response.getMessage().equals("Login successful") &&
-                    response.getUsername().equals("testuser") &&
-                    response.getEmail().equals("test@example.com") &&
-                    response.getToken().equals("jwt-token")
+                .expectNextMatches(response
+                        -> response.getMessage().equals("Login successful")
+                && response.getUsername().equals("testuser")
+                && response.getEmail().equals("test@example.com")
+                && response.getToken().equals("jwt-token")
                 )
                 .verifyComplete();
     }
@@ -208,9 +218,9 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.login(loginRequest);
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable ->
-                    throwable instanceof IllegalArgumentException &&
-                    throwable.getMessage().equals("Invalid credentials")
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Invalid credentials")
                 )
                 .verify();
     }
@@ -223,9 +233,9 @@ class AuthServiceTest {
         Mono<AuthResponse> result = authService.login(loginRequest);
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable ->
-                    throwable instanceof IllegalArgumentException &&
-                    throwable.getMessage().equals("Invalid credentials")
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Invalid credentials")
                 )
                 .verify();
     }
