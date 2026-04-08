@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sayedhesham.travelorch.user_service.dto.UserResponse;
 import com.sayedhesham.travelorch.user_service.dto.UserUpdateRequest;
+import com.sayedhesham.travelorch.user_service.security.SecurityUtils;
 import com.sayedhesham.travelorch.user_service.service.UserService;
 
 import jakarta.validation.Valid;
@@ -63,10 +64,14 @@ public class UserController {
     @PutMapping("/{id}")
     public Mono<ResponseEntity<UserResponse>> updateUser(@PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        return userService.updateUser(id, request)
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername -> userService.updateUser(id, request, currentUsername))
                 .map(ResponseEntity::ok)
                 .onErrorResume(IllegalArgumentException.class, e
                         -> Mono.just(ResponseEntity.badRequest().build())
+                )
+                .onErrorResume(SecurityException.class, e
+                        -> Mono.just(ResponseEntity.status(403).build())
                 );
     }
 

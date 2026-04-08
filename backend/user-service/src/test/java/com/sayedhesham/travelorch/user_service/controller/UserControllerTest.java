@@ -10,6 +10,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,7 +40,12 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        webTestClient = WebTestClient.bindToController(userController).build();
+        webTestClient = WebTestClient.bindToController(userController)
+                .webFilter((exchange, chain) ->
+                        chain.filter(exchange)
+                                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(getAuthentication()))
+                )
+                .build();
 
         userResponse = UserResponse.builder()
                 .id(1L)
@@ -51,6 +59,13 @@ class UserControllerTest {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+    }
+
+    private UsernamePasswordAuthenticationToken getAuthentication() {
+        return new UsernamePasswordAuthenticationToken(
+                "testuser", null,
+                java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
     }
 
     @Test
@@ -172,7 +187,8 @@ class UserControllerTest {
                 .roles(Set.of("USER"))
                 .build();
 
-        when(userService.updateUser(eq(1L), any(UserUpdateRequest.class))).thenReturn(Mono.just(updatedResponse));
+        when(userService.updateUser(eq(1L), any(UserUpdateRequest.class), eq("testuser")))
+                .thenReturn(Mono.just(updatedResponse));
 
         webTestClient.put()
                 .uri("/users/1")
@@ -193,7 +209,7 @@ class UserControllerTest {
                 .firstName("Jane")
                 .build();
 
-        when(userService.updateUser(eq(99L), any(UserUpdateRequest.class)))
+        when(userService.updateUser(eq(99L), any(UserUpdateRequest.class), eq("testuser")))
                 .thenReturn(Mono.error(new IllegalArgumentException("User not found with id: 99")));
 
         webTestClient.put()
@@ -210,7 +226,7 @@ class UserControllerTest {
                 .username("takenuser")
                 .build();
 
-        when(userService.updateUser(eq(1L), any(UserUpdateRequest.class)))
+        when(userService.updateUser(eq(1L), any(UserUpdateRequest.class), eq("testuser")))
                 .thenReturn(Mono.error(new IllegalArgumentException("Username already exists")));
 
         webTestClient.put()

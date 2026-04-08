@@ -68,6 +68,9 @@ eureka:
   instance:
     prefer-ip-address: true
 
+jwt:
+  secret-key: ${JWT_SECRET_KEY:your-super-secret-jwt-key-must-be-at-least-512-bits-long-for-hs512-algorithm}
+
 # Rate Limiting Configuration (optional, defaults provided)
 rate:
   limit:

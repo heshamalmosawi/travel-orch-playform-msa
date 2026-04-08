@@ -183,7 +183,7 @@ class UserServiceTest {
                 .firstName("Jane")
                 .build();
 
-        StepVerifier.create(userService.updateUser(1L, request))
+        StepVerifier.create(userService.updateUser(1L, request, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals("Jane", response.getFirstName());
                     assertEquals("Doe", response.getLastName());
@@ -201,7 +201,7 @@ class UserServiceTest {
                 .username("takenuser")
                 .build();
 
-        StepVerifier.create(userService.updateUser(1L, request))
+        StepVerifier.create(userService.updateUser(1L, request, "testuser"))
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("Username already exists")
@@ -218,7 +218,7 @@ class UserServiceTest {
                 .email("taken@example.com")
                 .build();
 
-        StepVerifier.create(userService.updateUser(1L, request))
+        StepVerifier.create(userService.updateUser(1L, request, "testuser"))
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("Email already exists")
@@ -235,7 +235,7 @@ class UserServiceTest {
                 .firstName("Jane")
                 .build();
 
-        StepVerifier.create(userService.updateUser(99L, request))
+        StepVerifier.create(userService.updateUser(99L, request, "testuser"))
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("User not found with id: 99")

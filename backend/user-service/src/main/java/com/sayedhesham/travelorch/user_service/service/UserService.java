@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.user_service.service;
 
 import java.time.LocalDate;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -22,6 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
 
+    @PreAuthorize("hasPermission('user', 'list')")
     public Flux<UserResponse> getAllUsers() {
         return Mono.fromCallable(() -> transactionTemplate.execute(status
                 -> userRepository.findAll().stream()
@@ -59,46 +61,57 @@ public class UserService {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<UserResponse> updateUser(Long id, UserUpdateRequest request) {
+    public Mono<UserResponse> updateUser(Long id, UserUpdateRequest request, String currentUsername) {
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
-            User user = userRepository.findById(id)
+            User targetUser = userRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-            if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + currentUsername));
+
+            boolean isOwner = targetUser.getUsername().equals(currentUsername);
+            boolean canUpdateAny = hasPermission(currentUser, "user", "update");
+
+            if (!isOwner && !canUpdateAny) {
+                throw new SecurityException("You do not have permission to update this user");
+            }
+
+            if (request.getUsername() != null && !request.getUsername().equals(targetUser.getUsername())) {
                 if (userRepository.existsByUsername(request.getUsername())) {
                     throw new IllegalArgumentException("Username already exists");
                 }
-                user.setUsername(request.getUsername());
+                targetUser.setUsername(request.getUsername());
             }
 
-            if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (request.getEmail() != null && !request.getEmail().equals(targetUser.getEmail())) {
                 if (userRepository.existsByEmail(request.getEmail())) {
                     throw new IllegalArgumentException("Email already exists");
                 }
-                user.setEmail(request.getEmail());
+                targetUser.setEmail(request.getEmail());
             }
 
             if (request.getFirstName() != null) {
-                user.setFirstName(request.getFirstName());
+                targetUser.setFirstName(request.getFirstName());
             }
 
             if (request.getLastName() != null) {
-                user.setLastName(request.getLastName());
+                targetUser.setLastName(request.getLastName());
             }
 
             if (request.getPhone() != null) {
-                user.setPhone(request.getPhone());
+                targetUser.setPhone(request.getPhone());
             }
 
             if (request.getDateOfBirth() != null) {
-                user.setDateOfBirth(LocalDate.parse(request.getDateOfBirth()));
+                targetUser.setDateOfBirth(LocalDate.parse(request.getDateOfBirth()));
             }
 
-            User updatedUser = userRepository.save(user);
+            User updatedUser = userRepository.save(targetUser);
             return UserResponse.fromEntity(updatedUser);
         })).subscribeOn(Schedulers.boundedElastic());
     }
 
+    @PreAuthorize("hasPermission('user', 'delete')")
     public Mono<Void> deleteUser(Long id) {
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
             if (!userRepository.existsById(id)) {
@@ -107,5 +120,14 @@ public class UserService {
             userRepository.deleteById(id);
             return null;
         })).subscribeOn(Schedulers.boundedElastic()).then();
+    }
+
+    private boolean hasPermission(User user, String resource, String action) {
+        return user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .anyMatch(permission ->
+                        resource.equalsIgnoreCase(permission.getResource()) &&
+                        action.equalsIgnoreCase(permission.getAction())
+                );
     }
 }
