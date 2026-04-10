@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.user_service.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,8 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sayedhesham.travelorch.common.entity.rbac.Role;
@@ -59,13 +62,20 @@ class UserServiceTest {
                 .phone("1234567890")
                 .roles(roles)
                 .build();
+        testUser.setId(1L);
+    }
+
+    private void setupTransactionTemplateInvocation() {
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            TransactionCallback<?> callback = invocation.getArgument(0);
+            return callback.doInTransaction(null);
+        });
     }
 
     @Test
     void getAllUsers_Success() {
-        when(transactionTemplate.execute(any())).thenReturn(
-                List.of(UserResponse.fromEntity(testUser))
-        );
+        setupTransactionTemplateInvocation();
+        when(userRepository.findAll()).thenReturn(List.of(testUser));
 
         Flux<UserResponse> result = userService.getAllUsers();
 
@@ -81,7 +91,8 @@ class UserServiceTest {
 
     @Test
     void getAllUsers_EmptyList() {
-        when(transactionTemplate.execute(any())).thenReturn(List.of());
+        setupTransactionTemplateInvocation();
+        when(userRepository.findAll()).thenReturn(List.of());
 
         Flux<UserResponse> result = userService.getAllUsers();
 
@@ -91,7 +102,8 @@ class UserServiceTest {
 
     @Test
     void getUserById_Success() {
-        when(transactionTemplate.execute(any())).thenReturn(UserResponse.fromEntity(testUser));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
         StepVerifier.create(userService.getUserById(1L))
                 .expectNextMatches(response -> {
@@ -104,8 +116,8 @@ class UserServiceTest {
 
     @Test
     void getUserById_NotFound() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("User not found with id: 99"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         StepVerifier.create(userService.getUserById(99L))
                 .expectErrorMatches(throwable
@@ -117,7 +129,8 @@ class UserServiceTest {
 
     @Test
     void getUserByUsername_Success() {
-        when(transactionTemplate.execute(any())).thenReturn(UserResponse.fromEntity(testUser));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
 
         StepVerifier.create(userService.getUserByUsername("testuser"))
                 .expectNextMatches(response -> {
@@ -129,8 +142,8 @@ class UserServiceTest {
 
     @Test
     void getUserByUsername_NotFound() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("User not found with username: unknown"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
         StepVerifier.create(userService.getUserByUsername("unknown"))
                 .expectErrorMatches(throwable
@@ -142,7 +155,8 @@ class UserServiceTest {
 
     @Test
     void getUserByEmail_Success() {
-        when(transactionTemplate.execute(any())).thenReturn(UserResponse.fromEntity(testUser));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
 
         StepVerifier.create(userService.getUserByEmail("test@example.com"))
                 .expectNextMatches(response -> {
@@ -154,8 +168,8 @@ class UserServiceTest {
 
     @Test
     void getUserByEmail_NotFound() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("User not found with email: unknown@example.com"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
 
         StepVerifier.create(userService.getUserByEmail("unknown@example.com"))
                 .expectErrorMatches(throwable
@@ -167,17 +181,10 @@ class UserServiceTest {
 
     @Test
     void updateUser_UpdateFirstName_Success() {
-        User updatedUser = User.builder()
-                .username("testuser")
-                .email("test@example.com")
-                .passwordHash("encodedPassword")
-                .firstName("Jane")
-                .lastName("Doe")
-                .phone("1234567890")
-                .roles(testUser.getRoles())
-                .build();
-
-        when(transactionTemplate.execute(any())).thenReturn(UserResponse.fromEntity(updatedUser));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         UserUpdateRequest request = UserUpdateRequest.builder()
                 .firstName("Jane")
@@ -190,12 +197,16 @@ class UserServiceTest {
                     return true;
                 })
                 .verifyComplete();
+
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
     void updateUser_DuplicateUsername() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("Username already exists"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.existsByUsername("takenuser")).thenReturn(true);
 
         UserUpdateRequest request = UserUpdateRequest.builder()
                 .username("takenuser")
@@ -211,8 +222,10 @@ class UserServiceTest {
 
     @Test
     void updateUser_DuplicateEmail() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("Email already exists"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
 
         UserUpdateRequest request = UserUpdateRequest.builder()
                 .email("taken@example.com")
@@ -228,8 +241,8 @@ class UserServiceTest {
 
     @Test
     void updateUser_NotFound() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("User not found with id: 99"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         UserUpdateRequest request = UserUpdateRequest.builder()
                 .firstName("Jane")
@@ -245,16 +258,19 @@ class UserServiceTest {
 
     @Test
     void deleteUser_Success() {
-        when(transactionTemplate.execute(any())).thenReturn(null);
+        setupTransactionTemplateInvocation();
+        when(userRepository.existsById(1L)).thenReturn(true);
 
         StepVerifier.create(userService.deleteUser(1L))
                 .verifyComplete();
+
+        verify(userRepository).deleteById(1L);
     }
 
     @Test
     void deleteUser_NotFound() {
-        when(transactionTemplate.execute(any()))
-                .thenThrow(new IllegalArgumentException("User not found with id: 99"));
+        setupTransactionTemplateInvocation();
+        when(userRepository.existsById(99L)).thenReturn(false);
 
         StepVerifier.create(userService.deleteUser(99L))
                 .expectErrorMatches(throwable
