@@ -1,5 +1,6 @@
 package com.sayedhesham.travelorch.user_service.security;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -12,7 +13,8 @@ public final class SecurityUtils {
     public static Mono<String> getCurrentUsername() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
-                .filter(Authentication::isAuthenticated)
+                .filter(auth -> auth.isAuthenticated()
+                        && !(auth instanceof AnonymousAuthenticationToken))
                 .map(Authentication::getName);
     }
 }
