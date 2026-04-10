@@ -1,11 +1,14 @@
 package com.sayedhesham.travelorch.user_service.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -28,5 +31,6 @@ public class UserUpdateRequest {
     @Size(max = 20, message = "Phone number must not exceed 20 characters")
     private String phone;
 
-    private String dateOfBirth;
+    @Past(message = "Date of birth must be in the past")
+    private LocalDate dateOfBirth;
 }

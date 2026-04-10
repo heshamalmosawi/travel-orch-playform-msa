@@ -1,7 +1,5 @@
 package com.sayedhesham.travelorch.user_service.service;
 
-import java.time.LocalDate;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -118,7 +116,7 @@ public class UserService {
             }
 
             if (request.getDateOfBirth() != null) {
-                targetUser.setDateOfBirth(LocalDate.parse(request.getDateOfBirth()));
+                targetUser.setDateOfBirth(request.getDateOfBirth());
             }
 
             User updatedUser = userRepository.save(targetUser);
