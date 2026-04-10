@@ -2,20 +2,7 @@ spring:
   application:
     name: apigateway-service
 
-  # Vault Configuration
-  # JWT secret is sourced from Vault at: secret/travel-system/jwt
   cloud:
-    vault:
-      enabled: ${VAULT_ENABLED:false}
-      uri: ${VAULT_URI:http://localhost:8200}
-      token: ${VAULT_TOKEN}
-      scheme: http
-      kv:
-        enabled: true
-        backend: secret
-        default-context: travel-system
-        profiles:
-          - jwt
 
     gateway:
       server:
@@ -47,9 +34,6 @@ spring:
           enabled: true
           lower-case-service-id: true
 
-  config:
-    import: optional:vault://
-
 server:
   port: 8443
   ssl:
@@ -68,9 +52,6 @@ eureka:
   instance:
     prefer-ip-address: true
 
-jwt:
-  secret-key: ${JWT_SECRET_KEY:your-super-secret-jwt-key-must-be-at-least-512-bits-long-for-hs512-algorithm}
-
 # Rate Limiting Configuration (optional, defaults provided)
 rate:
   limit:
@@ -88,4 +69,4 @@ management:
 
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
