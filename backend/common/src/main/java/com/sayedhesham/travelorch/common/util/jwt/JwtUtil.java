@@ -1,13 +1,13 @@
 package com.sayedhesham.travelorch.common.util.jwt;
 
-import com.sayedhesham.travelorch.common.config.JwtProperties;
-
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.sayedhesham.travelorch.common.config.JwtProperties;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -79,8 +79,8 @@ public class JwtUtil {
 
     public boolean isService(String token) {
         Object serviceClaim = getClaims(token).get(JwtConstants.SERVICE_CLAIM);
-        if (serviceClaim instanceof Boolean) {
-            return (Boolean) serviceClaim;
+        if (serviceClaim instanceof Boolean aBoolean) {
+            return aBoolean;
         }
         return false;
     }
@@ -128,6 +128,10 @@ public class JwtUtil {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public Claims parseClaims(String token) {
+        return parser.parseSignedClaims(token).getPayload();
     }
 
     private Claims getClaims(String token) {
