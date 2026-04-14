@@ -11,4 +11,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/auth.page').then((m) => m.AuthPage),
   },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./features/admin/admin.page').then((m) => m.AdminPage),
+  },
 ];

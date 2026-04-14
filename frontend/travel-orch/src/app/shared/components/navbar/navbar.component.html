@@ -1,0 +1,11 @@
+<header class="navbar">
+  <h1 class="navbar-brand" (click)="goHome()">TravelOrch</h1>
+  @if (isAuthenticated) {
+    <div class="navbar-actions">
+      @if (isAdmin) {
+        <button class="btn btn-secondary" (click)="goToAdmin()">Admin Dashboard</button>
+      }
+      <button class="btn btn-primary" (click)="logout()">Logout</button>
+    </div>
+  }
+</header>

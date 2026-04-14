@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 
 @Component({
-  selector: 'app-home-page',
+  selector: 'app-admin-page',
   standalone: true,
   imports: [CommonModule, NavbarComponent],
-  templateUrl: './home.page.html',
-  styleUrl: './home.page.scss',
+  templateUrl: './admin.page.html',
+  styleUrl: './admin.page.scss',
 })
-export class HomePage {}
+export class AdminPage {}
