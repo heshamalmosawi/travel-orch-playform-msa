@@ -55,7 +55,7 @@ class UserControllerTest {
                 .lastName("Doe")
                 .phone("1234567890")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .roles(Set.of("USER"))
+                .roles(Set.of("user"))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -184,7 +184,7 @@ class UserControllerTest {
                 .firstName("Jane")
                 .lastName("Smith")
                 .phone("1234567890")
-                .roles(Set.of("USER"))
+                .roles(Set.of("user"))
                 .build();
 
         when(userService.updateUser(eq(1L), any(UserUpdateRequest.class), eq("testuser")))
