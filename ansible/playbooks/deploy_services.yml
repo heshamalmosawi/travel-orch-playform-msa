@@ -28,11 +28,10 @@
       ansible.builtin.debug:
         msg: |
           Microservices Deployment Plan:
-          - Eureka Service     (port 8761)
           - API Gateway        (port 8443)
-          - User Service       (internal)
-          - Travel Service     (internal)
-          - Payment Service    (internal)
+          - User Service       (port 8082)
+          - Travel Service     (port 8083)
+          - Payment Service    (port 8084)
           - Frontend Service   (port 4200)
 
     - name: Warning - Infrastructure prerequisite check
@@ -59,13 +58,14 @@
           Microservices Deployment Complete!
           ============================================
           Services:
-          - Eureka Server:   http://localhost:{{ microservices_eureka_port | default(8761) }}
           - API Gateway:     https://localhost:{{ microservices_gateway_port | default(8443) }}
+          - User Service:    http://localhost:8082
+          - Travel Service:  http://localhost:8083
+          - Payment Service: http://localhost:8084
           - Frontend:        http://localhost:{{ microservices_frontend_port | default(4200) }}
           ============================================
 
           Health Checks:
-          - Eureka Dashboard:  http://localhost:{{ microservices_eureka_port | default(8761) }}
           - API Gateway:       https://localhost:{{ microservices_gateway_port | default(8443) }}/actuator/health
           - Frontend:          http://localhost:{{ microservices_frontend_port | default(4200) }}
           ============================================
