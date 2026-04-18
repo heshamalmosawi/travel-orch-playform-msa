@@ -24,6 +24,9 @@ $font-body: 'Lora', Georgia, serif;
 }
 
 .travels-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 2rem;
 
   h2 {
@@ -497,6 +500,130 @@ $font-body: 'Lora', Georgia, serif;
   line-height: 1.5;
   margin: 0;
   strong { color: $accent-orange; }
+}
+
+.dest-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+
+  label {
+    font-family: $font-heading;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: $light;
+  }
+}
+
+.btn-sm {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+}
+
+.hint-text {
+  font-family: $font-body;
+  font-size: 0.8rem;
+  color: $mid-gray;
+  margin: 0;
+  font-style: italic;
+}
+
+.dest-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid $dark-border;
+
+  &:last-child { border-bottom: none; }
+}
+
+.dest-row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dest-row-dates {
+  display: flex;
+  gap: 0.75rem;
+  padding-left: 32px;
+}
+
+.dest-date-group {
+  flex: 1;
+  min-width: 0;
+  gap: 0.2rem !important;
+
+  label {
+    font-family: $font-heading;
+    font-size: 0.7rem !important;
+    font-weight: 500;
+    color: $mid-gray;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+}
+
+.dest-row-order {
+  font-family: $font-heading;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: $accent-orange;
+  background: rgba($accent-orange, 0.12);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.dest-select {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  font-family: $font-body;
+  font-size: 0.8rem;
+  border: 1px solid $dark-border;
+  border-radius: 5px;
+  background: $dark-input;
+  color: $light;
+  outline: none;
+  min-width: 0;
+
+  &:focus { border-color: $accent-blue; }
+}
+
+.dest-date-input {
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  font-family: $font-body;
+  font-size: 0.8rem;
+  border: 1px solid $dark-border;
+  border-radius: 5px;
+  background: $dark-input;
+  color: $light;
+  outline: none;
+
+  &:focus { border-color: $accent-blue; }
+}
+
+.btn-delete-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: rgba(#e53e3e, 0.12);
+  color: #e53e3e;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  &:hover { background: rgba(#e53e3e, 0.25); }
 }
 
 .detail-grid {
