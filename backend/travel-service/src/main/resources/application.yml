@@ -46,6 +46,12 @@ spring:
 server:
   port: 0
 
+# JWT Configuration
+jwt:
+  secret-key: ${JWT_SECRET_KEY:your-super-secret-jwt-key-must-be-at-least-512-bits-long-for-hs512-algorithm}
+  access-token-expiration-ms: 86400000  # 1 day
+  refresh-token-expiration-ms: 604800000  # 7 days
+
 eureka:
   client:
     service-url:

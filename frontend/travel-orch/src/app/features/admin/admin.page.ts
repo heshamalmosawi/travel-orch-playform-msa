@@ -17,7 +17,8 @@ export class AdminPage {
 
   readonly navItems = [
     { label: 'Users', path: '/admin/users', icon: 'users' },
-    { label: 'Travel', path: '/admin/travel', icon: 'travel' },
+    { label: 'Destinations', path: '/admin/travel', icon: 'travel' },
+    { label: 'Travels', path: '/admin/travels', icon: 'travels' },
     { label: 'Bookings', path: '/admin/bookings', icon: 'bookings' },
     { label: 'Settings', path: '/admin/settings', icon: 'settings' },
   ];

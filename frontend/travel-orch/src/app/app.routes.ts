@@ -36,6 +36,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'travels',
+        loadComponent: () =>
+          import('./features/admin/pages/travels/travels.page').then(
+            (m) => m.TravelsPage
+          ),
+      },
+      {
         path: 'bookings',
         loadComponent: () =>
           import('./features/admin/pages/bookings/bookings.page').then(

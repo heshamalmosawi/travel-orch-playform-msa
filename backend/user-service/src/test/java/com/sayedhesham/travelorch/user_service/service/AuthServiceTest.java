@@ -74,7 +74,7 @@ class AuthServiceTest {
                 .build();
 
         userRole = Role.builder()
-                .name("USER")
+                .name("user")
                 .description("Regular user")
                 .build();
 
@@ -98,7 +98,7 @@ class AuthServiceTest {
     void register_Success() {
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
+        when(roleRepository.findByName("user")).thenReturn(Optional.of(userRole));
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtUtil.generateToken(anyString(), anySet(), anyBoolean())).thenReturn("jwt-token");
@@ -148,14 +148,14 @@ class AuthServiceTest {
     void register_DefaultRoleNotFound() {
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
+        when(roleRepository.findByName("user")).thenReturn(Optional.empty());
 
         Mono<AuthResponse> result = authService.register(registrationRequest);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalStateException
-                && throwable.getMessage().equals("Default USER role not found")
+                && throwable.getMessage().equals("Default user role not found")
                 )
                 .verify();
     }
