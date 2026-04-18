@@ -286,7 +286,10 @@ export class TravelsPage {
   }
 
   formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
