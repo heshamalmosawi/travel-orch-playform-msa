@@ -1,0 +1,300 @@
+<div class="travels-page">
+  <main class="travels-content">
+    <div class="travels-header">
+      <div>
+        <h2>Travel Management</h2>
+        <p class="travels-subtitle">View and manage all travel plans across users</p>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value">{{ totalTravels() }}</span>
+        <span class="stat-label">Total Travels</span>
+      </div>
+      <div class="stat-card stat-card--draft">
+        <span class="stat-value">{{ draftCount() }}</span>
+        <span class="stat-label">Drafts</span>
+      </div>
+      <div class="stat-card stat-card--confirmed">
+        <span class="stat-value">{{ confirmedCount() }}</span>
+        <span class="stat-label">Confirmed</span>
+      </div>
+      <div class="stat-card stat-card--completed">
+        <span class="stat-value">{{ completedCount() }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+    </div>
+
+    <div class="travels-section">
+      <div class="toolbar">
+        <div class="search-wrapper">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by title, description, or ID..."
+            (input)="onSearch($event)"
+          />
+        </div>
+        <select class="status-select" (change)="onStatusFilter($event)">
+          <option value="">All Statuses</option>
+          @for (status of statusOptions; track status) {
+            <option [value]="status">{{ getStatusLabel(status) }}</option>
+          }
+        </select>
+        <button class="btn btn-secondary" (click)="loadTravels()">Refresh</button>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading travels...</p>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="error-state" role="alert">
+          <p>{{ errorMessage() }}</p>
+          <button class="btn btn-primary" (click)="loadTravels()">Retry</button>
+        </div>
+      }
+
+      @if (!isLoading() && !errorMessage()) {
+        @if (filteredTravels().length === 0) {
+          <div class="empty-state">
+            <p>@if (searchTerm() || statusFilter()) { No travels match your filters } @else { No travels found }</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Dates</th>
+                  <th>Duration</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Destinations</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (travel of filteredTravels(); track travel.id) {
+                  <tr>
+                    <td class="td-id">#{{ travel.id }}</td>
+                    <td class="td-name">
+                      {{ travel.title }}
+                      @if (travel.description) {
+                        <span class="td-desc">{{ truncate(travel.description, 50) }}</span>
+                      }
+                    </td>
+                    <td class="td-dates">
+                      {{ formatDate(travel.startDate) }} — {{ formatDate(travel.endDate) }}
+                    </td>
+                    <td class="td-duration">{{ travel.durationDays }}d</td>
+                    <td class="td-price">
+                      @if (travel.totalPrice !== null) {
+                        ${{ travel.totalPrice.toLocaleString() }}
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td>
+                      <span class="badge" [class]="getStatusClass(travel.status)">
+                        {{ getStatusLabel(travel.status) }}
+                      </span>
+                    </td>
+                    <td class="td-dest-count">{{ travel.destinations?.length || 0 }}</td>
+                    <td class="td-date">{{ formatDate(travel.createdAt) }}</td>
+                    <td class="td-actions">
+                      <button class="btn-icon btn-view" (click)="onViewDetails(travel)" title="View details">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                      <button class="btn-icon btn-edit" (click)="openEditModal(travel)" title="Edit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="btn-icon btn-delete" (click)="confirmDelete(travel)" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          <line x1="10" y1="11" x2="10" y2="17"/>
+                          <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </div>
+  </main>
+
+  @if (viewTravel()) {
+    <div class="modal-overlay" (click)="closeViewModal()">
+      <div class="modal modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ viewTravel()!.title }}</h3>
+          <button class="modal-close" (click)="closeViewModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Status</span>
+              <span class="badge" [class]="getStatusClass(viewTravel()!.status)">{{ getStatusLabel(viewTravel()!.status) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Dates</span>
+              <span class="detail-value">{{ formatDate(viewTravel()!.startDate) }} — {{ formatDate(viewTravel()!.endDate) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Duration</span>
+              <span class="detail-value">{{ viewTravel()!.durationDays }} days</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Total Price</span>
+              <span class="detail-value">@if (viewTravel()!.totalPrice !== null) { ${{ viewTravel()!.totalPrice!.toLocaleString() }} } @else { — }</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">User ID</span>
+              <span class="detail-value">#{{ viewTravel()!.userId }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created</span>
+              <span class="detail-value">{{ formatDate(viewTravel()!.createdAt) }}</span>
+            </div>
+          </div>
+          @if (viewTravel()!.description) {
+            <div class="detail-description">
+              <span class="detail-label">Description</span>
+              <p>{{ viewTravel()!.description }}</p>
+            </div>
+          }
+          @if (viewTravel()!.destinations && viewTravel()!.destinations.length > 0) {
+            <div class="detail-destinations">
+              <span class="detail-label">Destinations ({{ viewTravel()!.destinations.length }})</span>
+              <div class="dest-list">
+                @for (dest of viewTravel()!.destinations; track dest.id) {
+                  <div class="dest-item">
+                    <span class="dest-order">{{ dest.visitOrder }}</span>
+                    <div class="dest-info">
+                      <span class="dest-name">{{ dest.destination?.name || 'Unknown' }}</span>
+                      <span class="dest-location">{{ dest.destination?.city }}, {{ dest.destination?.country }}</span>
+                    </div>
+                    <div class="dest-dates">
+                      @if (dest.arrivalDate && dest.departureDate) {
+                        {{ formatDate(dest.arrivalDate) }} — {{ formatDate(dest.departureDate) }}
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (editingTravel()) {
+    <div class="modal-overlay" (click)="closeEditModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Edit: {{ editingTravel()!.title }}</h3>
+          <button class="modal-close" (click)="closeEditModal()">&times;</button>
+        </div>
+        <form class="modal-body" [formGroup]="editForm" (ngSubmit)="onSaveEdit()">
+          <div class="form-group">
+            <label for="e-title">Title</label>
+            <input id="e-title" type="text" formControlName="title" />
+            @if (editForm.get('title')?.invalid && editForm.get('title')?.touched) {
+              <span class="field-error">Title is required</span>
+            }
+          </div>
+          <div class="form-group">
+            <label for="e-desc">Description</label>
+            <textarea id="e-desc" formControlName="description" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="e-start">Start Date</label>
+              <input id="e-start" type="date" formControlName="startDate" />
+              @if (editForm.get('startDate')?.invalid && editForm.get('startDate')?.touched) {
+                <span class="field-error">Start date is required</span>
+              }
+            </div>
+            <div class="form-group">
+              <label for="e-end">End Date</label>
+              <input id="e-end" type="date" formControlName="endDate" />
+              @if (editForm.get('endDate')?.invalid && editForm.get('endDate')?.touched) {
+                <span class="field-error">End date is required</span>
+              }
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="e-duration">Duration (days)</label>
+              <input id="e-duration" type="number" min="1" formControlName="durationDays" />
+              @if (editForm.get('durationDays')?.invalid && editForm.get('durationDays')?.touched) {
+                <span class="field-error">Duration is required</span>
+              }
+            </div>
+            <div class="form-group">
+              <label for="e-price">Total Price</label>
+              <input id="e-price" type="number" step="0.01" min="0" formControlName="totalPrice" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="e-status">Status</label>
+            <select id="e-status" formControlName="status">
+              <option value="">No change</option>
+              @for (status of statusOptions; track status) {
+                <option [value]="status">{{ getStatusLabel(status) }}</option>
+              }
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-cancel" (click)="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+              @if (isSubmitting()) { Saving... } @else { Save Changes }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (deletingTravel()) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Confirm Deletion</h3>
+          <button class="modal-close" (click)="cancelDelete()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="delete-warning">
+            Are you sure you want to delete travel <strong>{{ deletingTravel()!.title }}</strong>
+            ({{ formatDate(deletingTravel()!.startDate) }} — {{ formatDate(deletingTravel()!.endDate) }})?
+            This action cannot be undone.
+          </p>
+          <div class="modal-footer">
+            <button class="btn btn-cancel" (click)="cancelDelete()">Cancel</button>
+            <button class="btn btn-danger" (click)="onDeleteTravel()" [disabled]="isSubmitting()">
+              @if (isSubmitting()) { Deleting... } @else { Delete Travel }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
