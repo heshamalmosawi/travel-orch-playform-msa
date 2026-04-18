@@ -1,8 +1,8 @@
 package com.sayedhesham.travelorch.common.enums;
 
 public enum PaymentStatus {
-    PENDING,
-    PROCESSING,
-    COMPLETED,
-    FAILED
+    pending,
+    processing,
+    completed,
+    failed
 }

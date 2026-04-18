@@ -79,8 +79,8 @@ public class AuthService {
     }
 
     private Set<Role> getDefaultRoles() {
-        Role userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new IllegalStateException("Default USER role not found"));
+        Role userRole = roleRepository.findByName("user")
+                .orElseThrow(() -> new IllegalStateException("Default user role not found"));
 
         Set<Role> roles = new HashSet<>();
         roles.add(userRole);

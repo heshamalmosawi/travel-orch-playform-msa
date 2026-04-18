@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+      - ./data/migrations/V10__create_rbac_tables.sql:/docker-entrypoint-initdb.d/V10__create_rbac_tables.sql:ro
 
   neo4j:
     image: neo4j:latest
