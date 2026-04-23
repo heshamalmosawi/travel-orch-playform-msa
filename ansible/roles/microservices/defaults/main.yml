@@ -29,7 +29,6 @@ microservices_health_check_delay: 10
 microservices_health_check_timeout: 120
 
 # Service ports for health checks
-microservices_eureka_port: 8761
 microservices_gateway_port: 8443
 microservices_frontend_port: 4200
 
@@ -44,7 +43,6 @@ microservices_debug: false
 # Set to > 1 to enable replicas (removes container_name, uses deploy.replicas)
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 1
   travel: 1

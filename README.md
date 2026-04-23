@@ -25,7 +25,6 @@ docker compose up --build
 # Access the services
 # Frontend: https://localhost:4200
 # API Gateway: https://localhost:8443
-# Eureka Dashboard: http://localhost:8761
 ```
 
 ### Docker Services
@@ -33,11 +32,10 @@ docker compose up --build
 The following services will be started:
 
 - **frontend-service** (port 4200): Angular frontend application
-- **eureka-service** (port 8761): Service discovery server
 - **apigateway-service** (port 8443): API Gateway for routing requests
-- **user-service**: User management microservice
-- **travel-service**: Travel booking microservice
-- **payment-service**: Payment processing microservice
+- **user-service** (port 8082): User management microservice
+- **travel-service** (port 8083): Travel booking microservice
+- **payment-service** (port 8084): Payment processing microservice
 
 ### Stop Services
 
@@ -54,19 +52,6 @@ docker compose down -v
 ### Backend Services
 
 Each backend service can be run independently using Maven:
-
-#### Start Eureka Service (required first)
-
-```bash
-cd backend/eureka-service
-./mvnw spring-boot:run
-```
-
-Eureka will be available at http://localhost:8761
-
-#### Start Other Microservices
-
-In separate terminals, start each service:
 
 ```bash
 # API Gateway
@@ -86,7 +71,7 @@ cd backend/payment-service
 ./mvnw spring-boot:run
 ```
 
-All backend services register with Eureka and communicate through the API Gateway at https://localhost:8443
+All backend services communicate through the API Gateway at https://localhost:8443
 
 ### Frontend Application
 
@@ -113,7 +98,6 @@ ansible-playbook ansible/playbooks/site.yml
 travel-orch-playform-msa/
 ├── ansible/              # Infrastructure as Code (see ANSIBLE.md)
 ├── backend/
-│   ├── eureka-service/
 │   ├── apigateway-service/
 │   ├── user-service/
 │   ├── travel-service/

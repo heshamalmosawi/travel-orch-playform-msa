@@ -46,7 +46,7 @@ docker compose up -d
 
 A pre-configured dashboard is available at:
 - **URL**: http://localhost:3000/d/docker-logs/docker-container-logs
-- **Panels**: All services, Travel, User, Payment, API Gateway, Eureka, Frontend
+- **Panels**: All services, Travel, User, Payment, API Gateway, Frontend
 
 ## Check Status
 

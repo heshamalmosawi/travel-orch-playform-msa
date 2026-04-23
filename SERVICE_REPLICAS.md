@@ -10,7 +10,6 @@ The replica configuration uses Docker Compose's deploy mode to scale services. S
 
 ### Services with Fixed Replicas (1)
 - **Frontend Service** - Single instance due to port mapping constraints
-- **Eureka Service** - Single instance for service discovery
 - **API Gateway** - Single instance for SSL termination and routing
 
 ### Scalable Services (>1)
@@ -27,7 +26,6 @@ Defines the default replica count for all services:
 ```yaml
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 3
   travel: 3
@@ -41,7 +39,6 @@ Provides fallback default values if not specified in group_vars:
 ```yaml
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 1
   travel: 1
@@ -92,7 +89,6 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 
 This deploys with:
 - Frontend: 1 replica
-- Eureka: 1 replica
 - Gateway: 1 replica
 - User Service: 3 replicas
 - Travel Service: 3 replicas
@@ -114,7 +110,6 @@ Create a file `replica-config.json`:
 {
   "microservices_replicas": {
     "frontend": 1,
-    "eureka": 1,
     "gateway": 1,
     "user": 5,
     "travel": 5,
@@ -135,7 +130,6 @@ Edit `ansible/group_vars/all.yml`:
 ```yaml
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 5
   travel: 5
@@ -168,7 +162,6 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 ```yaml
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 1
   travel: 1
@@ -179,7 +172,6 @@ microservices_replicas:
 ```yaml
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 2
   travel: 2
@@ -190,7 +182,6 @@ microservices_replicas:
 ```yaml
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 3-5
   travel: 3-5
@@ -281,14 +272,13 @@ netstat -tulnp | grep :8084
 ### Check Service Health
 
 ```bash
-# View Eureka dashboard
-http://localhost:8761
+# Check API Gateway health
+curl -k https://localhost:8443/actuator/health
 
-# Check service registration via Eureka
-curl http://localhost:8761/eureka/apps
-
-# Check health endpoints
-curl https://localhost:8443/actuator/health
+# Check individual service health endpoints
+curl http://localhost:8082/actuator/health
+curl http://localhost:8083/actuator/health
+curl http://localhost:8084/actuator/health
 ```
 
 ### Monitor Resource Usage
@@ -347,4 +337,3 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 - [Docker Compose Deploy Mode](https://docs.docker.com/compose/compose-file/deploy/)
 - [Docker Service Replication](https://docs.docker.com/engine/swarm/services/#replicated-and-global-services)
 - [Spring Boot Microservices Scaling](https://spring.io/guides/gs/spring-boot-docker/)
-- [Eureka Service Discovery](https://cloud.spring.io/spring-cloud-netflix/reference/html/#service-discovery-eureka-clients)

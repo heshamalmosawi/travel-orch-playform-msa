@@ -9,30 +9,25 @@ spring:
         webflux:
           routes:
             - id: user-service
-              uri: lb://user-service
+              uri: ${USER_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/user/**
               filters:
                 - StripPrefix=2
 
             - id: payment-service
-              uri: lb://payment-service
+              uri: ${PAYMENT_SERVICE_URL:http://localhost:8084}
               predicates:
                 - Path=/api/payment/**
               filters:
                 - StripPrefix=2
 
             - id: travel-service
-              uri: lb://travel-service
+              uri: ${TRAVEL_SERVICE_URL:http://localhost:8083}
               predicates:
                 - Path=/api/travel/**
               filters:
                 - StripPrefix=2
-
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
 
 server:
   port: 8443
@@ -44,13 +39,6 @@ server:
     enabled: true
     protocol: TLS
     enabled-protocols: TLSv1.2
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
 
 # Rate Limiting Configuration (optional, defaults provided)
 rate:
