@@ -26,9 +26,6 @@ neo4j:
 microservices:
   image_tag: "{{ lookup('env', 'IMAGE_TAG') | default('latest', true) }}"
   services:
-    eureka:
-      name: "eureka-service"
-      port: 8761
     gateway:
       name: "apigateway-service"
       port: 8443
@@ -45,7 +42,6 @@ microservices:
 # Service Replicas Configuration
 microservices_replicas:
   frontend: 1
-  eureka: 1
   gateway: 1
   user: 3
   travel: 3

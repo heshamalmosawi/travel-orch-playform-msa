@@ -1,31 +1,25 @@
 #!/bin/bash
 
-# Wait for services to be healthy before starting the application
-echo "Waiting for services to be ready..."
+echo "Waiting for backend services to be ready..."
 
-# Wait for Eureka server
-echo "Checking Eureka server..."
-sleep 15
+echo "Waiting for user-service on port 8082..."
+until curl -sfS http://user-service:8082/actuator/health > /dev/null 2>&1; do
+  sleep 2
+done
+echo "user-service is ready!"
 
+echo "Waiting for travel-service on port 8083..."
+until curl -sfS http://travel-service:8083/actuator/health > /dev/null 2>&1; do
+  sleep 2
+done
+echo "travel-service is ready!"
 
-echo "Eureka server is ready!"
+echo "Waiting for payment-service on port 8084..."
+until curl -sfS http://payment-service:8084/actuator/health > /dev/null 2>&1; do
+  sleep 2
+done
+echo "payment-service is ready!"
 
-# Wait additional time for services to register with Eureka
-# echo "Waiting for microservices to register with Eureka (60 seconds)..."
-# sleep 60
+echo "All services are ready! Starting API Gateway..."
 
-# # Check if services are registered in Eureka
-# echo "Checking service registration..."
-# for service in "PRODUCT-SERVICE" "USER-SERVICE" "MEDIA-SERVICE"; do
-#     echo "Checking if $service is registered..."
-#     until curl -s "http://eureka-server:8761/eureka/apps" | grep -q "$service"; do
-#         echo "$service not registered yet, waiting 10 seconds..."
-#         sleep 10
-#     done
-#     echo "$service is registered!"
-# done
-
-echo "All services are registered! Starting API Gateway..."
-
-# Execute the main application command
 exec "$@"
