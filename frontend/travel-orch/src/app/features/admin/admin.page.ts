@@ -19,6 +19,7 @@ export class AdminPage {
     { label: 'Users', path: '/admin/users', icon: 'users' },
     { label: 'Destinations', path: '/admin/travel', icon: 'travel' },
     { label: 'Travels', path: '/admin/travels', icon: 'travels' },
+    { label: 'Payments', path: '/admin/payments', icon: 'payments' },
     { label: 'Bookings', path: '/admin/bookings', icon: 'bookings' },
     { label: 'Settings', path: '/admin/settings', icon: 'settings' },
   ];
