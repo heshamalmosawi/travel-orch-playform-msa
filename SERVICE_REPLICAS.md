@@ -272,13 +272,13 @@ netstat -tulnp | grep :8084
 ### Check Service Health
 
 ```bash
-# Check API Gateway health
+# Check API Gateway health (has actuator enabled)
 curl -k https://localhost:8443/actuator/health
 
-# Check individual service health endpoints
-curl http://localhost:8082/actuator/health
-curl http://localhost:8083/actuator/health
-curl http://localhost:8084/actuator/health
+# Check backend services are listening (no actuator — any HTTP response confirms readiness)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8083/
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/
 ```
 
 ### Monitor Resource Usage

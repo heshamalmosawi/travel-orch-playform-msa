@@ -27,6 +27,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -112,7 +113,10 @@ public class PaymentTransactionService {
                             "Travel not found with id: " + request.getTravelId()));
 
             String currency = request.getCurrency() != null ? request.getCurrency().toLowerCase() : "usd";
-            long amountInCents = request.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
+            long amountInCents = request.getAmount()
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .longValueExact();
 
             PaymentIntent paymentIntent = createStripePaymentIntent(amountInCents, currency);
             log.info("createTransaction - Stripe PaymentIntent created: id={}, status={}",

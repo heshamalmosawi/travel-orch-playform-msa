@@ -1,8 +1,8 @@
 package com.sayedhesham.travelorch.payment_service.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +20,7 @@ public class PaymentTransactionCreateRequest {
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
 
-    @Size(max = 3, message = "Currency must be a 3-letter ISO code")
+    @Pattern(regexp = "[a-zA-Z]{3}", message = "Currency must be a 3-letter ISO code")
     private String currency;
 
     @NotNull(message = "Travel ID is required")
