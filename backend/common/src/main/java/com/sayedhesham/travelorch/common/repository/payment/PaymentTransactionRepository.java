@@ -19,4 +19,6 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     Optional<PaymentTransaction> findByProviderTransactionId(String providerTransactionId);
     
     Optional<PaymentTransaction> findByPaymentIntentId(String paymentIntentId);
+
+    List<PaymentTransaction> findByTravelUserId(Long userId);
 }

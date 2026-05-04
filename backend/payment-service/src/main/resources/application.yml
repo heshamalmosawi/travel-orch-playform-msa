@@ -16,6 +16,7 @@ spring:
         default-context: travel-system
         profiles:
           - jwt
+          - stripe
 
   config:
     import: optional:vault://
@@ -38,3 +39,15 @@ spring:
 
 server:
   port: 8084
+
+# Stripe Configuration
+# Secret key sourced from Vault at: secret/travel-system/stripe (key: "stripe.secret-key")
+# For local development without Vault, set STRIPE_SECRET_KEY environment variable.
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+
+# JWT Configuration
+jwt:
+  secret-key: ${JWT_SECRET_KEY:your-super-secret-jwt-key-must-be-at-least-512-bits-long-for-hs512-algorithm}
+  access-token-expiration-ms: 86400000
+  refresh-token-expiration-ms: 604800000

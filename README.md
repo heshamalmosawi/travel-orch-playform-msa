@@ -66,10 +66,21 @@ cd backend/user-service
 cd backend/travel-service
 ./mvnw spring-boot:run
 
-# Payment Service
+# Payment Service (requires Stripe secret key — see below)
 cd backend/payment-service
-./mvnw spring-boot:run
+STRIPE_SECRET_KEY=sk_test_your_key_here ./mvnw spring-boot:run
 ```
+
+#### Payment Service — Stripe Configuration
+
+The payment-service creates a Stripe client at startup and **will fail to start** without a valid Stripe secret key. Provide the key via one of:
+
+| Method | How |
+|---|---|
+| **Environment variable** (recommended for local dev) | `export STRIPE_SECRET_KEY=sk_test_…` before running the service |
+| **HashiCorp Vault** | Set `VAULT_ENABLED=true`, `VAULT_URI`, and `VAULT_TOKEN`; store the key at `secret/data/travel-system/stripe` with key `stripe.secret-key` |
+
+The key must start with `sk_test_` (test mode) or `sk_live_` (live mode). Obtain a key from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys).
 
 All backend services communicate through the API Gateway at https://localhost:8443
 
