@@ -22,6 +22,13 @@ services:
 {% else %}
     container_name: payment-service
 {% endif %}
+    env_file:
+      - .env
+    environment:
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - VAULT_ADDR=${VAULT_ADDR:-}
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - VAULT_SECRET_PATH=${VAULT_SECRET_PATH:-}
     networks:
       - microservices-network
 
