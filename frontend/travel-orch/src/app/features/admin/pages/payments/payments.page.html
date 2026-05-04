@@ -1,0 +1,156 @@
+<div class="admin-page">
+  <main class="admin-content">
+    <div class="admin-header">
+      <h2>Payment Transactions</h2>
+      <p class="admin-subtitle">View and monitor all payment transactions</p>
+    </div>
+
+    <div class="stats-grid stats-grid--4">
+      <div class="stat-card">
+        <span class="stat-value">{{ totalCount() }}</span>
+        <span class="stat-label">Total Transactions</span>
+      </div>
+      <div class="stat-card stat-card--pending">
+        <span class="stat-value">{{ pendingCount() }}</span>
+        <span class="stat-label">Pending</span>
+      </div>
+      <div class="stat-card stat-card--completed">
+        <span class="stat-value">{{ completedCount() }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+      <div class="stat-card stat-card--volume">
+        <span class="stat-value">${{ totalVolume().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+        <span class="stat-label">Total Volume</span>
+      </div>
+    </div>
+
+    <div class="payments-section">
+      <div class="toolbar">
+        <div class="search-wrapper">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by ID, PaymentIntent, or currency..."
+            (input)="onSearch($event)"
+          />
+        </div>
+        <select class="status-select" (change)="onStatusFilter($event)">
+          <option value="">All Statuses</option>
+          @for (status of statusOptions; track status) {
+            <option [value]="status">{{ getStatusLabel(status) }}</option>
+          }
+        </select>
+        <button class="btn btn-secondary" (click)="loadTransactions()">Refresh</button>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading transactions...</p>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="error-state" role="alert">
+          <p>{{ errorMessage() }}</p>
+          <button class="btn btn-primary" (click)="loadTransactions()">Retry</button>
+        </div>
+      }
+
+      @if (!isLoading() && !errorMessage()) {
+        @if (filteredTransactions().length === 0) {
+          <div class="empty-state">
+            <p>@if (searchTerm() || statusFilter()) { No transactions match your filters } @else { No transactions found }</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>PaymentIntent ID</th>
+                  <th>Travel</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (tx of filteredTransactions(); track tx.id) {
+                  <tr>
+                    <td class="td-id">#{{ tx.id }}</td>
+                    <td class="td-amount">{{ formatAmount(tx.amount, tx.currency) }}</td>
+                    <td>
+                      <span class="badge" [class]="getStatusClass(tx.status)">
+                        {{ getStatusLabel(tx.status) }}
+                      </span>
+                    </td>
+                    <td class="td-pi" [title]="tx.paymentIntentId || ''">
+                      {{ truncate(tx.paymentIntentId, 20) }}
+                    </td>
+                    <td class="td-travel">
+                      <span class="travel-ref">#{{ tx.travelId }}</span>
+                    </td>
+                    <td class="td-date">{{ formatDate(tx.createdAt) }}</td>
+                    <td class="td-actions">
+                      <button class="btn-icon btn-view" (click)="onViewDetails(tx)" title="View details">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </div>
+  </main>
+
+  @if (viewTransaction()) {
+    <div class="modal-overlay" (click)="closeViewModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Transaction #{{ viewTransaction()!.id }}</h3>
+          <button class="modal-close" (click)="closeViewModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Amount</span>
+              <span class="detail-value detail-value--amount">{{ formatAmount(viewTransaction()!.amount, viewTransaction()!.currency) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Status</span>
+              <span class="badge" [class]="getStatusClass(viewTransaction()!.status)">{{ getStatusLabel(viewTransaction()!.status) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Currency</span>
+              <span class="detail-value">{{ viewTransaction()!.currency }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Travel ID</span>
+              <span class="detail-value">#{{ viewTransaction()!.travelId }}</span>
+            </div>
+            <div class="detail-item detail-item--full">
+              <span class="detail-label">PaymentIntent ID</span>
+              <span class="detail-value detail-value--mono">{{ viewTransaction()!.paymentIntentId || '\u2014' }}</span>
+            </div>
+            <div class="detail-item detail-item--full">
+              <span class="detail-label">Provider Transaction ID</span>
+              <span class="detail-value detail-value--mono">{{ viewTransaction()!.providerTransactionId || '\u2014' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created</span>
+              <span class="detail-value">{{ formatDate(viewTransaction()!.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
