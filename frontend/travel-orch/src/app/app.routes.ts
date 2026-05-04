@@ -50,6 +50,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/admin/pages/payments/payments.page').then(
+            (m) => m.PaymentsPage
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/admin/pages/settings/settings.page').then(
