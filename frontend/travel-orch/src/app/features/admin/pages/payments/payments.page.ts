@@ -48,9 +48,13 @@ export class PaymentsPage {
   readonly completedCount = computed(() =>
     this.transactions().filter((t) => t.status === 'completed').length
   );
-  readonly totalVolume = computed(() =>
-    this.transactions().reduce((sum, t) => sum + t.amount, 0)
-  );
+  readonly volumeByCurrency = computed(() => {
+    const map = new Map<string, number>();
+    for (const t of this.transactions()) {
+      map.set(t.currency, (map.get(t.currency) ?? 0) + t.amount);
+    }
+    return map;
+  });
 
   readonly statusOptions = ['pending', 'processing', 'completed', 'failed'];
 
@@ -88,8 +92,20 @@ export class PaymentsPage {
     this.statusFilter.set(select.value);
   }
 
+  readonly isLoadingDetails = signal(false);
+
   onViewDetails(transaction: PaymentTransactionResponse): void {
     this.viewTransaction.set(transaction);
+    this.isLoadingDetails.set(true);
+    this.paymentService.getById(transaction.id).subscribe({
+      next: (full) => {
+        this.viewTransaction.set(full);
+        this.isLoadingDetails.set(false);
+      },
+      error: () => {
+        this.isLoadingDetails.set(false);
+      },
+    });
   }
 
   closeViewModal(): void {
@@ -129,6 +145,18 @@ export class PaymentsPage {
   truncate(text: string | null, max: number): string {
     if (!text) return '';
     return text.length > max ? text.substring(0, max) + '...' : text;
+  }
+
+  getCurrencyVolumes(): { currency: string; formatted: string }[] {
+    const entries: { currency: string; formatted: string }[] = [];
+    this.volumeByCurrency().forEach((amount, currency) => {
+      const symbol = this.getCurrencySymbol(currency);
+      entries.push({
+        currency,
+        formatted: `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency.toUpperCase()}`,
+      });
+    });
+    return entries;
   }
 
   private getCurrencySymbol(currency: string): string {
