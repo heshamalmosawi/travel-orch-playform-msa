@@ -12,24 +12,18 @@ services:
   payment-service:
     build: ./backend/payment-service
     container_name: payment-service
-    ports:
-      - "8084:8084"
     networks:
       - microservices-network
 
   travel-service:
     build: ./backend/travel-service
     container_name: travel-service
-    ports:
-      - "8083:8083"
     networks:
       - microservices-network
 
   user-service:
     build: ./backend/user-service
     container_name: user-service
-    ports:
-      - "8082:8082"
     networks:
       - microservices-network
 
