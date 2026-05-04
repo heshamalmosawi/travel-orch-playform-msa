@@ -21,8 +21,6 @@ services:
       replicas: {{ microservices_replicas.get('payment', 1) }}
 {% else %}
     container_name: payment-service
-    ports:
-      - "8084:8084"
 {% endif %}
     networks:
       - microservices-network
@@ -34,8 +32,6 @@ services:
       replicas: {{ microservices_replicas.get('travel', 1) }}
 {% else %}
     container_name: travel-service
-    ports:
-      - "8083:8083"
 {% endif %}
     networks:
       - microservices-network
@@ -47,8 +43,6 @@ services:
       replicas: {{ microservices_replicas.get('user', 1) }}
 {% else %}
     container_name: user-service
-    ports:
-      - "8082:8082"
 {% endif %}
     networks:
       - microservices-network
