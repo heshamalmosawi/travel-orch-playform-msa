@@ -1,0 +1,184 @@
+services:
+  frontend-service:
+    build: ./frontend/travel-orch
+    container_name: frontend-service
+    ports:
+      - "4200:2122"
+    depends_on:
+      - apigateway-service
+    networks:
+      - app-network
+
+  apigateway-service:
+    build:
+      context: ./backend
+      dockerfile: apigateway-service/Dockerfile
+    container_name: apigateway-service
+    ports:
+      - "8443:8443"
+    depends_on:
+      - user-service
+      - travel-service
+      - payment-service
+    networks:
+      - app-network
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  user-service:
+    build:
+      context: ./backend
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    networks:
+      - app-network
+    depends_on:
+      - db
+    environment:
+      - VAULT_ENABLED=false
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-mydatabase}
+      - DB_USER=${DB_USER:-myuser}
+      - DB_PASSWORD=${DB_PASSWORD:-mypassword}
+
+  travel-service:
+    build:
+      context: ./backend
+      dockerfile: travel-service/Dockerfile
+    container_name: travel-service
+    networks:
+      - app-network
+    depends_on:
+      - db
+      - neo4j
+    environment:
+      - VAULT_ENABLED=false
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-mydatabase}
+      - DB_USER=${DB_USER:-myuser}
+      - DB_PASSWORD=${DB_PASSWORD:-mypassword}
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password123}
+
+  payment-service:
+    build:
+      context: ./backend
+      dockerfile: payment-service/Dockerfile
+    container_name: payment-service
+    networks:
+      - app-network
+    depends_on:
+      - db
+    environment:
+      - VAULT_ENABLED=false
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-mydatabase}
+      - DB_USER=${DB_USER:-myuser}
+      - DB_PASSWORD=${DB_PASSWORD:-mypassword}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-myuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mypassword}
+      POSTGRES_DB: ${DB_NAME:-mydatabase}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./db/data/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - app-network
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j-local
+    restart: always
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-password123}
+    volumes:
+      - neo4j_data:/var/lib/neo4j/data
+      - neo4j_logs:/var/lib/neo4j/logs
+    networks:
+      - app-network
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    profiles:
+      - logging
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    profiles:
+      - logging
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail-positions:/tmp
+    networks:
+      - app-network
+    depends_on:
+      loki:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    profiles:
+      - logging
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
+  grafana-data:
+  loki-data:
+  promtail-positions:
+
+networks:
+  app-network:
+    driver: bridge
