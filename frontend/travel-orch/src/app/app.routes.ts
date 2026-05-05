@@ -11,4 +11,58 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/auth.page').then((m) => m.AuthPage),
   },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./features/admin/admin.page').then((m) => m.AdminPage),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'users',
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/pages/users/users.page').then(
+            (m) => m.UsersPage
+          ),
+      },
+      {
+        path: 'travel',
+        loadComponent: () =>
+          import('./features/admin/pages/travel/travel.page').then(
+            (m) => m.TravelPage
+          ),
+      },
+      {
+        path: 'travels',
+        loadComponent: () =>
+          import('./features/admin/pages/travels/travels.page').then(
+            (m) => m.TravelsPage
+          ),
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./features/admin/pages/bookings/bookings.page').then(
+            (m) => m.BookingsPage
+          ),
+      },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/admin/pages/payments/payments.page').then(
+            (m) => m.PaymentsPage
+          ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/admin/pages/settings/settings.page').then(
+            (m) => m.SettingsPage
+          ),
+      },
+    ],
+  },
 ];

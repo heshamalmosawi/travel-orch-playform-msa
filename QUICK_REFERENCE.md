@@ -10,8 +10,7 @@ ansible-playbook ansible/playbooks/deploy_services.yml
 ### Deploy with Custom Replicas
 ```bash
 ansible-playbook ansible/playbooks/deploy_services.yml \
-  -e "microservices_replicas={'frontend':1,'eureka':1,'gateway':1,'user':5,'travel':5,'payment':5}"
-  -e "microservices_replicas={'frontend':1,'eureka':1,'gateway':1,'user':5,'travel':5,'payment':5}"
+  -e "microservices_replicas={'frontend':1,'gateway':1,'user':5,'travel':5,'payment':5}"
 ```
 
 ### Check Configuration
@@ -31,7 +30,7 @@ ansible-playbook ansible/playbooks/deploy_services.yml \
 ## Default Values
 
 **Production** (group_vars):
-- Frontend: 1, Eureka: 1, Gateway: 1
+- Frontend: 1, Gateway: 1
 - User: 3, Travel: 3, Payment: 3
 
 **Development** (defaults):
@@ -53,8 +52,8 @@ docker ps | grep user-service
 docker ps | grep travel-service
 docker ps | grep payment-service
 
-# Check service status in Eureka
-curl http://localhost:8761/eureka/apps
+# Check service health
+curl https://localhost:8443/actuator/health
 ```
 
 ## Scale Manually
