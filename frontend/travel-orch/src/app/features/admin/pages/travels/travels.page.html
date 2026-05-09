@@ -113,7 +113,7 @@
                         {{ getStatusLabel(travel.status) }}
                       </span>
                     </td>
-                    <td class="td-dest-count">{{ travel.destinations?.length || 0 }}</td>
+                    <td class="td-dest-count">{{ travel.destinations.length }}</td>
                     <td class="td-date">{{ formatDate(travel.createdAt) }}</td>
                     <td class="td-actions">
                       <button class="btn-icon btn-view" (click)="onViewDetails(travel)" title="View details">
