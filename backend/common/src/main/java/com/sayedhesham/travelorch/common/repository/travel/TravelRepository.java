@@ -22,7 +22,7 @@ public interface TravelRepository extends JpaRepository<Travel, Long> {
     
     List<Travel> findByStartDateBetween(LocalDate start, LocalDate end);
     
-    @Query("SELECT t FROM Travel t JOIN FETCH t.destinations WHERE t.id = :id")
+    @Query("SELECT t FROM Travel t LEFT JOIN FETCH t.destinations WHERE t.id = :id")
     Travel findByIdWithDestinations(@Param("id") Long id);
     
     @Query("SELECT t FROM Travel t WHERE t.user = :user AND t.startDate >= :date ORDER BY t.startDate ASC")

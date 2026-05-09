@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.travel_service.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -25,10 +26,11 @@ public class DestinationService {
     private final DestinationRepository destinationRepository;
     private final TransactionTemplate transactionTemplate;
 
+    @PreAuthorize("hasPermission('destinations', 'read')")
     public Flux<DestinationResponse> getAllDestinations() {
         log.info("getAllDestinations - Fetching all destinations");
-        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
-                destinationRepository.findAll().stream()
+        return Mono.fromCallable(() -> transactionTemplate.execute(status
+                -> destinationRepository.findAll().stream()
                         .map(DestinationResponse::fromEntity)
                         .toList()
         ))
@@ -37,6 +39,7 @@ public class DestinationService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    @PreAuthorize("hasPermission('destinations', 'read')")
     public Flux<DestinationResponse> searchDestinations(String name, String country, String city) {
         log.info("searchDestinations - name: {}, country: {}, city: {}", name, country, city);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
@@ -66,8 +69,8 @@ public class DestinationService {
 
     public Mono<DestinationResponse> getDestinationById(Long id) {
         log.info("getDestinationById - Fetching destination with id: {}", id);
-        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
-                destinationRepository.findById(id)
+        return Mono.fromCallable(() -> transactionTemplate.execute(status
+                -> destinationRepository.findById(id)
                         .map(DestinationResponse::fromEntity)
                         .orElseThrow(() -> new IllegalArgumentException("Destination not found with id: " + id))
         ))
@@ -75,6 +78,7 @@ public class DestinationService {
                 .doOnNext(dest -> log.info("getDestinationById - Found: {}", dest.getName()));
     }
 
+    @PreAuthorize("hasPermission('destinations', 'write')")
     public Mono<DestinationResponse> createDestination(DestinationCreateRequest request) {
         log.info("createDestination - Creating destination: {}", request.getName());
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
@@ -95,6 +99,7 @@ public class DestinationService {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
+    @PreAuthorize("hasPermission('destinations', 'write')")
     public Mono<DestinationResponse> updateDestination(Long id, DestinationUpdateRequest request) {
         log.info("updateDestination - Updating destination id: {}", id);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
@@ -133,6 +138,7 @@ public class DestinationService {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
+    @PreAuthorize("hasPermission('destinations', 'delete')")
     public Mono<Void> deleteDestination(Long id) {
         log.info("deleteDestination - Deleting destination id: {}", id);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
