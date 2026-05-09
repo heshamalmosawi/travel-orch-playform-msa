@@ -66,8 +66,10 @@ public class DestinationController {
             @Valid @RequestBody DestinationCreateRequest request) {
         log.info("POST /destinations - Creating destination: {}", request.getName());
         return destinationService.createDestination(request)
-                .<ResponseEntity<DestinationResponse>>map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created))
-                .doOnNext(response -> log.info("POST /destinations - Created id: {}", response.getBody().getId()));
+                .<ResponseEntity<DestinationResponse>>map(created
+                        -> ResponseEntity.status(HttpStatus.CREATED).body(created))
+                .doOnNext(response -> log.info("POST /destinations - Created id: {}",
+                response.getBody().getId()));
     }
 
     @PutMapping("/{id}")

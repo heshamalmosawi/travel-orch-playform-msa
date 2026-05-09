@@ -124,7 +124,7 @@ class TravelControllerTest {
 
     @Test
     void getTravelById_Success() {
-        when(travelService.getTravelById(100L)).thenReturn(Mono.just(travelResponse));
+        when(travelService.getTravelById(100L, "admin")).thenReturn(Mono.just(travelResponse));
 
         webTestClient.get()
                 .uri("/travels/100")
@@ -140,7 +140,7 @@ class TravelControllerTest {
 
     @Test
     void getTravelById_NotFound() {
-        when(travelService.getTravelById(99L))
+        when(travelService.getTravelById(99L, "admin"))
                 .thenReturn(Mono.error(new IllegalArgumentException("Travel not found with id: 99")));
 
         webTestClient.get()
@@ -151,7 +151,7 @@ class TravelControllerTest {
 
     @Test
     void getTravelsByUser_Success() {
-        when(travelService.getTravelsByUser(1L)).thenReturn(Flux.just(travelResponse));
+        when(travelService.getTravelsByUser(1L, "admin")).thenReturn(Flux.just(travelResponse));
 
         webTestClient.get()
                 .uri("/travels/user/1")
@@ -202,7 +202,7 @@ class TravelControllerTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        when(travelService.createTravel(any(TravelCreateRequest.class)))
+        when(travelService.createTravel(any(TravelCreateRequest.class), eq("admin")))
                 .thenReturn(Mono.just(createdResponse));
 
         webTestClient.post()
@@ -241,7 +241,7 @@ class TravelControllerTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        when(travelService.updateTravel(eq(100L), any(TravelUpdateRequest.class)))
+        when(travelService.updateTravel(eq(100L), any(TravelUpdateRequest.class), eq("admin")))
                 .thenReturn(Mono.just(updatedResponse));
 
         webTestClient.put()
@@ -263,7 +263,7 @@ class TravelControllerTest {
                 .title("New Title")
                 .build();
 
-        when(travelService.updateTravel(eq(99L), any(TravelUpdateRequest.class)))
+        when(travelService.updateTravel(eq(99L), any(TravelUpdateRequest.class), eq("admin")))
                 .thenReturn(Mono.error(new IllegalArgumentException("Travel not found with id: 99")));
 
         webTestClient.put()
@@ -276,7 +276,7 @@ class TravelControllerTest {
 
     @Test
     void deleteTravel_Success() {
-        when(travelService.deleteTravel(100L)).thenReturn(Mono.empty());
+        when(travelService.deleteTravel(100L, "admin")).thenReturn(Mono.empty());
 
         webTestClient.delete()
                 .uri("/travels/100")
@@ -286,12 +286,62 @@ class TravelControllerTest {
 
     @Test
     void deleteTravel_NotFound() {
-        when(travelService.deleteTravel(99L))
+        when(travelService.deleteTravel(99L, "admin"))
                 .thenReturn(Mono.error(new IllegalArgumentException("Travel not found with id: 99")));
 
         webTestClient.delete()
                 .uri("/travels/99")
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void getTravelById_Forbidden() {
+        when(travelService.getTravelById(200L, "admin"))
+                .thenReturn(Mono.error(new SecurityException("You do not have permission to view this travel")));
+
+        webTestClient.get()
+                .uri("/travels/200")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void getTravelsByUser_Forbidden() {
+        when(travelService.getTravelsByUser(2L, "admin"))
+                .thenReturn(Flux.error(new SecurityException("You do not have permission to view these travels")));
+
+        webTestClient.get()
+                .uri("/travels/user/2")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void updateTravel_Forbidden() {
+        TravelUpdateRequest updateRequest = TravelUpdateRequest.builder()
+                .title("Forbidden Update")
+                .build();
+
+        when(travelService.updateTravel(eq(200L), any(TravelUpdateRequest.class), eq("admin")))
+                .thenReturn(Mono.error(new SecurityException("You do not have permission to update this travel")));
+
+        webTestClient.put()
+                .uri("/travels/200")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updateRequest)
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void deleteTravel_Forbidden() {
+        when(travelService.deleteTravel(200L, "admin"))
+                .thenReturn(Mono.error(new SecurityException("You do not have permission to delete this travel")));
+
+        webTestClient.delete()
+                .uri("/travels/200")
+                .exchange()
+                .expectStatus().isForbidden();
     }
 }

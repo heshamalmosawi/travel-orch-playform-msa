@@ -3,8 +3,10 @@ package com.sayedhesham.travelorch.travel_service.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.sayedhesham.travelorch.common.entity.rbac.Permission;
+import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import com.sayedhesham.travelorch.common.entity.travel.Destination;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.travel.TravelDestination;
@@ -79,6 +83,38 @@ class TravelServiceTest {
         testUser.setId(1L);
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
+
+        Permission readPermission = new Permission();
+        readPermission.setId(1L);
+        readPermission.setName("travels:read");
+        readPermission.setResource("travels");
+        readPermission.setAction("read");
+
+        Permission writePermission = new Permission();
+        writePermission.setId(2L);
+        writePermission.setName("travels:write");
+        writePermission.setResource("travels");
+        writePermission.setAction("write");
+
+        Permission deletePermission = new Permission();
+        deletePermission.setId(3L);
+        deletePermission.setName("travels:delete");
+        deletePermission.setResource("travels");
+        deletePermission.setAction("delete");
+
+        Set<Permission> permissions = new HashSet<>();
+        permissions.add(readPermission);
+        permissions.add(writePermission);
+        permissions.add(deletePermission);
+
+        Role userRole = new Role();
+        userRole.setId(1L);
+        userRole.setName("user");
+        userRole.setPermissions(permissions);
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(userRole);
+        testUser.setRoles(roles);
 
         testDestination = new Destination();
         testDestination.setId(10L);
@@ -151,8 +187,9 @@ class TravelServiceTest {
         setupTransactionTemplateInvocation();
         testTravel.getDestinations().add(testTravelDestination);
         when(travelRepository.findByIdWithDestinations(100L)).thenReturn(testTravel);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
 
-        StepVerifier.create(travelService.getTravelById(100L))
+        StepVerifier.create(travelService.getTravelById(100L, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals(100L, response.getId());
                     assertEquals("Summer Trip", response.getTitle());
@@ -168,7 +205,7 @@ class TravelServiceTest {
         setupTransactionTemplateInvocation();
         when(travelRepository.findByIdWithDestinations(99L)).thenReturn(null);
 
-        StepVerifier.create(travelService.getTravelById(99L))
+        StepVerifier.create(travelService.getTravelById(99L, "testuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("Travel not found with id: 99")
@@ -179,10 +216,11 @@ class TravelServiceTest {
     @Test
     void getTravelsByUser_Success() {
         setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(travelRepository.findByUser(testUser)).thenReturn(List.of(testTravel));
 
-        StepVerifier.create(travelService.getTravelsByUser(1L))
+        StepVerifier.create(travelService.getTravelsByUser(1L, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals("Summer Trip", response.getTitle());
                     assertEquals(1L, response.getUserId());
@@ -194,9 +232,10 @@ class TravelServiceTest {
     @Test
     void getTravelsByUser_UserNotFound() {
         setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        StepVerifier.create(travelService.getTravelsByUser(99L))
+        StepVerifier.create(travelService.getTravelsByUser(99L, "testuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("User not found with id: 99")
@@ -220,6 +259,7 @@ class TravelServiceTest {
     @Test
     void createTravel_WithoutDestinations_Success() {
         setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
             Travel t = invocation.getArgument(0);
@@ -240,7 +280,7 @@ class TravelServiceTest {
                 .userId(1L)
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request))
+        StepVerifier.create(travelService.createTravel(request, "testuser"))
                 .expectNextMatches(response -> {
                     assertNotNull(response.getId());
                     assertEquals("Winter Trip", response.getTitle());
@@ -255,6 +295,7 @@ class TravelServiceTest {
     @Test
     void createTravel_WithDestinations_Success() {
         setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(destinationRepository.findById(10L)).thenReturn(Optional.of(testDestination));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
@@ -307,7 +348,7 @@ class TravelServiceTest {
                 .destinations(List.of(destRequest))
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request))
+        StepVerifier.create(travelService.createTravel(request, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals("Summer Trip", response.getTitle());
                     assertEquals(1, response.getDestinations().size());
@@ -322,6 +363,7 @@ class TravelServiceTest {
     @Test
     void createTravel_UserNotFound() {
         setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         TravelCreateRequest request = TravelCreateRequest.builder()
@@ -332,7 +374,7 @@ class TravelServiceTest {
                 .userId(99L)
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request))
+        StepVerifier.create(travelService.createTravel(request, "testuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("User not found with id: 99")
@@ -345,6 +387,7 @@ class TravelServiceTest {
     @Test
     void createTravel_DestinationNotFound() {
         setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(destinationRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -362,7 +405,7 @@ class TravelServiceTest {
                 .destinations(List.of(destRequest))
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request))
+        StepVerifier.create(travelService.createTravel(request, "testuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("Destination not found with id: 99")
@@ -376,6 +419,7 @@ class TravelServiceTest {
     void updateTravel_UpdateTitle_Success() {
         setupTransactionTemplateInvocation();
         when(travelRepository.findById(100L)).thenReturn(Optional.of(testTravel));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(travelRepository.findByIdWithDestinations(100L)).thenReturn(testTravel);
 
@@ -383,7 +427,7 @@ class TravelServiceTest {
                 .title("Updated Trip Title")
                 .build();
 
-        StepVerifier.create(travelService.updateTravel(100L, request))
+        StepVerifier.create(travelService.updateTravel(100L, request, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals("Updated Trip Title", response.getTitle());
                     return true;
@@ -397,6 +441,7 @@ class TravelServiceTest {
     void updateTravel_UpdateStatus_Success() {
         setupTransactionTemplateInvocation();
         when(travelRepository.findById(100L)).thenReturn(Optional.of(testTravel));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(travelRepository.findByIdWithDestinations(100L)).thenReturn(testTravel);
 
@@ -404,7 +449,7 @@ class TravelServiceTest {
                 .status(TravelStatus.confirmed)
                 .build();
 
-        StepVerifier.create(travelService.updateTravel(100L, request))
+        StepVerifier.create(travelService.updateTravel(100L, request, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals(TravelStatus.confirmed, response.getStatus());
                     return true;
@@ -421,7 +466,7 @@ class TravelServiceTest {
                 .title("New Title")
                 .build();
 
-        StepVerifier.create(travelService.updateTravel(99L, request))
+        StepVerifier.create(travelService.updateTravel(99L, request, "testuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("Travel not found with id: 99")
@@ -433,8 +478,9 @@ class TravelServiceTest {
     void deleteTravel_Success() {
         setupTransactionTemplateInvocation();
         when(travelRepository.findById(100L)).thenReturn(Optional.of(testTravel));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
 
-        StepVerifier.create(travelService.deleteTravel(100L))
+        StepVerifier.create(travelService.deleteTravel(100L, "testuser"))
                 .verifyComplete();
 
         verify(travelActivityRepository).deleteByTravel(testTravel);
@@ -449,7 +495,7 @@ class TravelServiceTest {
         setupTransactionTemplateInvocation();
         when(travelRepository.findById(99L)).thenReturn(Optional.empty());
 
-        StepVerifier.create(travelService.deleteTravel(99L))
+        StepVerifier.create(travelService.deleteTravel(99L, "testuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("Travel not found with id: 99")
