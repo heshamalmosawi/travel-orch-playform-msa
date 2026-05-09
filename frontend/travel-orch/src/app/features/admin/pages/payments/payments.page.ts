@@ -1,8 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { AuthService } from '../../../auth/auth.service';
 import { PaymentService } from '../../payment/payment.service';
 import { PaymentTransactionResponse } from '../../payment/payment.model';
 
@@ -15,8 +13,6 @@ import { PaymentTransactionResponse } from '../../payment/payment.model';
 })
 export class PaymentsPage {
   private readonly paymentService = inject(PaymentService);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
 
   readonly transactions = signal<PaymentTransactionResponse[]>([]);
@@ -59,10 +55,6 @@ export class PaymentsPage {
   readonly statusOptions = ['pending', 'processing', 'completed', 'failed'];
 
   constructor() {
-    if (!this.authService.isAuthenticated() || !this.authService.isAdmin()) {
-      this.router.navigate(['/auth']);
-      return;
-    }
     this.loadTransactions();
   }
 
