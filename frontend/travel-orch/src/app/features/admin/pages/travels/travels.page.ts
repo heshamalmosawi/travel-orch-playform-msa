@@ -6,9 +6,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { AuthService } from '../../../auth/auth.service';
 import { TravelService } from '../../travel/travel.service';
 import { DestinationService } from '../../travel/destination.service';
 import {
@@ -29,8 +27,6 @@ import { DestinationResponse } from '../../travel/destination.model';
 export class TravelsPage {
   private readonly travelService = inject(TravelService);
   private readonly destinationService = inject(DestinationService);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
@@ -90,10 +86,6 @@ export class TravelsPage {
   readonly statusOptions = ['draft', 'planned', 'confirmed', 'in_progress', 'completed', 'cancelled'];
 
   constructor() {
-    if (!this.authService.isAuthenticated() || !this.authService.isAdmin()) {
-      this.router.navigate(['/auth']);
-      return;
-    }
     this.loadTravels();
   }
 

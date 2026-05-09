@@ -6,9 +6,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { AuthService } from '../../../auth/auth.service';
 import { AdminService } from '../../admin.service';
 import { UserResponse, UserUpdateRequest } from '../../admin.model';
 
@@ -21,8 +19,6 @@ import { UserResponse, UserUpdateRequest } from '../../admin.model';
 })
 export class UsersPage {
   private readonly adminService = inject(AdminService);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
@@ -69,10 +65,6 @@ export class UsersPage {
   });
 
   constructor() {
-    if (!this.authService.isAuthenticated() || !this.authService.isAdmin()) {
-      this.router.navigate(['/auth']);
-      return;
-    }
     this.loadUsers();
   }
 
