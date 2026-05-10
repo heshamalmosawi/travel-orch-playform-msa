@@ -2,15 +2,18 @@
 
 ## Quick Start
 
+> **Note:** Grafana, Loki, and Promtail are configured under the `logging` profile in `docker-compose.app.yml`.
+> You must include `--profile logging` to start them. Without it, only the application services will start.
+
 ```bash
-# Start logging stack
-./start-logging.sh
+# Start app services + logging stack (Grafana, Loki, Promtail)
+docker compose -f docker-compose.app.yml --profile logging up -d
 
-# Start microservices
-docker compose up -d
+# Start only app services (no logging)
+docker compose -f docker-compose.app.yml up -d
 
-# Stop logging stack
-./stop-logging.sh
+# Stop everything
+docker compose -f docker-compose.app.yml --profile logging down
 ```
 
 ## Access URLs
