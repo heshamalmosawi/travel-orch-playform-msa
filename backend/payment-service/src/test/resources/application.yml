@@ -8,9 +8,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
 
 stripe:
   secret-key: sk_test_000000000000000000000000000000000000000000000000
