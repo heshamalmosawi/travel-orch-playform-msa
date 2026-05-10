@@ -34,19 +34,19 @@
           5. Microservices   - Deploy all services (includes frontend)
 
   roles:
-    - role: docker
+    - role: ../../roles/docker
       tags: ['docker', 'infrastructure']
 
-    - role: ssl
+    - role: ../../roles/ssl
       tags: ['ssl', 'infrastructure']
 
-    - role: vault
+    - role: ../../roles/vault
       tags: ['vault', 'infrastructure']
 
-    - role: databases
+    - role: ../../roles/databases
       tags: ['databases', 'infrastructure']
 
-    - role: microservices
+    - role: ../../roles/microservices
       tags: ['microservices', 'services']
 
   post_tasks:
