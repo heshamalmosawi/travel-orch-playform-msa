@@ -10,25 +10,50 @@ services:
       - microservices-network
 
   payment-service:
-    build: ./backend/payment-service
+    build:
+      context: ./backend
+      dockerfile: payment-service/Dockerfile
     container_name: payment-service
     networks:
       - microservices-network
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - db.host=postgres_container
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
 
   travel-service:
-    build: ./backend/travel-service
+    build:
+      context: ./backend
+      dockerfile: travel-service/Dockerfile
     container_name: travel-service
     networks:
       - microservices-network
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - db.host=postgres_container
+      - neo4j.host=neo4j-local
 
   user-service:
-    build: ./backend/user-service
+    build:
+      context: ./backend
+      dockerfile: user-service/Dockerfile
     container_name: user-service
     networks:
       - microservices-network
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - db.host=postgres_container
 
   apigateway-service:
-    build: ./backend/apigateway-service
+    build:
+      context: ./backend
+      dockerfile: apigateway-service/Dockerfile
     container_name: apigateway-service
     ports:
       - "8443:8443"
@@ -42,6 +67,9 @@ services:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - USER_SERVICE_URL=http://user-service:8082
+      - PAYMENT_SERVICE_URL=http://payment-service:8084
+      - TRAVEL_SERVICE_URL=http://travel-service:8083
 
 networks:
   microservices-network:
