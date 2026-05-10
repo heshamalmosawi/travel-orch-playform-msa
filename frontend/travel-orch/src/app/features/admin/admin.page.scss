@@ -1,0 +1,129 @@
+$dark: #141413;
+$dark-card: #1e1e1c;
+$dark-elevated: #2a2a27;
+$light: #faf9f5;
+$mid-gray: #b0aea5;
+$dark-border: #333330;
+$accent-orange: #d97757;
+$accent-blue: #6a9bcc;
+$accent-green: #788c5d;
+$font-heading: 'Poppins', Arial, sans-serif;
+$font-body: 'Lora', Georgia, serif;
+
+.admin-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: $dark;
+}
+
+.admin-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: $dark-card;
+  border-right: 1px solid $dark-border;
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+}
+
+.sidebar-header {
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid $dark-border;
+}
+
+.sidebar-title {
+  font-family: $font-heading;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $mid-gray;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.sidebar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.25rem;
+  font-family: $font-heading;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: $mid-gray;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba($light, 0.04);
+    color: $light;
+  }
+
+  &.active {
+    background: rgba($accent-orange, 0.1);
+    color: $accent-orange;
+    border-right: 3px solid $accent-orange;
+  }
+}
+
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.sidebar-label {
+  line-height: 1;
+}
+
+.admin-main {
+  flex: 1;
+  overflow-y: auto;
+  background: $dark;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .sidebar-header {
+    padding: 1rem 0.5rem;
+    text-align: center;
+  }
+
+  .sidebar-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+
+    &.active {
+      border-right: none;
+      border-left: 3px solid $accent-orange;
+    }
+  }
+
+  .sidebar-label {
+    display: none;
+  }
+}

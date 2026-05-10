@@ -56,7 +56,7 @@ public class Travel extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    private TravelStatus status = TravelStatus.DRAFT;
+    private TravelStatus status = TravelStatus.draft;
 
     @OneToMany(mappedBy = "travel", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("visitOrder ASC")

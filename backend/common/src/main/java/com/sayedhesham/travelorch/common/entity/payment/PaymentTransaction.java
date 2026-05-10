@@ -43,7 +43,7 @@ public class PaymentTransaction extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    private PaymentStatus status = PaymentStatus.PENDING;
+    private PaymentStatus status = PaymentStatus.pending;
 
     @Column(name = "provider_transaction_id")
     private String providerTransactionId;

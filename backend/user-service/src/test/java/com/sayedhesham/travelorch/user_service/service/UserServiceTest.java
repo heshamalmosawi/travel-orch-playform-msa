@@ -46,7 +46,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userRole = Role.builder()
-                .name("USER")
+                .name("user")
                 .description("Regular user")
                 .build();
 
@@ -83,7 +83,7 @@ class UserServiceTest {
                 .expectNextMatches(response -> {
                     assertEquals("testuser", response.getUsername());
                     assertEquals("test@example.com", response.getEmail());
-                    assertTrue(response.getRoles().contains("USER"));
+                    assertTrue(response.getRoles().contains("user"));
                     return true;
                 })
                 .verifyComplete();

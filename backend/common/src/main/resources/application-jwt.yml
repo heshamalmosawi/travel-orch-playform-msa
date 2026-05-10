@@ -4,5 +4,5 @@
 # For local development without Vault, set JWT_SECRET_KEY environment variable.
 jwt:
   secret-key: ${JWT_SECRET_KEY:}
-  access-token-expiration-ms: 1800000    # 30 minutes (1800000 ms)
+  access-token-expiration-ms: 86400000   # 1 day (86400000 ms)
   refresh-token-expiration-ms: 604800000 # 7 days (604800000 ms)
