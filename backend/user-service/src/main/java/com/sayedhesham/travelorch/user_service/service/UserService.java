@@ -25,7 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
 
-    @PreAuthorize("hasPermission('user', 'list')")
+    @PreAuthorize("hasPermission('users', 'read')")
     public Flux<UserResponse> getAllUsers() {
         log.info("getAllUsers - Fetching all users");
         return Mono.fromCallable(() -> transactionTemplate.execute(status
@@ -81,7 +81,7 @@ public class UserService {
                     .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + currentUsername));
 
             boolean isOwner = targetUser.getUsername().equals(currentUsername);
-            boolean canUpdateAny = hasPermission(currentUser, "user", "update");
+            boolean canUpdateAny = hasPermission(currentUser, "users", "write");
             log.debug("updateUser - isOwner: {}, canUpdateAny: {}", isOwner, canUpdateAny);
 
             if (!isOwner && !canUpdateAny) {
@@ -125,7 +125,7 @@ public class UserService {
         })).subscribeOn(Schedulers.boundedElastic());
     }
 
-    @PreAuthorize("hasPermission('user', 'delete')")
+    @PreAuthorize("hasPermission('users', 'delete')")
     public Mono<Void> deleteUser(Long id) {
         log.info("deleteUser - Deleting user with id: {}", id);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {

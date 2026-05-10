@@ -88,7 +88,6 @@ ansible/
 
 | Service | URL |
 |---------|-----|
-| Eureka Server | http://localhost:8761 |
 | API Gateway | https://localhost:8443 |
 | Frontend | http://localhost:4200 |
 | PostgreSQL | localhost:5432 |

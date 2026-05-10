@@ -26,7 +26,6 @@ Deploys the Travel Management System microservices using Docker Compose v2.
 | `microservices_health_check_enabled` | `true` | Enable health checks |
 | `microservices_health_check_delay` | `10` | Delay before health checks (seconds) |
 | `microservices_health_check_timeout` | `120` | Health check timeout (seconds) |
-| `microservices_eureka_port` | `8761` | Eureka service port |
 | `microservices_gateway_port` | `8443` | API Gateway port |
 | `microservices_frontend_port` | `4200` | Frontend service port |
 | `microservices_network` | `microservices-network` | Docker network name |
@@ -37,7 +36,6 @@ Deploys the Travel Management System microservices using Docker Compose v2.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `microservices_replicas.frontend` | `1` | Number of frontend replicas |
-| `microservices_replicas.eureka` | `1` | Number of eureka replicas |
 | `microservices_replicas.gateway` | `1` | Number of gateway replicas |
 | `microservices_replicas.user` | `1` | Number of user-service replicas |
 | `microservices_replicas.travel` | `1` | Number of travel-service replicas |
@@ -89,7 +87,6 @@ Deploys the Travel Management System microservices using Docker Compose v2.
     - role: microservices
       vars:
         microservices_services:
-          - eureka-service
           - apigateway-service
 ```
 
@@ -116,7 +113,6 @@ Deploys the Travel Management System microservices using Docker Compose v2.
       vars:
         microservices_replicas:
           frontend: 1
-          eureka: 1
           gateway: 1
           user: 3
           travel: 3
@@ -134,7 +130,7 @@ ansible-playbook playbooks/test_microservices.yml -e "microservices_build=always
 
 # Deploy specific services
 ansible-playbook playbooks/test_microservices.yml \
-  -e "microservices_services=['eureka-service','apigateway-service']"
+  -e "microservices_services=['apigateway-service']"
 
 # Stop all services
 ansible-playbook playbooks/test_microservices.yml -e "microservices_state=absent"
@@ -146,7 +142,7 @@ ansible-playbook playbooks/test_microservices.yml \
 
 # Deploy with custom replica configuration
 ansible-playbook playbooks/test_microservices.yml \
-  -e "microservices_replicas='{\"frontend\":1,\"eureka\":1,\"gateway\":1,\"user\":3,\"travel\":3,\"payment\":3}'"
+  -e "microservices_replicas='{\"frontend\":1,\"gateway\":1,\"user\":3,\"travel\":3,\"payment\":3}'"
 ```
 
 ## Tasks
@@ -155,7 +151,7 @@ This role performs the following tasks:
 
 1. **Pre-flight Checks** - Verifies docker-compose.yml and .env files exist
 2. **Deploy Services** - Uses `community.docker.docker_compose_v2` to deploy
-3. **Health Checks** - Waits for Eureka, Gateway, and Frontend to be ready
+3. **Health Checks** - Waits for Gateway and Frontend to be ready
 4. **Container Status** - Displays running container status
 5. **Summary** - Shows deployment summary with service URLs
 
@@ -164,7 +160,6 @@ This role performs the following tasks:
 | Service | Container | Port | Description |
 |---------|-----------|------|-------------|
 | Frontend | frontend-service | 4200 | Angular web application |
-| Eureka | eureka-service | 8761 | Service discovery |
 | API Gateway | apigateway-service | 8443 | API routing and SSL |
 | User Service | user-service | 8082 | User management |
 | Travel Service | travel-service | 8083 | Travel booking |
@@ -209,7 +204,6 @@ This role performs the following tasks:
 After deployment, services are available at:
 
 - **Frontend**: http://localhost:4200
-- **Eureka Dashboard**: http://localhost:8761
 - **API Gateway**: https://localhost:8443
 
 ## License

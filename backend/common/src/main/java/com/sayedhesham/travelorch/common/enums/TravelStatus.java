@@ -1,10 +1,10 @@
 package com.sayedhesham.travelorch.common.enums;
 
 public enum TravelStatus {
-    DRAFT,
-    PLANNED,
-    CONFIRMED,
-    IN_PROGRESS,
-    COMPLETED,
-    CANCELLED
+    draft,
+    planned,
+    confirmed,
+    in_progress,
+    completed,
+    cancelled
 }

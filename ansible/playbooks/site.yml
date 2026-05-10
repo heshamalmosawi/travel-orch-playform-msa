@@ -57,8 +57,10 @@
           Deployment Complete!
           ============================================
           Services:
-          - Eureka Server:   http://localhost:8761
           - API Gateway:     https://localhost:8443
+          - User Service:    http://localhost:8082
+          - Travel Service:  http://localhost:8083
+          - Payment Service: http://localhost:8084
           - Frontend:        http://localhost:4200
           - PostgreSQL:      localhost:5432
           - Neo4j HTTP:      http://localhost:7474

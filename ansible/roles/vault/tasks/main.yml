@@ -146,6 +146,21 @@
     status_code: [200, 204]
   when: vault_token is defined
 
+- name: Store Stripe secret key in Vault
+  ansible.builtin.uri:
+    url: "{{ vault_address }}/v1/{{ vault_kv_path }}/data/{{ vault_kv_mount }}/stripe"
+    method: POST
+    body_format: json
+    body:
+      data:
+        stripe.secret-key: "{{ vault_secrets.stripe_api_key }}"
+    headers:
+      X-Vault-Token: "{{ vault_token | default('') }}"
+    status_code: [200, 204]
+  when:
+    - vault_token is defined
+    - vault_secrets.stripe_api_key | length > 0
+
 - name: Display secret storage confirmation
   ansible.builtin.debug:
     msg: "Secrets stored in Vault at path: {{ vault_kv_mount }}"

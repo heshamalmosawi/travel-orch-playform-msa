@@ -1,0 +1,52 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #141413;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-brand {
+  margin: 0;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #faf9f5;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.2s;
+
+  &.btn-primary {
+    background: #d97757;
+    color: #faf9f5;
+
+    &:hover {
+      background: #c4623f;
+    }
+  }
+
+  &.btn-secondary {
+    background: #6a9bcc;
+    color: #faf9f5;
+
+    &:hover {
+      background: #5889b8;
+    }
+  }
+}

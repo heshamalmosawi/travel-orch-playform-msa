@@ -25,7 +25,6 @@ docker compose up --build
 # Access the services
 # Frontend: https://localhost:4200
 # API Gateway: https://localhost:8443
-# Eureka Dashboard: http://localhost:8761
 ```
 
 ### Docker Services
@@ -33,11 +32,10 @@ docker compose up --build
 The following services will be started:
 
 - **frontend-service** (port 4200): Angular frontend application
-- **eureka-service** (port 8761): Service discovery server
 - **apigateway-service** (port 8443): API Gateway for routing requests
-- **user-service**: User management microservice
-- **travel-service**: Travel booking microservice
-- **payment-service**: Payment processing microservice
+- **user-service** (port 8082): User management microservice
+- **travel-service** (port 8083): Travel booking microservice
+- **payment-service** (port 8084): Payment processing microservice
 
 ### Stop Services
 
@@ -55,19 +53,6 @@ docker compose down -v
 
 Each backend service can be run independently using Maven:
 
-#### Start Eureka Service (required first)
-
-```bash
-cd backend/eureka-service
-./mvnw spring-boot:run
-```
-
-Eureka will be available at http://localhost:8761
-
-#### Start Other Microservices
-
-In separate terminals, start each service:
-
 ```bash
 # API Gateway
 cd backend/apigateway-service
@@ -81,12 +66,23 @@ cd backend/user-service
 cd backend/travel-service
 ./mvnw spring-boot:run
 
-# Payment Service
+# Payment Service (requires Stripe secret key — see below)
 cd backend/payment-service
-./mvnw spring-boot:run
+STRIPE_SECRET_KEY=sk_test_your_key_here ./mvnw spring-boot:run
 ```
 
-All backend services register with Eureka and communicate through the API Gateway at https://localhost:8443
+#### Payment Service — Stripe Configuration
+
+The payment-service creates a Stripe client at startup and **will fail to start** without a valid Stripe secret key. Provide the key via one of:
+
+| Method | How |
+|---|---|
+| **Environment variable** (recommended for local dev) | `export STRIPE_SECRET_KEY=sk_test_…` before running the service |
+| **HashiCorp Vault** | Set `VAULT_ENABLED=true`, `VAULT_URI`, and `VAULT_TOKEN`; store the key at `secret/data/travel-system/stripe` with key `stripe.secret-key` |
+
+The key must start with `sk_test_` (test mode) or `sk_live_` (live mode). Obtain a key from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys).
+
+All backend services communicate through the API Gateway at https://localhost:8443
 
 ### Frontend Application
 
@@ -113,7 +109,6 @@ ansible-playbook ansible/playbooks/site.yml
 travel-orch-playform-msa/
 ├── ansible/              # Infrastructure as Code (see ANSIBLE.md)
 ├── backend/
-│   ├── eureka-service/
 │   ├── apigateway-service/
 │   ├── user-service/
 │   ├── travel-service/
