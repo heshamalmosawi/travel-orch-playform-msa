@@ -20,11 +20,15 @@ cp .env.example .env
 # Edit .env to customize rate limiting or other settings
 
 # Build and start all services
-docker compose up --build
+docker compose -f docker-compose.app.yml up --build -d
+
+# Include Grafana/Loki/Promtail logging stack
+docker compose -f docker-compose.app.yml --profile logging up --build -d
 
 # Access the services
 # Frontend: https://localhost:4200
 # API Gateway: https://localhost:8443
+# Grafana: http://localhost:3000 (admin/changeme)
 ```
 
 ### Docker Services
@@ -41,10 +45,10 @@ The following services will be started:
 
 ```bash
 # Stop all services
-docker compose down
+docker compose -f docker-compose.app.yml down
 
 # Stop and remove volumes
-docker compose down -v
+docker compose -f docker-compose.app.yml down -v
 ```
 
 ## Local Development

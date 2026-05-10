@@ -50,8 +50,7 @@
     headers:
       X-Vault-Token: "{{ vault.token | default('') }}"
     status_code: [200, 204]
-  register: vault_postgres_password
-  when: vault_health.status == 200
+  when: vault_health.status is defined and vault_health.status == 200
   failed_when: false
 
 - name: Retrieve Neo4j password from Vault
@@ -63,40 +62,40 @@
       X-Vault-Token: "{{ vault.token | default('') }}"
     status_code: [200, 204]
   register: vault_neo4j_password
-  when: vault_health.status == 200
+  when: vault_health.status is defined and vault_health.status == 200
   failed_when: false
 
 - name: Set PostgreSQL password from Vault
   ansible.builtin.set_fact:
     postgres_password: "{{ vault_postgres_password.json.data.data.password | default(postgres_password) }}"
-  when: vault_health.status == 200
+  when: vault_health.status is defined and vault_health.status == 200
 
 - name: Set Neo4j password from Vault
   ansible.builtin.set_fact:
     neo4j_password: "{{ vault_neo4j_password.json.data.data.password | default(neo4j_auth | regex_replace('neo4j/', '')) }}"
-  when: vault_health.status == 200
+  when: vault_health.status is defined and vault_health.status == 200
 
 - name: Use default PostgreSQL password if Vault unavailable
   ansible.builtin.set_fact:
     postgres_password: "{{ postgres_password | default('mysecretpassword') }}"
   when:
-    - vault_health.status != 200
+    - vault_health.status is not defined or vault_health.status != 200
     - postgres_password is defined
 
 - name: Use default Neo4j password if Vault unavailable
   ansible.builtin.set_fact:
     neo4j_password: "{{ neo4j_auth | regex_replace('neo4j/', '') | default('password123') }}"
   when:
-    - vault_health.status != 200
+    - vault_health.status is not defined or vault_health.status != 200
     - neo4j_auth is defined
 
 - name: Display PostgreSQL password source
   ansible.builtin.debug:
-    msg: "PostgreSQL password from: {{ 'Vault' if vault_health.status == 200 else 'default' }}"
+    msg: "PostgreSQL password from: {{ 'Vault' if (vault_health.status is defined and vault_health.status == 200) else 'default' }}"
 
 - name: Display Neo4j password source
   ansible.builtin.debug:
-    msg: "Neo4j password from: {{ 'Vault' if vault_health.status == 200 else 'default' }}"
+    msg: "Neo4j password from: {{ 'Vault' if (vault_health.status is defined and vault_health.status == 200) else 'default' }}"
 
 - name: Deploy databases using Docker Compose
   community.docker.docker_compose_v2:
@@ -139,7 +138,8 @@
 
 - name: Display PostgreSQL container status
   ansible.builtin.debug:
-    msg: "PostgreSQL container status: {{ postgres_container_status.container[0].State.Status }}"
+    msg: "PostgreSQL container status: {{ postgres_container_status.container[0].State.Status | default('not found') }}"
+  when: postgres_container_status.container is defined and postgres_container_status.container | length > 0
 
 - name: Verify Neo4j container is running
   ansible.builtin.docker_container_info:
@@ -148,7 +148,8 @@
 
 - name: Display Neo4j container status
   ansible.builtin.debug:
-    msg: "Neo4j container status: {{ neo4j_container_status.container[0].State.Status }}"
+    msg: "Neo4j container status: {{ neo4j_container_status.container[0].State.Status | default('not found') }}"
+  when: neo4j_container_status.container is defined and neo4j_container_status.container | length > 0
 
 - name: Display deployed databases summary
   ansible.builtin.debug:

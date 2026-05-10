@@ -12,7 +12,8 @@
 
 - name: Display Vault health status
   ansible.builtin.debug:
-    msg: "Vault health status: {{ vault_health.status }}"
+    msg: "Vault health status: {{ vault_health.status | default('unreachable') }}"
+  when: vault_health.status is defined
 
 - name: Check if Vault is initialized
   ansible.builtin.stat:
@@ -31,7 +32,7 @@
 - name: Fail if Vault is not running
   ansible.builtin.fail:
     msg: "Vault is not running. Please start Vault service first."
-  when: vault_health.status not in [200, 429]
+  when: vault_health.status is defined and vault_health.status not in [200, 429]
 
 - name: Read Vault unseal keys (if initialized)
   ansible.builtin.slurp:
