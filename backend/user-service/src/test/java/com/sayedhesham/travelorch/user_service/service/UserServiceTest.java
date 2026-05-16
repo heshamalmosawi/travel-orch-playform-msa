@@ -21,7 +21,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import com.sayedhesham.travelorch.common.entity.user.User;
+import com.sayedhesham.travelorch.common.repository.rbac.RoleRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
+import com.sayedhesham.travelorch.user_service.dto.RoleUpdateRequest;
 import com.sayedhesham.travelorch.user_service.dto.UserResponse;
 import com.sayedhesham.travelorch.user_service.dto.UserUpdateRequest;
 
@@ -35,23 +37,52 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
     private TransactionTemplate transactionTemplate;
 
     @InjectMocks
     private UserService userService;
 
     private User testUser;
+    private User adminUser;
     private Role userRole;
+    private Role adminRole;
+    private Role travelManagerRole;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         userRole = Role.builder()
                 .name("user")
                 .description("Regular user")
                 .build();
 
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
+        adminRole = Role.builder()
+                .name("admin")
+                .description("Administrator")
+                .permissions(Set.of(
+                        com.sayedhesham.travelorch.common.entity.rbac.Permission.builder()
+                                .name("users.write")
+                                .resource("users")
+                                .action("write")
+                                .build(),
+                        com.sayedhesham.travelorch.common.entity.rbac.Permission.builder()
+                                .name("admin.all")
+                                .resource("admin")
+                                .action("all")
+                                .build()
+                ))
+                .build();
+
+        travelManagerRole = Role.builder()
+                .name("travel_manager")
+                .description("Travel manager")
+                .build();
+
+        Set<Role> userRoles = new HashSet<>();
+        userRoles.add(userRole);
 
         testUser = User.builder()
                 .username("testuser")
@@ -60,9 +91,23 @@ class UserServiceTest {
                 .firstName("John")
                 .lastName("Doe")
                 .phone("1234567890")
-                .roles(roles)
+                .roles(userRoles)
                 .build();
         testUser.setId(1L);
+
+        Set<Role> adminRoles = new HashSet<>();
+        adminRoles.add(userRole);
+        adminRoles.add(adminRole);
+
+        adminUser = User.builder()
+                .username("admin")
+                .email("admin@example.com")
+                .passwordHash("encodedPassword")
+                .firstName("Admin")
+                .lastName("User")
+                .roles(adminRoles)
+                .build();
+        adminUser.setId(2L);
     }
 
     private void setupTransactionTemplateInvocation() {
@@ -276,6 +321,63 @@ class UserServiceTest {
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("User not found with id: 99")
+                )
+                .verify();
+    }
+
+    @Test
+    void updateUserRole_Success() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(roleRepository.findByName("travel_manager")).thenReturn(Optional.of(travelManagerRole));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RoleUpdateRequest request = RoleUpdateRequest.builder()
+                .role("travel_manager")
+                .build();
+
+        StepVerifier.create(userService.updateUserRole(1L, request))
+                .expectNextMatches(response -> {
+                    assertTrue(response.getRoles().contains("travel_manager"));
+                    assertEquals(1, response.getRoles().size());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void updateUserRole_UserNotFound() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        RoleUpdateRequest request = RoleUpdateRequest.builder()
+                .role("travel_manager")
+                .build();
+
+        StepVerifier.create(userService.updateUserRole(99L, request))
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("User not found with id: 99")
+                )
+                .verify();
+    }
+
+    @Test
+    void updateUserRole_RoleNotFound() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(roleRepository.findByName("nonexistent")).thenReturn(Optional.empty());
+
+        RoleUpdateRequest request = RoleUpdateRequest.builder()
+                .role("nonexistent")
+                .build();
+
+        StepVerifier.create(userService.updateUserRole(1L, request))
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Role not found: nonexistent")
                 )
                 .verify();
     }

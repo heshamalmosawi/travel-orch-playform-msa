@@ -31,12 +31,24 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
+    return this.hasRole('admin');
+  }
+
+  isTravelManager(): boolean {
+    return this.hasRole('travel_manager');
+  }
+
+  isTraveler(): boolean {
+    return this.isAuthenticated() && !this.isAdmin();
+  }
+
+  hasRole(role: string): boolean {
     const token = this.getToken();
     if (!token) return false;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const roles: string[] = payload['roles'] || [];
-      return roles.map(r => r.toUpperCase()).includes('ADMIN');
+      return roles.map(r => r.toLowerCase()).includes(role.toLowerCase());
     } catch {
       return false;
     }

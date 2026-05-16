@@ -1,30 +1,33 @@
 package com.sayedhesham.travelorch.user_service.controller;
 
-import com.sayedhesham.travelorch.user_service.dto.UserResponse;
-import com.sayedhesham.travelorch.user_service.dto.UserUpdateRequest;
-import com.sayedhesham.travelorch.user_service.service.UserService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
+import com.sayedhesham.travelorch.user_service.dto.RoleUpdateRequest;
+import com.sayedhesham.travelorch.user_service.dto.UserResponse;
+import com.sayedhesham.travelorch.user_service.dto.UserUpdateRequest;
+import com.sayedhesham.travelorch.user_service.service.UserService;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
@@ -190,7 +193,7 @@ class UserControllerTest {
         when(userService.updateUser(eq(1L), any(UserUpdateRequest.class), eq("testuser")))
                 .thenReturn(Mono.just(updatedResponse));
 
-        webTestClient.put()
+        webTestClient.patch()
                 .uri("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updateRequest)
@@ -212,7 +215,7 @@ class UserControllerTest {
         when(userService.updateUser(eq(99L), any(UserUpdateRequest.class), eq("testuser")))
                 .thenReturn(Mono.error(new IllegalArgumentException("User not found with id: 99")));
 
-        webTestClient.put()
+        webTestClient.patch()
                 .uri("/users/99")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updateRequest)
@@ -229,7 +232,7 @@ class UserControllerTest {
         when(userService.updateUser(eq(1L), any(UserUpdateRequest.class), eq("testuser")))
                 .thenReturn(Mono.error(new IllegalArgumentException("Username already exists")));
 
-        webTestClient.put()
+        webTestClient.patch()
                 .uri("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updateRequest)
@@ -256,5 +259,53 @@ class UserControllerTest {
                 .uri("/users/99")
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void updateUser_WithRole_Success() {
+        RoleUpdateRequest updateRequest = RoleUpdateRequest.builder()
+                .role("travel_manager")
+                .build();
+
+        UserResponse updatedResponse = UserResponse.builder()
+                .id(1L)
+                .username("testuser")
+                .email("test@example.com")
+                .firstName("John")
+                .lastName("Doe")
+                .roles(Set.of("travel_manager"))
+                .build();
+
+        when(userService.updateUserRole(eq(1L), any(RoleUpdateRequest.class)))
+                .thenReturn(Mono.just(updatedResponse));
+
+        webTestClient.patch()
+                .uri("/users/1/role")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updateRequest)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(UserResponse.class)
+                .value(response -> {
+                    assertEquals("testuser", response.getUsername());
+                    assertTrue(response.getRoles().contains("travel_manager"));
+                });
+    }
+
+    @Test
+    void updateUser_WithRole_Forbidden() {
+        RoleUpdateRequest updateRequest = RoleUpdateRequest.builder()
+                .role("travel_manager")
+                .build();
+
+        when(userService.updateUserRole(eq(1L), any(RoleUpdateRequest.class)))
+                .thenReturn(Mono.error(new SecurityException("You do not have permission to update roles")));
+
+        webTestClient.patch()
+                .uri("/users/1/role")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updateRequest)
+                .exchange()
+                .expectStatus().isForbidden();
     }
 }
