@@ -18,5 +18,8 @@ export interface UserUpdateRequest {
   lastName?: string;
   phone?: string;
   dateOfBirth?: string;
-  role?: string;
+}
+
+export interface RoleUpdateRequest {
+  role: string;
 }
