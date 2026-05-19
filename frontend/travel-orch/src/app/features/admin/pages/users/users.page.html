@@ -149,6 +149,19 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="edit-role">Role</label>
+            <select id="edit-role" formControlName="role">
+              <option value="" disabled>Select a role</option>
+              @for (role of availableRoles; track role) {
+                <option [value]="role">{{ role | titlecase }}</option>
+              }
+            </select>
+            @if (editForm.get('role')?.invalid && editForm.get('role')?.touched) {
+              <span class="field-error">Role is required</span>
+            }
+          </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-cancel" (click)="closeEditModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">

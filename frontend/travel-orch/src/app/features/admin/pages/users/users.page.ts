@@ -8,7 +8,7 @@ import {
 } from '@angular/forms';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { AdminService } from '../../admin.service';
-import { UserResponse, UserUpdateRequest } from '../../admin.model';
+import { UserResponse, UserUpdateRequest, RoleUpdateRequest } from '../../admin.model';
 
 @Component({
   selector: 'app-users-page',
@@ -31,12 +31,16 @@ export class UsersPage {
   readonly deletingUser = signal<UserResponse | null>(null);
   readonly isSubmitting = signal(false);
 
+  // Available roles: admins can't promote to ADMIN, only to TRAVEL_MANAGER or USER
+  readonly availableRoles = ['user', 'travel_manager'];
+
   readonly editForm: FormGroup = this.fb.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.maxLength(20)]],
     dateOfBirth: [''],
+    role: ['', [Validators.required]],
   });
 
   readonly filteredUsers = computed(() => {
@@ -93,12 +97,14 @@ export class UsersPage {
 
   openEditModal(user: UserResponse): void {
     this.editingUser.set(user);
+    const userRole = user.roles && user.roles.length > 0 ? user.roles[0].toLowerCase() : 'user';
     this.editForm.patchValue({
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       phone: user.phone || '',
       dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+      role: userRole,
     });
   }
 
@@ -125,14 +131,42 @@ export class UsersPage {
       dateOfBirth: this.editForm.value.dateOfBirth || undefined,
     };
 
+    const newRole = this.editForm.value.role?.toLowerCase();
+    const currentRole = user.roles && user.roles.length > 0 ? user.roles[0].toLowerCase() : 'user';
+    const roleChanged = newRole && newRole !== currentRole;
+
+    // First update user details
     this.adminService.updateUser(user.id, data).subscribe({
       next: (updated) => {
-        this.isSubmitting.set(false);
-        this.users.update((users) =>
-          users.map((u) => (u.id === updated.id ? updated : u))
-        );
-        this.closeEditModal();
-        this.toastService.success(`User "${updated.username}" updated successfully`);
+        // If role changed, update role separately
+        if (roleChanged) {
+          const roleUpdateData: RoleUpdateRequest = {
+            role: newRole,
+          };
+          this.adminService.updateUserRole(user.id, roleUpdateData).subscribe({
+            next: (updatedWithRole) => {
+              this.isSubmitting.set(false);
+              this.users.update((users) =>
+                users.map((u) => (u.id === updatedWithRole.id ? updatedWithRole : u))
+              );
+              this.closeEditModal();
+              this.toastService.success(`User "${updatedWithRole.username}" updated successfully`);
+            },
+            error: (err) => {
+              this.isSubmitting.set(false);
+              this.toastService.error(
+                err.error?.message || 'Failed to update user role'
+              );
+            },
+          });
+        } else {
+          this.isSubmitting.set(false);
+          this.users.update((users) =>
+            users.map((u) => (u.id === updated.id ? updated : u))
+          );
+          this.closeEditModal();
+          this.toastService.success(`User "${updated.username}" updated successfully`);
+        }
       },
       error: (err) => {
         this.isSubmitting.set(false);
