@@ -1,9 +1,11 @@
 -- Add role_id column to users table
 ALTER TABLE users ADD COLUMN role_id BIGINT REFERENCES roles(id);
 
--- Migrate existing data: assign the first role from user_roles
-UPDATE users SET role_id = (
-    SELECT role_id FROM user_roles WHERE user_id = users.id LIMIT 1
+-- Migrate existing data: assign the first role from user_roles,
+-- falling back to the default 'user' role for users with no mapping
+UPDATE users SET role_id = COALESCE(
+    (SELECT role_id FROM user_roles WHERE user_id = users.id LIMIT 1),
+    (SELECT id FROM roles WHERE name = 'user')
 );
 
 -- Make role_id NOT NULL after migration
