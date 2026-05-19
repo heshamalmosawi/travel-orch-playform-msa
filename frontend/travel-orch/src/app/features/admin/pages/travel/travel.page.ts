@@ -7,6 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { AutocompleteComponent } from '../../../../shared/components/autocomplete/autocomplete.component';
 import { DestinationService } from '../../travel/destination.service';
 import {
   DestinationResponse,
@@ -17,7 +18,7 @@ import {
 @Component({
   selector: 'app-travel-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, AutocompleteComponent],
   templateUrl: './travel.page.html',
   styleUrl: './travel.page.scss',
 })
@@ -30,6 +31,7 @@ export class TravelPage {
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly searchTerm = signal('');
+  readonly selectedDestinationId = signal<number | null>(null);
 
   readonly showCreateModal = signal(false);
   readonly editingDestination = signal<DestinationResponse | null>(null);
@@ -48,8 +50,14 @@ export class TravelPage {
 
   readonly filteredDestinations = computed(() => {
     const term = this.searchTerm().toLowerCase();
-    if (!term) return this.destinations();
-    return this.destinations().filter(
+    const selId = this.selectedDestinationId();
+
+    let list = this.destinations();
+    if (selId !== null) {
+      list = list.filter((d) => d.id === selId);
+    }
+    if (!term) return list;
+    return list.filter(
       (d) =>
         d.name.toLowerCase().includes(term) ||
         d.country.toLowerCase().includes(term) ||
@@ -86,9 +94,21 @@ export class TravelPage {
     });
   }
 
-  onSearch(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.searchTerm.set(input.value);
+  onSearchTermChange(term: string): void {
+    this.searchTerm.set(term);
+    if (!term) {
+      this.selectedDestinationId.set(null);
+    }
+  }
+
+  onDestinationSelected(dest: DestinationResponse): void {
+    this.selectedDestinationId.set(dest.id);
+    this.searchTerm.set(dest.name);
+  }
+
+  clearFilter(): void {
+    this.searchTerm.set('');
+    this.selectedDestinationId.set(null);
   }
 
   openCreateModal(): void {

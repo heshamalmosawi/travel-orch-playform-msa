@@ -21,6 +21,12 @@ export class DestinationService {
     return this.http.get<DestinationResponse[]>(`${this.apiUrl}/api/travel/destinations/search`, { params: httpParams });
   }
 
+  autocomplete(q: string): Observable<DestinationResponse[]> {
+    return this.http.get<DestinationResponse[]>(`${this.apiUrl}/api/travel/destinations/autocomplete`, {
+      params: new HttpParams().set('q', q),
+    });
+  }
+
   getById(id: number): Observable<DestinationResponse> {
     return this.http.get<DestinationResponse>(`${this.apiUrl}/api/travel/destinations/${id}`);
   }

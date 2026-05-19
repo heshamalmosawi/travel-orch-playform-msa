@@ -1,4 +1,21 @@
 services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  
   frontend-service:
     build:
       context: ./frontend/travel-orch
@@ -180,6 +197,7 @@ volumes:
   grafana-data:
   loki-data:
   promtail-positions:
+  elasticsearch_data:
 
 networks:
   app-network:

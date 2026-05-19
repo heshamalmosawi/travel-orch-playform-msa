@@ -31,13 +31,16 @@
     <div class="destinations-section">
       <div class="toolbar">
         <div class="search-wrapper">
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Search by name, country, city..."
-            (input)="onSearch($event)"
+          <app-autocomplete
+            placeholder="Search destinations by name, city, country..."
+            [class.filter-active]="selectedDestinationId() !== null"
+            (selected)="onDestinationSelected($event)"
+            (queryChange)="onSearchTermChange($event)"
           />
         </div>
+        @if (selectedDestinationId() !== null) {
+          <button class="btn btn-cancel" (click)="clearFilter()">Clear filter</button>
+        }
         <button class="btn btn-secondary" (click)="loadDestinations()">Refresh</button>
       </div>
 
