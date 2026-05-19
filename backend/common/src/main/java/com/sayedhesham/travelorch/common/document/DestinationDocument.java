@@ -1,11 +1,14 @@
-package com.sayedhesham.travelorch.travel_service.dto;
+package com.sayedhesham.travelorch.common.document;
 
-import com.sayedhesham.travelorch.common.document.DestinationDocument;
 import com.sayedhesham.travelorch.common.entity.travel.Destination;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,22 +17,39 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DestinationResponse {
+@Document(indexName = "destinations")
+public class DestinationDocument {
 
+    @Id
     private Long id;
+
+    @Field(type = FieldType.Text)
     private String name;
+
+    @Field(type = FieldType.Text)
     private String description;
+
+    @Field(type = FieldType.Keyword)
     private String country;
+
+    @Field(type = FieldType.Keyword)
     private String city;
+
+    @Field(type = FieldType.Keyword)
     private String region;
+
+    @Field(type = FieldType.Double)
     private BigDecimal latitude;
+
+    @Field(type = FieldType.Double)
     private BigDecimal longitude;
-    private String imageBase64;
+
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 
-    public static DestinationResponse fromEntity(Destination destination) {
-        return DestinationResponse.builder()
+    public static DestinationDocument fromEntity(Destination destination) {
+        return DestinationDocument.builder()
                 .id(destination.getId())
                 .name(destination.getName())
                 .description(destination.getDescription())
@@ -38,24 +58,8 @@ public class DestinationResponse {
                 .region(destination.getRegion())
                 .latitude(destination.getLatitude())
                 .longitude(destination.getLongitude())
-                .imageBase64(destination.getImageBase64())
                 .createdAt(destination.getCreatedAt())
                 .updatedAt(destination.getUpdatedAt())
-                .build();
-    }
-
-    public static DestinationResponse fromDocument(DestinationDocument doc) {
-        return DestinationResponse.builder()
-                .id(doc.getId())
-                .name(doc.getName())
-                .description(doc.getDescription())
-                .country(doc.getCountry())
-                .city(doc.getCity())
-                .region(doc.getRegion())
-                .latitude(doc.getLatitude())
-                .longitude(doc.getLongitude())
-                .createdAt(doc.getCreatedAt())
-                .updatedAt(doc.getUpdatedAt())
                 .build();
     }
 }
