@@ -51,7 +51,7 @@ describe('AuthService', () => {
   });
 
   it('should detect admin role from token', () => {
-    const payload = btoa(JSON.stringify({ roles: ['admin', 'user'] }));
+    const payload = btoa(JSON.stringify({ role: 'admin' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
 
@@ -60,7 +60,7 @@ describe('AuthService', () => {
   });
 
   it('should detect travel_manager role from token', () => {
-    const payload = btoa(JSON.stringify({ roles: ['user', 'travel_manager'] }));
+    const payload = btoa(JSON.stringify({ role: 'travel_manager' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
 
@@ -70,7 +70,7 @@ describe('AuthService', () => {
   });
 
   it('should return true for isTraveler when authenticated but not admin', () => {
-    const payload = btoa(JSON.stringify({ roles: ['user'] }));
+    const payload = btoa(JSON.stringify({ role: 'user' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
 
@@ -78,7 +78,7 @@ describe('AuthService', () => {
   });
 
   it('should return false for isTraveler when admin', () => {
-    const payload = btoa(JSON.stringify({ roles: ['admin'] }));
+    const payload = btoa(JSON.stringify({ role: 'admin' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
 
@@ -93,7 +93,7 @@ describe('AuthService', () => {
     expect(service.isTravelManager()).toBeFalse();
   });
 
-  it('should handle token with no roles claim', () => {
+  it('should handle token with no role claim', () => {
     const payload = btoa(JSON.stringify({ sub: 'testuser' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
@@ -103,7 +103,7 @@ describe('AuthService', () => {
   });
 
   it('should perform case-insensitive role matching', () => {
-    const payload = btoa(JSON.stringify({ roles: ['ADMIN', 'USER'] }));
+    const payload = btoa(JSON.stringify({ role: 'ADMIN' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
 
@@ -113,7 +113,7 @@ describe('AuthService', () => {
   });
 
   it('should remove token on logout', () => {
-    const payload = btoa(JSON.stringify({ roles: ['user'] }));
+    const payload = btoa(JSON.stringify({ role: 'user' }));
     const fakeToken = `header.${payload}.signature`;
     localStorage.setItem('auth_token', fakeToken);
 
@@ -133,7 +133,7 @@ describe('AuthService', () => {
       token: 'fake.jwt.token',
     };
 
-    const payload = btoa(JSON.stringify({ roles: ['user'] }));
+    const payload = btoa(JSON.stringify({ role: 'user' }));
     response.token = `header.${payload}.signature`;
 
     http.post.and.returnValue(of(response));
@@ -150,7 +150,7 @@ describe('AuthService', () => {
       token: 'fake.jwt.token',
     };
 
-    const payload = btoa(JSON.stringify({ roles: ['user'] }));
+    const payload = btoa(JSON.stringify({ role: 'user' }));
     response.token = `header.${payload}.signature`;
 
     http.post.and.returnValue(of(response));

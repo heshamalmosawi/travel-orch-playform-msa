@@ -2,8 +2,6 @@ package com.sayedhesham.travelorch.user_service.security;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,31 +56,22 @@ public class JwtSecurityContextRepository implements ServerSecurityContextReposi
             }
 
             String username = claims.getSubject();
-            Set<String> roles = extractRoles(claims);
+            String role = jwtUtil.extractRole(token);
 
-            List<SimpleGrantedAuthority> authorities = roles.stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                    .collect(Collectors.toList());
+            List<SimpleGrantedAuthority> authorities = List.of();
+            if (role != null) {
+                authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            }
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     username, null, authorities
             );
 
-            log.info("load [{}] - Authenticated user: {} with roles: {}", path, username, roles);
+            log.info("load [{}] - Authenticated user: {} with role: {}", path, username, role);
             return Mono.just(new SecurityContextImpl(authentication));
         } catch (Exception e) {
             log.warn("load [{}] - JWT parsing failed: {}", path, e.getMessage());
             return Mono.empty();
         }
-    }
-
-    private Set<String> extractRoles(Claims claims) {
-        Object rolesClaim = claims.get(JwtConstants.ROLES_CLAIM);
-        if (rolesClaim instanceof List) {
-            return ((List<?>) rolesClaim).stream()
-                    .map(Object::toString)
-                    .collect(Collectors.toSet());
-        }
-        return Set.of();
     }
 }

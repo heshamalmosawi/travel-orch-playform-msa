@@ -2,7 +2,6 @@ package com.sayedhesham.travelorch.user_service.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,7 +57,7 @@ class UserControllerTest {
                 .lastName("Doe")
                 .phone("1234567890")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .roles(Set.of("user"))
+                .role("user")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -187,7 +186,7 @@ class UserControllerTest {
                 .firstName("Jane")
                 .lastName("Smith")
                 .phone("1234567890")
-                .roles(Set.of("user"))
+                .role("user")
                 .build();
 
         when(userService.updateUser(eq(1L), any(UserUpdateRequest.class), eq("testuser")))
@@ -273,7 +272,7 @@ class UserControllerTest {
                 .email("test@example.com")
                 .firstName("John")
                 .lastName("Doe")
-                .roles(Set.of("travel_manager"))
+                .role("travel_manager")
                 .build();
 
         when(userService.updateUserRole(eq(1L), any(RoleUpdateRequest.class)))
@@ -288,7 +287,7 @@ class UserControllerTest {
                 .expectBody(UserResponse.class)
                 .value(response -> {
                     assertEquals("testuser", response.getUsername());
-                    assertTrue(response.getRoles().contains("travel_manager"));
+                    assertEquals("travel_manager", response.getRole());
                 });
     }
 

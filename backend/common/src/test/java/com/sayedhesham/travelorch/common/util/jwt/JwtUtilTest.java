@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
 
 import java.util.Date;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,10 +40,10 @@ class JwtUtilTest {
         @DisplayName("Should generate valid access token with all claims")
         void shouldGenerateValidAccessToken() {
             String username = "testuser";
-            Set<String> roles = Set.of("user", "admin");
+            String role = "user";
             boolean isService = false;
 
-            String token = jwtUtil.generateToken(username, roles, isService);
+            String token = jwtUtil.generateToken(username, role, isService);
 
             assertNotNull(token);
             assertFalse(token.isEmpty());
@@ -65,16 +64,12 @@ class JwtUtilTest {
         }
 
         @Test
-        @DisplayName("Should generate different tokens for same user")
+        @DisplayName("Should generate different tokens for different roles")
         void shouldGenerateDifferentTokens() {
             String username = "testuser";
-            Set<String> roles = Set.of("user");
 
-            String token1 = jwtUtil.generateToken(username, roles, false);
-            
-            // Add a different role to ensure tokens differ
-            Set<String> roles2 = Set.of("user", "admin");
-            String token2 = jwtUtil.generateToken(username, roles2, false);
+            String token1 = jwtUtil.generateToken(username, "user", false);
+            String token2 = jwtUtil.generateToken(username, "admin", false);
 
             assertNotEquals(token1, token2);
         }
@@ -88,8 +83,7 @@ class JwtUtilTest {
 
         @BeforeEach
         void createValidToken() {
-            Set<String> roles = Set.of("user", "admin");
-            validToken = jwtUtil.generateToken("testuser", roles, false);
+            validToken = jwtUtil.generateToken("testuser", "user", false);
         }
 
         @Test
@@ -100,12 +94,10 @@ class JwtUtilTest {
         }
 
         @Test
-        @DisplayName("Should extract roles correctly")
-        void shouldExtractRoles() {
-            Set<String> roles = jwtUtil.extractRoles(validToken);
-            assertEquals(2, roles.size());
-            assertTrue(roles.contains("user"));
-            assertTrue(roles.contains("admin"));
+        @DisplayName("Should extract role correctly")
+        void shouldExtractRole() {
+            String role = jwtUtil.extractRole(validToken);
+            assertEquals("user", role);
         }
 
         @Test
@@ -119,10 +111,10 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should identify service tokens correctly")
         void shouldIdentifyServiceTokens() {
-            String serviceToken = jwtUtil.generateToken("service-user", Set.of("service"), true);
+            String serviceToken = jwtUtil.generateToken("service-user", "service", true);
             assertTrue(jwtUtil.isService(serviceToken));
 
-            String userToken = jwtUtil.generateToken("regular-user", Set.of("user"), false);
+            String userToken = jwtUtil.generateToken("regular-user", "user", false);
             assertFalse(jwtUtil.isService(userToken));
         }
 
@@ -132,7 +124,7 @@ class JwtUtilTest {
             String refreshToken = jwtUtil.generateRefreshToken("testuser");
             assertTrue(jwtUtil.isRefreshToken(refreshToken));
 
-            String accessToken = jwtUtil.generateToken("testuser", Set.of("user"), false);
+            String accessToken = jwtUtil.generateToken("testuser", "user", false);
             assertFalse(jwtUtil.isRefreshToken(accessToken));
         }
     }
@@ -144,8 +136,7 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should validate valid token without username check")
         void shouldValidateValidToken() {
-            Set<String> roles = Set.of("user");
-            String token = jwtUtil.generateToken("testuser", roles, false);
+            String token = jwtUtil.generateToken("testuser", "user", false);
 
             assertTrue(jwtUtil.validateToken(token));
         }
@@ -153,8 +144,7 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should validate valid token with username check")
         void shouldValidateValidTokenWithUsername() {
-            Set<String> roles = Set.of("user");
-            String token = jwtUtil.generateToken("testuser", roles, false);
+            String token = jwtUtil.generateToken("testuser", "user", false);
 
             assertTrue(jwtUtil.validateToken(token, "testuser"));
         }
@@ -162,8 +152,7 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should fail validation for wrong username")
         void shouldFailValidationForWrongUsername() {
-            Set<String> roles = Set.of("user");
-            String token = jwtUtil.generateToken("testuser", roles, false);
+            String token = jwtUtil.generateToken("testuser", "user", false);
 
             assertFalse(jwtUtil.validateToken(token, "wronguser"));
         }
@@ -177,7 +166,7 @@ class JwtUtilTest {
             
             String expiredToken = io.jsonwebtoken.Jwts.builder()
                     .subject("testuser")
-                    .claim("roles", Set.of("user"))
+                    .claim("role", "user")
                     .claim("service", false)
                     .issuedAt(new Date(now.getTime() - 2000)) // Issued 2 seconds ago
                     .expiration(pastExpiration)
@@ -206,8 +195,7 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should fail validation for tampered token")
         void shouldFailValidationForTamperedToken() {
-            Set<String> roles = Set.of("user");
-            String token = jwtUtil.generateToken("testuser", roles, false);
+            String token = jwtUtil.generateToken("testuser", "user", false);
 
             String tamperedToken = token + "tampered";
 
@@ -222,8 +210,7 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should detect valid token as not expired")
         void shouldDetectValidTokenAsNotExpired() {
-            Set<String> roles = Set.of("user");
-            String token = jwtUtil.generateToken("testuser", roles, false);
+            String token = jwtUtil.generateToken("testuser", "user", false);
 
             assertFalse(jwtUtil.isTokenExpired(token));
         }
@@ -231,10 +218,9 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should return correct expiration time for access token")
         void shouldReturnCorrectExpirationForAccessToken() {
-            Set<String> roles = Set.of("user");
             long beforeGeneration = System.currentTimeMillis();
-             
-            String token = jwtUtil.generateToken("testuser", roles, false);
+
+            String token = jwtUtil.generateToken("testuser", "user", false);
             Date expiration = jwtUtil.extractExpiration(token);
             long afterGeneration = System.currentTimeMillis();
 
@@ -267,34 +253,31 @@ class JwtUtilTest {
     class EdgeCasesTests {
 
         @Test
-        @DisplayName("Should handle empty roles set")
-        void shouldHandleEmptyRoles() {
-            Set<String> roles = Set.of();
-            String token = jwtUtil.generateToken("testuser", roles, false);
+        @DisplayName("Should handle single role extraction")
+        void shouldHandleSingleRole() {
+            String token = jwtUtil.generateToken("testuser", "admin", false);
 
-            Set<String> extractedRoles = jwtUtil.extractRoles(token);
-            assertTrue(extractedRoles.isEmpty());
+            String extractedRole = jwtUtil.extractRole(token);
+            assertEquals("admin", extractedRole);
         }
 
         @Test
         @DisplayName("Should handle special characters in username")
         void shouldHandleSpecialCharactersInUsername() {
             String username = "test.user+special@domain.com";
-            Set<String> roles = Set.of("user");
-            String token = jwtUtil.generateToken(username, roles, false);
+            String token = jwtUtil.generateToken(username, "user", false);
 
             assertEquals(username, jwtUtil.extractUsername(token));
             assertTrue(jwtUtil.validateToken(token));
         }
 
         @Test
-        @DisplayName("Should handle long role list")
-        void shouldHandleLongLists() {
-            Set<String> roles = Set.of("user", "admin", "moderator", "editor", "viewer");
-            String token = jwtUtil.generateToken("testuser", roles, false);
+        @DisplayName("Should extract role from token with any role name")
+        void shouldHandleAnyRoleName() {
+            String token = jwtUtil.generateToken("testuser", "travel_manager", false);
 
-            Set<String> extractedRoles = jwtUtil.extractRoles(token);
-            assertEquals(5, extractedRoles.size());
+            String extractedRole = jwtUtil.extractRole(token);
+            assertEquals("travel_manager", extractedRole);
         }
 
         @Test
@@ -303,7 +286,7 @@ class JwtUtilTest {
             String invalidToken = "this.is.not.a.valid.jwt";
 
             assertThrows(MalformedJwtException.class, () -> jwtUtil.extractUsername(invalidToken));
-            assertThrows(MalformedJwtException.class, () -> jwtUtil.extractRoles(invalidToken));
+            assertThrows(MalformedJwtException.class, () -> jwtUtil.extractRole(invalidToken));
         }
     }
 
@@ -326,7 +309,7 @@ class JwtUtilTest {
         @Test
         @DisplayName("Should have correct claim names")
         void shouldHaveCorrectClaimNames() {
-            assertEquals("roles", JwtConstants.ROLES_CLAIM);
+            assertEquals("role", JwtConstants.ROLE_CLAIM);
             assertEquals("service", JwtConstants.SERVICE_CLAIM);
             assertEquals("token_type", JwtConstants.TOKEN_TYPE_CLAIM);
         }

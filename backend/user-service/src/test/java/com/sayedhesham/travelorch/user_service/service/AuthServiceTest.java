@@ -1,15 +1,12 @@
 package com.sayedhesham.travelorch.user_service.service;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -85,7 +82,7 @@ class AuthServiceTest {
                 .firstName("John")
                 .lastName("Doe")
                 .phone("1234567890")
-                .roles(new HashSet<>())
+                .role(userRole)
                 .build();
 
         loginRequest = LoginRequest.builder()
@@ -101,7 +98,7 @@ class AuthServiceTest {
         when(roleRepository.findByName("user")).thenReturn(Optional.of(userRole));
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(jwtUtil.generateToken(anyString(), anySet(), anyBoolean())).thenReturn("jwt-token");
+        when(jwtUtil.generateToken(anyString(), anyString(), anyBoolean())).thenReturn("jwt-token");
 
         Mono<AuthResponse> result = authService.register(registrationRequest);
 
@@ -155,20 +152,18 @@ class AuthServiceTest {
         StepVerifier.create(result)
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalStateException
-                && throwable.getMessage().equals("Default user role not found")
+                && throwable.getMessage().equals("Role not found: user")
                 )
                 .verify();
     }
 
     @Test
     void login_Success_WithUsername() {
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
-        savedUser.setRoles(roles);
+        savedUser.setRole(userRole);
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(savedUser));
         when(passwordEncoder.matches("password123", "encodedPassword")).thenReturn(true);
-        when(jwtUtil.generateToken(anyString(), anySet(), anyBoolean())).thenReturn("jwt-token");
+        when(jwtUtil.generateToken(anyString(), anyString(), anyBoolean())).thenReturn("jwt-token");
 
         Mono<AuthResponse> result = authService.login(loginRequest);
 
@@ -184,9 +179,7 @@ class AuthServiceTest {
 
     @Test
     void login_Success_WithEmail() {
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
-        savedUser.setRoles(roles);
+        savedUser.setRole(userRole);
 
         LoginRequest emailLoginRequest = LoginRequest.builder()
                 .username("test@example.com")
@@ -196,7 +189,7 @@ class AuthServiceTest {
         when(userRepository.findByUsername("test@example.com")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(savedUser));
         when(passwordEncoder.matches("password123", "encodedPassword")).thenReturn(true);
-        when(jwtUtil.generateToken(anyString(), anySet(), anyBoolean())).thenReturn("jwt-token");
+        when(jwtUtil.generateToken(anyString(), anyString(), anyBoolean())).thenReturn("jwt-token");
 
         Mono<AuthResponse> result = authService.login(emailLoginRequest);
 
@@ -236,6 +229,180 @@ class AuthServiceTest {
                 .expectErrorMatches(throwable
                         -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("Invalid credentials")
+                )
+                .verify();
+    }
+
+    @Test
+    void register_WithTravelManagerRole_Success() {
+        Role travelManagerRole = Role.builder()
+                .name("travel_manager")
+                .description("Travel manager")
+                .build();
+
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(roleRepository.findByName("travel_manager")).thenReturn(Optional.of(travelManagerRole));
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(jwtUtil.generateToken(anyString(), anyString(), anyBoolean())).thenReturn("jwt-token");
+
+        RegistrationRequest requestWithRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("travel_manager")
+                .build();
+
+        Mono<AuthResponse> result = authService.register(requestWithRole);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response
+                        -> response.getMessage().equals("User registered successfully")
+                && response.getUsername().equals("testuser")
+                && response.getEmail().equals("test@example.com")
+                && response.getToken().equals("jwt-token")
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void register_WithAdminRole_Failed() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+
+        RegistrationRequest requestWithAdminRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("admin")
+                .build();
+
+        Mono<AuthResponse> result = authService.register(requestWithAdminRole);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Invalid role: admin. Only 'user' and 'travel_manager' are allowed for self-registration.")
+                )
+                .verify();
+    }
+
+    @Test
+    void register_WithEmptyRole_DefaultsToUser() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(roleRepository.findByName("user")).thenReturn(Optional.of(userRole));
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(jwtUtil.generateToken(anyString(), anyString(), anyBoolean())).thenReturn("jwt-token");
+
+        RegistrationRequest requestWithEmptyRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("")
+                .build();
+
+        Mono<AuthResponse> result = authService.register(requestWithEmptyRole);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response
+                        -> response.getMessage().equals("User registered successfully")
+                && response.getUsername().equals("testuser")
+                && response.getEmail().equals("test@example.com")
+                && response.getToken().equals("jwt-token")
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void register_WithNullRole_DefaultsToUser() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(roleRepository.findByName("user")).thenReturn(Optional.of(userRole));
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(jwtUtil.generateToken(anyString(), anyString(), anyBoolean())).thenReturn("jwt-token");
+
+        RegistrationRequest requestWithNullRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role(null)
+                .build();
+
+        Mono<AuthResponse> result = authService.register(requestWithNullRole);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response
+                        -> response.getMessage().equals("User registered successfully")
+                && response.getUsername().equals("testuser")
+                && response.getEmail().equals("test@example.com")
+                && response.getToken().equals("jwt-token")
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void register_WithInvalidRole_Failed() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+
+        RegistrationRequest requestWithInvalidRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("nonexistent")
+                .build();
+
+        Mono<AuthResponse> result = authService.register(requestWithInvalidRole);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalArgumentException
+                && throwable.getMessage().equals("Invalid role: nonexistent. Only 'user' and 'travel_manager' are allowed for self-registration.")
+                )
+                .verify();
+    }
+
+    @Test
+    void register_WithNonexistentRole_Failed() {
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(roleRepository.findByName("travel_manager")).thenReturn(Optional.empty());
+
+        RegistrationRequest requestWithRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("travel_manager")
+                .build();
+
+        Mono<AuthResponse> result = authService.register(requestWithRole);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable
+                        -> throwable instanceof IllegalStateException
+                && throwable.getMessage().equals("Role not found: travel_manager")
                 )
                 .verify();
     }

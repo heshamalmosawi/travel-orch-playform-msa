@@ -1,6 +1,5 @@
 package com.sayedhesham.travelorch.user_service.service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -81,9 +80,6 @@ class UserServiceTest {
                 .description("Travel manager")
                 .build();
 
-        Set<Role> userRoles = new HashSet<>();
-        userRoles.add(userRole);
-
         testUser = User.builder()
                 .username("testuser")
                 .email("test@example.com")
@@ -91,13 +87,9 @@ class UserServiceTest {
                 .firstName("John")
                 .lastName("Doe")
                 .phone("1234567890")
-                .roles(userRoles)
+                .role(userRole)
                 .build();
         testUser.setId(1L);
-
-        Set<Role> adminRoles = new HashSet<>();
-        adminRoles.add(userRole);
-        adminRoles.add(adminRole);
 
         adminUser = User.builder()
                 .username("admin")
@@ -105,7 +97,7 @@ class UserServiceTest {
                 .passwordHash("encodedPassword")
                 .firstName("Admin")
                 .lastName("User")
-                .roles(adminRoles)
+                .role(adminRole)
                 .build();
         adminUser.setId(2L);
     }
@@ -128,7 +120,7 @@ class UserServiceTest {
                 .expectNextMatches(response -> {
                     assertEquals("testuser", response.getUsername());
                     assertEquals("test@example.com", response.getEmail());
-                    assertTrue(response.getRoles().contains("user"));
+                    assertTrue(response.getRole().contains("user"));
                     return true;
                 })
                 .verifyComplete();
@@ -338,8 +330,7 @@ class UserServiceTest {
 
         StepVerifier.create(userService.updateUserRole(1L, request))
                 .expectNextMatches(response -> {
-                    assertTrue(response.getRoles().contains("travel_manager"));
-                    assertEquals(1, response.getRoles().size());
+                    assertEquals("travel_manager", response.getRole());
                     return true;
                 })
                 .verifyComplete();

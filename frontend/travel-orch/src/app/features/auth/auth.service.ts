@@ -47,8 +47,8 @@ export class AuthService {
     if (!token) return false;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      const roles: string[] = payload['roles'] || [];
-      return roles.map(r => r.toLowerCase()).includes(role.toLowerCase());
+      const tokenRole = payload['role'] || '';
+      return tokenRole.toLowerCase() === role.toLowerCase();
     } catch {
       return false;
     }

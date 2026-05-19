@@ -156,6 +156,18 @@
           />
         </div>
 
+        <div class="form-group">
+          <label for="reg-role">Account Type</label>
+          <select
+            id="reg-role"
+            formControlName="role"
+            class="role-select"
+          >
+            <option value="user">Traveler</option>
+            <option value="travel_manager">Travel Manager</option>
+          </select>
+        </div>
+
         <button class="auth-submit" type="submit" [disabled]="isLoading()">
           @if (isLoading()) {
             Creating account...
