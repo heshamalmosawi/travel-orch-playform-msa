@@ -17,10 +17,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -60,7 +56,7 @@ public class AuthService {
                 throw new IllegalArgumentException("Invalid credentials");
             }
 
-            return generateAuthResponse(user, user.getRoles(), "Login successful");
+            return generateAuthResponse(user, user.getRole(), "Login successful");
         })).subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -71,9 +67,9 @@ public class AuthService {
     }
 
     private AuthResponse createUserAndGenerateToken(RegistrationRequest request) {
-        logger.debug("Fetching default roles");
-        Set<Role> roles = getDefaultRoles();
-        logger.debug("Default roles fetched: {}", roles.stream().map(Role::getName).collect(Collectors.toSet()));
+        logger.debug("Fetching roles for registration");
+        Role role = getRoleForRegistration(request.getRole());
+        logger.debug("Role fetched: {}", role.getName());
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -82,32 +78,34 @@ public class AuthService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phone(request.getPhone())
-                .roles(roles)
+                .role(role)
                 .build();
 
         logger.debug("Saving user to database");
         User savedUser = userRepository.save(user);
         logger.debug("User saved with id: {}", savedUser.getId());
-        return generateAuthResponse(savedUser, roles, "User registered successfully");
+        return generateAuthResponse(savedUser, role, "User registered successfully");
     }
 
-    private Set<Role> getDefaultRoles() {
-        logger.debug("Looking up 'user' role");
-        Role userRole = roleRepository.findByName("user")
-                .orElseThrow(() -> new IllegalStateException("Default user role not found"));
+    private Role getRoleForRegistration(String requestedRole) {
+        String roleName = requestedRole != null && !requestedRole.isBlank()
+                ? requestedRole.trim().toLowerCase()
+                : "user";
 
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
-        return roles;
+        if (!roleName.equals("user") && !roleName.equals("travel_manager")) {
+            throw new IllegalArgumentException("Invalid role: " + roleName + ". Only 'user' and 'travel_manager' are allowed for self-registration.");
+        }
+
+        logger.debug("Looking up role: {}", roleName);
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException("Role not found: " + roleName));
+
+        return role;
     }
 
-    private AuthResponse generateAuthResponse(User user, Set<Role> roles, String message) {
-        Set<String> roleNames = roles.stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-
+    private AuthResponse generateAuthResponse(User user, Role role, String message) {
         logger.debug("Generating JWT token for user: {}", user.getUsername());
-        String token = jwtUtil.generateToken(user.getUsername(), roleNames, false);
+        String token = jwtUtil.generateToken(user.getUsername(), role.getName(), false);
         logger.debug("Token generated successfully");
 
         return AuthResponse.builder()

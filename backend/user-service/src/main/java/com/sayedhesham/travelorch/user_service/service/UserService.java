@@ -139,7 +139,7 @@ public class UserService {
             Role newRole = roleRepository.findByName(request.getRole())
                     .orElseThrow(() -> new IllegalArgumentException("Role not found: " + request.getRole()));
 
-            user.setRoles(java.util.Set.of(newRole));
+            user.setRole(newRole);
             User savedUser = userRepository.save(user);
             log.info("updateUserRole - Updated role for user id: {} to {}", id, request.getRole());
             return UserResponse.fromEntity(savedUser);
@@ -161,8 +161,7 @@ public class UserService {
     }
 
     private boolean hasPermission(User user, String resource, String action) {
-        return user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
+        return user.getRole() != null && user.getRole().getPermissions().stream()
                 .anyMatch(permission
                         -> resource.equalsIgnoreCase(permission.getResource())
                 && action.equalsIgnoreCase(permission.getAction())

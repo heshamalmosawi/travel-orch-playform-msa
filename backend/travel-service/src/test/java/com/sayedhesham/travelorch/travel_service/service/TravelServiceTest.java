@@ -79,11 +79,6 @@ class TravelServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
-
         Permission readPermission = new Permission();
         readPermission.setId(1L);
         readPermission.setName("travels:read");
@@ -112,9 +107,11 @@ class TravelServiceTest {
         userRole.setName("user");
         userRole.setPermissions(permissions);
 
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
-        testUser.setRoles(roles);
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+        testUser.setRole(userRole);
 
         testDestination = new Destination();
         testDestination.setId(10L);
