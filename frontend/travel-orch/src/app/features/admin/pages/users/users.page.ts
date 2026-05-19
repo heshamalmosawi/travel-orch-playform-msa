@@ -58,7 +58,7 @@ export class UsersPage {
   readonly totalUsers = computed(() => this.users().length);
   readonly adminCount = computed(() =>
     this.users().filter((u) =>
-      u.roles.some((r) => r.toUpperCase() === 'ADMIN')
+      u.role?.toUpperCase() === 'ADMIN'
     ).length
   );
   readonly recentCount = computed(() => {
@@ -97,7 +97,7 @@ export class UsersPage {
 
   openEditModal(user: UserResponse): void {
     this.editingUser.set(user);
-    const userRole = user.roles && user.roles.length > 0 ? user.roles[0].toLowerCase() : 'user';
+    const userRole = user.role ? user.role.toLowerCase() : 'user';
     this.editForm.patchValue({
       firstName: user.firstName,
       lastName: user.lastName,
@@ -132,7 +132,7 @@ export class UsersPage {
     };
 
     const newRole = this.editForm.value.role?.toLowerCase();
-    const currentRole = user.roles && user.roles.length > 0 ? user.roles[0].toLowerCase() : 'user';
+    const currentRole = user.role ? user.role.toLowerCase() : 'user';
     const roleChanged = newRole && newRole !== currentRole;
 
     // First update user details
@@ -217,8 +217,7 @@ export class UsersPage {
     });
   }
 
-  getRoleBadgeClass(roles: string[]): string {
-    if (roles.some((r) => r.toUpperCase() === 'ADMIN')) return 'badge-admin';
-    return 'badge-user';
+  getRoleBadgeClass(role: string): string {
+    return role?.toUpperCase() === 'ADMIN' ? 'badge-admin' : 'badge-user';
   }
 }

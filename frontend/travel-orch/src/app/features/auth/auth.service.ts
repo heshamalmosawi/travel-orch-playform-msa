@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   isTraveler(): boolean {
-    return this.isAuthenticated() && !this.isAdmin();
+    return this.isAuthenticated() && this.hasRole('user');
   }
 
   hasRole(role: string): boolean {
