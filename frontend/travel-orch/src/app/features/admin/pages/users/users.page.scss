@@ -457,6 +457,34 @@ $font-body: 'Lora', Georgia, serif;
       color-scheme: dark;
     }
   }
+
+  select {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    font-family: $font-body;
+    font-size: 0.875rem;
+    border: 1px solid $dark-border;
+    border-radius: 6px;
+    background: $dark-input;
+    color: $light;
+    outline: none;
+    transition: border-color 0.2s ease;
+    cursor: pointer;
+
+    option {
+      background: $dark-elevated;
+      color: $light;
+    }
+
+    &:focus {
+      border-color: $accent-blue;
+      box-shadow: 0 0 0 2px rgba($accent-blue, 0.25);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #e53e3e;
+    }
+  }
 }
 
 .field-error {
