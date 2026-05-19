@@ -98,7 +98,7 @@ public class AuthService {
 
         logger.debug("Looking up role: {}", roleName);
         Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new IllegalStateException("Role not found: " + roleName));
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName));
 
         return role;
     }

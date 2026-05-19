@@ -151,7 +151,7 @@ class AuthServiceTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable
-                        -> throwable instanceof IllegalStateException
+                        -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("Role not found: user")
                 )
                 .verify();
@@ -401,7 +401,7 @@ class AuthServiceTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable
-                        -> throwable instanceof IllegalStateException
+                        -> throwable instanceof IllegalArgumentException
                 && throwable.getMessage().equals("Role not found: travel_manager")
                 )
                 .verify();

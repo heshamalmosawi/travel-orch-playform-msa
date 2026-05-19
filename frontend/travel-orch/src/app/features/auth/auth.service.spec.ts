@@ -85,6 +85,14 @@ describe('AuthService', () => {
     expect(service.isTraveler()).toBeFalse();
   });
 
+  it('should return false for isTraveler when travel_manager', () => {
+    const payload = btoa(JSON.stringify({ role: 'travel_manager' }));
+    const fakeToken = `header.${payload}.signature`;
+    localStorage.setItem('auth_token', fakeToken);
+
+    expect(service.isTraveler()).toBeFalse();
+  });
+
   it('should handle malformed token gracefully', () => {
     localStorage.setItem('auth_token', 'not-a-valid-token');
 
