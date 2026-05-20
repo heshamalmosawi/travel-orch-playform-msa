@@ -10,5 +10,9 @@
       }
       <button class="btn btn-primary" (click)="logout()">Logout</button>
     </div>
+  } @else {
+    <div class="navbar-actions">
+      <button class="btn btn-primary" (click)="goToLogin()">Login</button>
+    </div>
   }
 </header>

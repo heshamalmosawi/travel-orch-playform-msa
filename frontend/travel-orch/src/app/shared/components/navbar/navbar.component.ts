@@ -34,4 +34,8 @@ export class NavbarComponent {
   goToManager(): void {
     this.router.navigate(['/manager']);
   }
+
+  goToLogin(): void {
+    this.router.navigate(['/auth']);
+  }
 }
