@@ -159,6 +159,29 @@ $font-body: 'Lora', Georgia, serif;
       border-color: #e53e3e;
     }
   }
+
+  select.role-select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-family: $font-body;
+    font-size: 0.9rem;
+    border: 1px solid $light-gray;
+    border-radius: 6px;
+    background-color: #fff;
+    color: $dark;
+    outline: none;
+    transition: border-color 0.2s ease;
+    cursor: pointer;
+
+    &:focus {
+      border-color: $accent-blue;
+      box-shadow: 0 0 0 2px rgba($accent-blue, 0.15);
+    }
+
+    &:hover {
+      border-color: $tab-hover-bg;
+    }
+  }
 }
 
 .field-error {

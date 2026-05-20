@@ -10,6 +10,7 @@ export interface RegistrationRequest {
   firstName: string;
   lastName: string;
   phone?: string;
+  role?: string;
 }
 
 export interface AuthResponse {

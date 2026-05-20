@@ -171,8 +171,7 @@ public class PaymentTransactionService {
     }
 
     private boolean hasPermission(User user, String resource, String action) {
-        return user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
+        return user.getRole() != null && user.getRole().getPermissions().stream()
                 .anyMatch(permission ->
                         resource.equalsIgnoreCase(permission.getResource()) &&
                         action.equalsIgnoreCase(permission.getAction())

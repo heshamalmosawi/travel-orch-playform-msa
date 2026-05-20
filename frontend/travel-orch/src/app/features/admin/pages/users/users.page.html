@@ -72,11 +72,9 @@
                     <td class="td-username">{{ user.username }}</td>
                     <td class="td-email">{{ user.email }}</td>
                     <td>
-                      @for (role of user.roles; track role) {
-                        <span class="badge" [class]="getRoleBadgeClass(user.roles)">
-                          {{ role }}
-                        </span>
-                      }
+                      <span class="badge" [class]="getRoleBadgeClass(user.role)">
+                        {{ user.role }}
+                      </span>
                     </td>
                     <td class="td-date">{{ formatDate(user.createdAt) }}</td>
                     <td class="td-actions">
@@ -147,6 +145,19 @@
               <label for="edit-dob">Date of Birth</label>
               <input id="edit-dob" type="date" formControlName="dateOfBirth" />
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-role">Role</label>
+            <select id="edit-role" formControlName="role">
+              <option value="" disabled>Select a role</option>
+              @for (role of availableRoles; track role) {
+                <option [value]="role">{{ role | titlecase }}</option>
+              }
+            </select>
+            @if (editForm.get('role')?.invalid && editForm.get('role')?.touched) {
+              <span class="field-error">Role is required</span>
+            }
           </div>
 
           <div class="modal-footer">
