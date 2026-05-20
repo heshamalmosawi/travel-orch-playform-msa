@@ -1,5 +1,6 @@
 package com.sayedhesham.travelorch.travel_service.service;
 
+import com.sayedhesham.travelorch.common.document.DestinationDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +26,7 @@ public class DestinationService {
 
     private final DestinationRepository destinationRepository;
     private final TransactionTemplate transactionTemplate;
+    private final DestinationSearchService searchService;
 
     @PreAuthorize("hasPermission('destinations', 'read')")
     public Flux<DestinationResponse> getAllDestinations() {
@@ -94,9 +96,14 @@ public class DestinationService {
 
             Destination saved = destinationRepository.save(destination);
             log.info("createDestination - Created destination id: {}, name: {}", saved.getId(), saved.getName());
-            return DestinationResponse.fromEntity(saved);
+            return saved;
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(saved -> searchService
+                        .sync(DestinationDocument.fromEntity(saved))
+                        .thenReturn(DestinationResponse.fromEntity(saved))
+                        .doOnSuccess(v -> log.info("createDestination - Synced to ES id: {}", saved.getId()))
+                );
     }
 
     @PreAuthorize("hasPermission('destinations', 'write')")
@@ -133,9 +140,14 @@ public class DestinationService {
 
             Destination updated = destinationRepository.save(destination);
             log.info("updateDestination - Updated destination id: {}", updated.getId());
-            return DestinationResponse.fromEntity(updated);
+            return updated;
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(updated -> searchService
+                        .sync(DestinationDocument.fromEntity(updated))
+                        .thenReturn(DestinationResponse.fromEntity(updated))
+                        .doOnSuccess(v -> log.info("updateDestination - Synced to ES id: {}", updated.getId()))
+                );
     }
 
     @PreAuthorize("hasPermission('destinations', 'delete')")
@@ -148,9 +160,9 @@ public class DestinationService {
             }
             destinationRepository.deleteById(id);
             log.info("deleteDestination - Deleted destination id: {}", id);
-            return null;
+            return id;
         }))
                 .subscribeOn(Schedulers.boundedElastic())
-                .then();
+                .flatMap(searchService::delete);
     }
 }
