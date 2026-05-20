@@ -131,13 +131,14 @@ public class UserService {
 
     @PreAuthorize("hasPermission('admin', 'all')")
     public Mono<UserResponse> updateUserRole(Long id, RoleUpdateRequest request) {
-        log.info("updateUserRole - Updating role for user id: {} to {}", id, request.getRole());
+        String normalizedRole = request.getRole().trim().toLowerCase();
+        log.info("updateUserRole - Updating role for user id: {} to {}", id, normalizedRole);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
             User user = userRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-            Role newRole = roleRepository.findByName(request.getRole())
-                    .orElseThrow(() -> new IllegalArgumentException("Role not found: " + request.getRole()));
+            Role newRole = roleRepository.findByName(normalizedRole)
+                    .orElseThrow(() -> new IllegalArgumentException("Role not found: " + normalizedRole));
 
             user.setRole(newRole);
             User savedUser = userRepository.save(user);

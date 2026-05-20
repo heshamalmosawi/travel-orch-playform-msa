@@ -46,6 +46,8 @@ UPDATE users SET role_id = COALESCE(
 
 ALTER TABLE users ALTER COLUMN role_id SET NOT NULL;
 
+CREATE INDEX idx_users_role_id ON users(role_id);
+
 DROP TABLE IF EXISTS user_roles;
 DROP INDEX IF EXISTS idx_user_roles_user_id;
 DROP INDEX IF EXISTS idx_user_roles_role_id;

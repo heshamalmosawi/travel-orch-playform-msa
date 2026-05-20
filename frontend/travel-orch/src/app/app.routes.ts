@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
+import { managerGuard } from './core/guards/manager.guard';
 
 export const routes: Routes = [
   {
@@ -70,6 +71,14 @@ export const routes: Routes = [
         redirectTo: 'users',
       },
     ],
+  },
+  {
+    path: 'manager',
+    canActivate: [managerGuard],
+    loadComponent: () =>
+      import('./features/admin/pages/travels/travels.page').then(
+        (m) => m.TravelsPage
+      ),
   },
   {
     path: '**',

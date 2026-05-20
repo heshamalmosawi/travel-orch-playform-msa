@@ -47,7 +47,7 @@ export class AuthPage {
     this.mode.set(mode);
     this.errorMessage.set(null);
     this.loginForm.reset();
-    this.registerForm.reset();
+    this.registerForm.reset({ role: 'user' });
   }
 
   onLogin(): void {
