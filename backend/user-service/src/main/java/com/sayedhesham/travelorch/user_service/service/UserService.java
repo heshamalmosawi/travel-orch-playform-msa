@@ -6,8 +6,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import com.sayedhesham.travelorch.common.entity.user.User;
+import com.sayedhesham.travelorch.common.repository.rbac.RoleRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
+import com.sayedhesham.travelorch.user_service.dto.RoleUpdateRequest;
 import com.sayedhesham.travelorch.user_service.dto.UserResponse;
 import com.sayedhesham.travelorch.user_service.dto.UserUpdateRequest;
 
@@ -23,6 +26,7 @@ public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final TransactionTemplate transactionTemplate;
 
     @PreAuthorize("hasPermission('users', 'read')")
@@ -125,6 +129,24 @@ public class UserService {
         })).subscribeOn(Schedulers.boundedElastic());
     }
 
+    @PreAuthorize("hasPermission('admin', 'all')")
+    public Mono<UserResponse> updateUserRole(Long id, RoleUpdateRequest request) {
+        String normalizedRole = request.getRole().trim().toLowerCase();
+        log.info("updateUserRole - Updating role for user id: {} to {}", id, normalizedRole);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+
+            Role newRole = roleRepository.findByName(normalizedRole)
+                    .orElseThrow(() -> new IllegalArgumentException("Role not found: " + normalizedRole));
+
+            user.setRole(newRole);
+            User savedUser = userRepository.save(user);
+            log.info("updateUserRole - Updated role for user id: {} to {}", id, request.getRole());
+            return UserResponse.fromEntity(savedUser);
+        })).subscribeOn(Schedulers.boundedElastic());
+    }
+
     @PreAuthorize("hasPermission('users', 'delete')")
     public Mono<Void> deleteUser(Long id) {
         log.info("deleteUser - Deleting user with id: {}", id);
@@ -140,11 +162,10 @@ public class UserService {
     }
 
     private boolean hasPermission(User user, String resource, String action) {
-        return user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
-                .anyMatch(permission ->
-                        resource.equalsIgnoreCase(permission.getResource()) &&
-                        action.equalsIgnoreCase(permission.getAction())
+        return user.getRole() != null && user.getRole().getPermissions().stream()
+                .anyMatch(permission
+                        -> resource.equalsIgnoreCase(permission.getResource())
+                && action.equalsIgnoreCase(permission.getAction())
                 );
     }
 }

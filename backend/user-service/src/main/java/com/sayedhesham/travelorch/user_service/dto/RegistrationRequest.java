@@ -36,4 +36,6 @@ public class RegistrationRequest {
 
     @Size(max = 20, message = "Phone number must not exceed 20 characters")
     private String phone;
+
+    private String role;
 }

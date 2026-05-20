@@ -6,7 +6,7 @@ export interface UserResponse {
   lastName: string;
   phone: string | null;
   dateOfBirth: string | null;
-  roles: string[];
+  role: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,4 +18,8 @@ export interface UserUpdateRequest {
   lastName?: string;
   phone?: string;
   dateOfBirth?: string;
+}
+
+export interface RoleUpdateRequest {
+  role: string;
 }

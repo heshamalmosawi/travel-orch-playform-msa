@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.payment_service.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sayedhesham.travelorch.common.entity.payment.PaymentMethod;
 import com.sayedhesham.travelorch.common.entity.payment.PaymentTransaction;
+import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.PaymentProvider;
@@ -68,13 +70,21 @@ class PaymentTransactionServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Create default user role
+        Role userRole = new Role();
+        userRole.setId(1L);
+        userRole.setName("user");
+        userRole.setPermissions(new HashSet<>());
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");
+        testUser.setRole(userRole);
 
         otherUser = new User();
         otherUser.setId(2L);
         otherUser.setUsername("otheruser");
+        otherUser.setRole(userRole);
 
         testTravel = new Travel();
         testTravel.setId(1L);
