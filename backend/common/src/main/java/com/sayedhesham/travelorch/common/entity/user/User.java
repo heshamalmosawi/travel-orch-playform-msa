@@ -13,13 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
-/**
- * User entity for the travel platform.
- * Uses RBAC with roles and permissions tables.
- */
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_users_email", columnList = "email"),
@@ -64,37 +58,20 @@ public class User extends BaseEntity {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    @Builder.Default
-    private Set<Role> roles = new HashSet<>();
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
-    /**
-     * Check if user has admin privileges
-     */
     public boolean isAdmin() {
-        return roles.stream()
-            .anyMatch(role -> "admin".equalsIgnoreCase(role.getName()));
+        return role != null && "admin".equalsIgnoreCase(role.getName());
     }
 
-    /**
-     * Check if user has a specific role
-     */
     public boolean hasRole(String roleName) {
-        return roles.stream()
-            .anyMatch(role -> roleName.equalsIgnoreCase(role.getName()));
+        return role != null && roleName.equalsIgnoreCase(role.getName());
     }
 
-    /**
-     * Check if user has a specific permission
-     */
     public boolean hasPermission(String permissionName) {
-        return roles.stream()
-            .flatMap(role -> role.getPermissions().stream())
-            .anyMatch(permission -> permissionName.equalsIgnoreCase(permission.getName()));
+        return role != null && role.getPermissions().stream()
+                .anyMatch(permission -> permissionName.equalsIgnoreCase(permission.getName()));
     }
 }

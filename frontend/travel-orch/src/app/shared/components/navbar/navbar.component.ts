@@ -15,6 +15,7 @@ export class NavbarComponent {
   private readonly router = inject(Router);
 
   isAdmin = this.authService.isAdmin();
+  isTravelManager = this.authService.isTravelManager();
   isAuthenticated = this.authService.isAuthenticated();
 
   logout(): void {
@@ -28,5 +29,13 @@ export class NavbarComponent {
 
   goToAdmin(): void {
     this.router.navigate(['/admin']);
+  }
+
+  goToManager(): void {
+    this.router.navigate(['/manager']);
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/auth']);
   }
 }

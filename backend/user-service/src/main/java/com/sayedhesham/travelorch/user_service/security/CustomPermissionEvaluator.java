@@ -1,7 +1,6 @@
 package com.sayedhesham.travelorch.user_service.security;
 
 import java.io.Serializable;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,19 +45,23 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             return false;
         }
 
-        boolean granted = user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
+        if (user.getRole() == null) {
+            log.warn("checkPermission - User {} has no role for resource: {}, action: {}", username, resource, action);
+            return false;
+        }
+
+        boolean granted = user.getRole().getPermissions().stream()
                 .anyMatch(permission ->
                         resource.equalsIgnoreCase(permission.getResource()) &&
                         action.equalsIgnoreCase(permission.getAction())
                 );
 
         if (granted) {
-            log.info("checkPermission - GRANTED user: {} resource: {} action: {} (roles: {})", username, resource, action,
-                    user.getRoles().stream().map(r -> r.getName()).collect(Collectors.joining(",")));
+            log.info("checkPermission - GRANTED user: {} resource: {} action: {} (role: {})", username, resource, action,
+                    user.getRole().getName());
         } else {
-            log.warn("checkPermission - DENIED user: {} resource: {} action: {} (roles: {})", username, resource, action,
-                    user.getRoles().stream().map(r -> r.getName()).collect(Collectors.joining(",")));
+            log.warn("checkPermission - DENIED user: {} resource: {} action: {} (role: {})", username, resource, action,
+                user.getRole().getName());
         }
 
         return granted;

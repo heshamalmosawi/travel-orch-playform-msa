@@ -40,13 +40,14 @@ export class AuthPage {
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
     phone: ['', [Validators.maxLength(20)]],
+    role: ['user'],
   });
 
   setMode(mode: 'login' | 'register'): void {
     this.mode.set(mode);
     this.errorMessage.set(null);
     this.loginForm.reset();
-    this.registerForm.reset();
+    this.registerForm.reset({ role: 'user' });
   }
 
   onLogin(): void {
