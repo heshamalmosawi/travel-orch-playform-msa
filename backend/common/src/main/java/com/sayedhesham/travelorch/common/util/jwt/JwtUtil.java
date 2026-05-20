@@ -3,9 +3,6 @@ package com.sayedhesham.travelorch.common.util.jwt;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.sayedhesham.travelorch.common.config.JwtProperties;
 
@@ -36,13 +33,13 @@ public class JwtUtil {
         this(secretKey, new JwtProperties());
     }
 
-    public String generateToken(String username, Set<String> roles, boolean isService) {
+    public String generateToken(String username, String role, boolean isService) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTokenExpirationMs);
 
         return Jwts.builder()
                 .subject(username)
-                .claim(JwtConstants.ROLES_CLAIM, roles)
+                .claim(JwtConstants.ROLE_CLAIM, role)
                 .claim(JwtConstants.SERVICE_CLAIM, isService)
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -67,14 +64,9 @@ public class JwtUtil {
         return getClaims(token).getSubject();
     }
 
-    public Set<String> extractRoles(String token) {
-        Object rolesClaim = getClaims(token).get(JwtConstants.ROLES_CLAIM);
-        if (rolesClaim instanceof List) {
-            return ((List<?>) rolesClaim).stream()
-                    .map(Object::toString)
-                    .collect(Collectors.toSet());
-        }
-        return Set.of();
+    public String extractRole(String token) {
+        Object roleClaim = getClaims(token).get(JwtConstants.ROLE_CLAIM);
+        return roleClaim instanceof String ? (String) roleClaim : null;
     }
 
     public boolean isService(String token) {
@@ -113,8 +105,8 @@ public class JwtUtil {
             Claims claims = getClaims(token);
             String extractedUsername = claims.getSubject();
             Date expiration = claims.getExpiration();
-            return extractedUsername.equals(username) && 
-                   (expiration == null || !expiration.before(new Date()));
+            return extractedUsername.equals(username) &&
+                    (expiration == null || !expiration.before(new Date()));
         } catch (Exception e) {
             return false;
         }

@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -24,7 +22,7 @@ public class UserResponse {
     private String lastName;
     private String phone;
     private LocalDate dateOfBirth;
-    private Set<String> roles;
+    private String role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -37,9 +35,7 @@ public class UserResponse {
                 .lastName(user.getLastName())
                 .phone(user.getPhone())
                 .dateOfBirth(user.getDateOfBirth())
-                .roles(user.getRoles().stream()
-                        .map(role -> role.getName())
-                        .collect(Collectors.toSet()))
+                .role(user.getRole() != null ? user.getRole().getName() : null)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
