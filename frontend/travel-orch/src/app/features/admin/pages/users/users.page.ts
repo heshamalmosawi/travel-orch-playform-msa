@@ -152,10 +152,14 @@ export class UsersPage {
               this.closeEditModal();
               this.toastService.success(`User "${updatedWithRole.username}" updated successfully`);
             },
-            error: (err) => {
+            error: () => {
               this.isSubmitting.set(false);
-              this.toastService.error(
-                err.error?.message || 'Failed to update user role'
+              this.users.update((users) =>
+                users.map((u) => (u.id === updated.id ? updated : u))
+              );
+              this.closeEditModal();
+              this.toastService.warning(
+                `User details saved, but role update failed. Please try updating the role separately.`
               );
             },
           });

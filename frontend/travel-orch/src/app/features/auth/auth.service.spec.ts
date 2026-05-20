@@ -101,6 +101,16 @@ describe('AuthService', () => {
     expect(service.isTravelManager()).toBeFalse();
   });
 
+  it('should handle Base64URL-encoded tokens', () => {
+    const json = JSON.stringify({ role: 'admin' });
+    const base64 = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const fakeToken = `header.${base64}.signature`;
+    localStorage.setItem('auth_token', fakeToken);
+
+    expect(service.hasRole('admin')).toBeTrue();
+    expect(service.isAdmin()).toBeTrue();
+  });
+
   it('should handle token with no role claim', () => {
     const payload = btoa(JSON.stringify({ sub: 'testuser' }));
     const fakeToken = `header.${payload}.signature`;

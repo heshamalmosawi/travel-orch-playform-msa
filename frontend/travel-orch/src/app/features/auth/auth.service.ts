@@ -42,11 +42,19 @@ export class AuthService {
     return this.isAuthenticated() && this.hasRole('user');
   }
 
+  private decodeBase64Url(str: string): string {
+    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    return atob(base64);
+  }
+
   hasRole(role: string): boolean {
     const token = this.getToken();
     if (!token) return false;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(this.decodeBase64Url(token.split('.')[1]));
       const tokenRole = payload['role'] || '';
       return tokenRole.toLowerCase() === role.toLowerCase();
     } catch {
