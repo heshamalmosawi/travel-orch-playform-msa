@@ -14,6 +14,13 @@ export const routes: Routes = [
       import('./features/auth/auth.page').then((m) => m.AuthPage),
   },
   {
+    path: 'travels/:id',
+    loadComponent: () =>
+      import('./features/travel-detail/travel-detail.page').then(
+        (m) => m.TravelDetailPage
+      ),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
