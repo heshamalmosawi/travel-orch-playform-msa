@@ -244,14 +244,14 @@
           <div class="form-row">
             <div class="form-group">
               <label for="c-start">Start Date</label>
-              <input id="c-start" type="date" formControlName="startDate" />
+              <input id="c-start" type="date" formControlName="startDate" [min]="minDate" />
               @if (createForm.get('startDate')?.invalid && createForm.get('startDate')?.touched) {
                 <span class="field-error">Start date is required</span>
               }
             </div>
             <div class="form-group">
               <label for="c-end">End Date</label>
-              <input id="c-end" type="date" formControlName="endDate" />
+              <input id="c-end" type="date" formControlName="endDate" [min]="createForm.get('startDate')?.value || minDate" />
               @if (createForm.get('endDate')?.invalid && createForm.get('endDate')?.touched) {
                 <span class="field-error">End date is required</span>
               }
@@ -296,6 +296,9 @@
                       type="date"
                       class="dest-date-input"
                       [value]="dest.arrivalDate || ''"
+                      [min]="createForm.get('startDate')?.value || minDate"
+                      [max]="createForm.get('endDate')?.value || ''"
+                      [disabled]="!createForm.get('startDate')?.value || !createForm.get('endDate')?.value"
                       (change)="updatePendingDestination($index, 'arrivalDate', $any($event.target).value)"
                     />
                   </div>
@@ -305,6 +308,9 @@
                       type="date"
                       class="dest-date-input"
                       [value]="dest.departureDate || ''"
+                      [min]="dest.arrivalDate || createForm.get('startDate')?.value || minDate"
+                      [max]="createForm.get('endDate')?.value || ''"
+                      [disabled]="!createForm.get('startDate')?.value || !createForm.get('endDate')?.value"
                       (change)="updatePendingDestination($index, 'departureDate', $any($event.target).value)"
                     />
                   </div>
@@ -345,14 +351,14 @@
           <div class="form-row">
             <div class="form-group">
               <label for="e-start">Start Date</label>
-              <input id="e-start" type="date" formControlName="startDate" />
+              <input id="e-start" type="date" formControlName="startDate" [min]="minDate" />
               @if (editForm.get('startDate')?.invalid && editForm.get('startDate')?.touched) {
                 <span class="field-error">Start date is required</span>
               }
             </div>
             <div class="form-group">
               <label for="e-end">End Date</label>
-              <input id="e-end" type="date" formControlName="endDate" />
+              <input id="e-end" type="date" formControlName="endDate" [min]="editForm.get('startDate')?.value || minDate" />
               @if (editForm.get('endDate')?.invalid && editForm.get('endDate')?.touched) {
                 <span class="field-error">End date is required</span>
               }

@@ -280,15 +280,16 @@ export class TravelsPage {
     });
   }
 
+  get minDate(): string {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }
+
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
   }
 
   getStatusClass(status: string): string {
