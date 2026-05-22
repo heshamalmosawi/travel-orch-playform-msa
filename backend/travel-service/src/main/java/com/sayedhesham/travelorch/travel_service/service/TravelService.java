@@ -28,6 +28,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TravelService {
@@ -126,6 +129,19 @@ public class TravelService {
         }))
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnNext(list -> log.info("getMyTravels - Found {} travels for user: {}", list.size(), currentUsername))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<TravelResponse> getUpcomingTravels() {
+        log.info("getUpcomingTravels - Fetching upcoming travels");
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            List<TravelStatus> excluded = List.of(TravelStatus.cancelled, TravelStatus.completed);
+            return travelRepository.findAllUpcomingTravels(LocalDate.now(), excluded).stream()
+                    .map(TravelResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getUpcomingTravels - Found {} upcoming travels", list.size()))
                 .flatMapMany(Flux::fromIterable);
     }
 

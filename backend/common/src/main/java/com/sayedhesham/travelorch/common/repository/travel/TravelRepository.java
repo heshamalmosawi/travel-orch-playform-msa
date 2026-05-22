@@ -27,4 +27,7 @@ public interface TravelRepository extends JpaRepository<Travel, Long> {
 
     @Query("SELECT t FROM Travel t WHERE t.manager = :manager AND t.startDate >= :date ORDER BY t.startDate ASC")
     List<Travel> findUpcomingTravels(@Param("manager") User manager, @Param("date") LocalDate date);
+
+    @Query("SELECT t FROM Travel t WHERE t.startDate >= :date AND t.status NOT IN :excludedStatuses ORDER BY t.startDate ASC")
+    List<Travel> findAllUpcomingTravels(@Param("date") LocalDate date, @Param("excludedStatuses") List<TravelStatus> excludedStatuses);
 }

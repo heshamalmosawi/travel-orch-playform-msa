@@ -1,23 +1,176 @@
+$bg: #faf9f5;
+$text-dark: #141413;
+$text-mid: #6b6963;
+$text-muted: #b0aea5;
+$border: #e4e2dc;
+$white: #ffffff;
+$accent: #d97757;
+$font-heading: 'Poppins', Arial, sans-serif;
+$font-body: 'Lora', Georgia, serif;
+
 .home-page {
   min-height: 100vh;
-  background: #faf9f5;
+  background: $bg;
 }
 
 .home-content {
-  padding: 3rem 2rem;
-  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+}
 
-  h2 {
-    margin: 0 0 0.5rem;
-    font-family: 'Poppins', Arial, sans-serif;
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #141413;
+.home-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+
+  h1 {
+    font-family: $font-heading;
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0 0 0.75rem;
   }
 
   p {
-    font-family: 'Lora', Georgia, serif;
-    font-size: 1rem;
-    color: #b0aea5;
+    font-family: $font-body;
+    font-size: 1.1rem;
+    color: $text-mid;
+    margin: 0;
   }
 }
+
+.section-title {
+  font-family: $font-heading;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: $text-dark;
+  margin: 0 0 1.5rem;
+}
+
+.state-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+
+  .state-message {
+    font-family: $font-body;
+    font-size: 1rem;
+    color: $text-muted;
+    text-align: center;
+    margin: 0;
+  }
+
+  p {
+    font-family: $font-body;
+    color: $text-muted;
+    margin: 0;
+  }
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid $border;
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.package-card {
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-price {
+  font-family: $font-heading;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $text-dark;
+}
+
+.card-title {
+  font-family: $font-heading;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: $text-dark;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card-desc {
+  font-family: $font-body;
+  font-size: 0.9rem;
+  color: $text-mid;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: $text-muted;
+
+  svg {
+    flex-shrink: 0;
+    color: $text-muted;
+  }
+}
+
+// Status badges
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-family: $font-heading;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.badge-draft    { background: #f0eeea; color: #6b6963; }
+.badge-planned  { background: #e8f0fb; color: #3a6bb5; }
+.badge-confirmed { background: #e6f4ea; color: #2e7d4f; }
+.badge-progress { background: #fff3e0; color: #b45309; }
+.badge-completed { background: #f3f3f3; color: #555; }
+.badge-cancelled { background: #fde8e8; color: #b91c1c; }
