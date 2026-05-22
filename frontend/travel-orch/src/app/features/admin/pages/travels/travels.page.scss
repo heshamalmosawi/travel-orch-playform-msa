@@ -486,6 +486,11 @@ $font-body: 'Lora', Georgia, serif;
   font-family: $font-body;
 }
 
+.required-star {
+  color: #e53e3e;
+  margin-left: 2px;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;

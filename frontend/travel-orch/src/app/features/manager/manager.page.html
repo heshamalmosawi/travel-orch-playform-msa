@@ -80,7 +80,6 @@
                   <th>ID</th>
                   <th>Title</th>
                   <th>Dates</th>
-                  <th>Duration</th>
                   <th>Price</th>
                   <th>Status</th>
                   <th>Stops</th>
@@ -101,7 +100,6 @@
                     <td class="td-dates">
                       {{ formatDate(travel.startDate) }} — {{ formatDate(travel.endDate) }}
                     </td>
-                    <td class="td-duration">{{ travel.durationDays }}d</td>
                     <td class="td-price">
                       @if (travel.totalPrice !== null) {
                         ${{ travel.totalPrice.toLocaleString() }}
@@ -161,10 +159,6 @@
           <div class="detail-item">
             <span class="detail-label">Dates</span>
             <span class="detail-value">{{ formatDate(viewTravel()!.startDate) }} — {{ formatDate(viewTravel()!.endDate) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Duration</span>
-            <span class="detail-value">{{ viewTravel()!.durationDays }} days</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Total Price</span>
@@ -249,18 +243,9 @@
             }
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="c-duration">Duration (days)</label>
-            <input id="c-duration" type="number" min="1" formControlName="durationDays" placeholder="7" />
-            @if (createForm.get('durationDays')?.invalid && createForm.get('durationDays')?.touched) {
-              <span class="field-error">Duration is required</span>
-            }
-          </div>
-          <div class="form-group">
-            <label for="c-price">Total Price ($)</label>
-            <input id="c-price" type="number" step="0.01" min="0" formControlName="totalPrice" placeholder="Optional" />
-          </div>
+        <div class="form-group">
+          <label for="c-price">Total Price ($)</label>
+          <input id="c-price" type="number" step="0.01" min="0" formControlName="totalPrice" placeholder="Optional" />
         </div>
         <!-- Destinations Section -->
         <div class="form-group">

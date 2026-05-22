@@ -152,7 +152,6 @@ public class TravelService {
             travel.setDescription(request.getDescription());
             travel.setStartDate(request.getStartDate());
             travel.setEndDate(request.getEndDate());
-            travel.setDurationDays(request.getDurationDays());
             travel.setTotalPrice(request.getTotalPrice());
 
             if (request.getDestinations() != null && !request.getDestinations().isEmpty()) {
@@ -209,9 +208,6 @@ public class TravelService {
             }
             if (request.getEndDate() != null) {
                 travel.setEndDate(request.getEndDate());
-            }
-            if (request.getDurationDays() != null) {
-                travel.setDurationDays(request.getDurationDays());
             }
             if (request.getTotalPrice() != null) {
                 travel.setTotalPrice(request.getTotalPrice());

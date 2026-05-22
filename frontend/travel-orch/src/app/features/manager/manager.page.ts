@@ -54,7 +54,6 @@ export class ManagerPage {
     description: ['', [Validators.maxLength(10000)]],
     startDate: ['', [Validators.required]],
     endDate: ['', [Validators.required]],
-    durationDays: [null, [Validators.required, Validators.min(1)]],
     totalPrice: [null, [Validators.min(0)]],
   });
 
@@ -167,7 +166,6 @@ export class ManagerPage {
       description: this.createForm.value.description || undefined,
       startDate: this.createForm.value.startDate,
       endDate: this.createForm.value.endDate,
-      durationDays: this.createForm.value.durationDays,
       totalPrice: this.createForm.value.totalPrice || undefined,
       destinations: destinations.length > 0 ? destinations : undefined,
     };
