@@ -44,7 +44,7 @@ spring:
       password: ${neo4j.password:password123}
 
   elasticsearch:
-    uris: http://elasticsearch:9200
+    uris: http://${elasticsearch.host:localhost}:${elasticsearch.port:9200}
 
 server:
   port: 8083

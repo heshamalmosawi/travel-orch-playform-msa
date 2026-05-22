@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,8 +25,10 @@ import com.sayedhesham.travelorch.common.repository.travel.DestinationRepository
 import com.sayedhesham.travelorch.travel_service.dto.DestinationCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.DestinationResponse;
 import com.sayedhesham.travelorch.travel_service.dto.DestinationUpdateRequest;
+import com.sayedhesham.travelorch.common.document.DestinationDocument;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +39,9 @@ class DestinationServiceTest {
 
     @Mock
     private TransactionTemplate transactionTemplate;
+
+    @Mock
+    private DestinationSearchService searchService;
 
     @InjectMocks
     private DestinationService destinationService;
@@ -56,6 +62,9 @@ class DestinationServiceTest {
         testDestination.setImageBase64(null);
         testDestination.setCreatedAt(LocalDateTime.now());
         testDestination.setUpdatedAt(LocalDateTime.now());
+
+        lenient().when(searchService.sync(any(DestinationDocument.class))).thenReturn(Mono.empty());
+        lenient().when(searchService.delete(any(Long.class))).thenReturn(Mono.empty());
     }
 
     private void setupTransactionTemplateInvocation() {

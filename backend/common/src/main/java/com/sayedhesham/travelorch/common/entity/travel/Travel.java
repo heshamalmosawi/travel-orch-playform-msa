@@ -18,7 +18,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "travels", indexes = {
-    @Index(name = "idx_travels_user", columnList = "user_id"),
+    @Index(name = "idx_travels_manager", columnList = "manager_id"),
     @Index(name = "idx_travels_status", columnList = "status"),
     @Index(name = "idx_travels_dates", columnList = "start_date, end_date")
 })
@@ -28,8 +28,8 @@ import java.util.List;
 public class Travel extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "manager_id", nullable = false)
+    private User manager;
 
     @NotBlank
     @Size(max = 255)

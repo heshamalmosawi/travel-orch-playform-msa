@@ -23,7 +23,7 @@ export interface TravelResponse {
   durationDays: number;
   totalPrice: number | null;
   status: string;
-  userId: number;
+  managerId: number;
   destinations: TravelDestinationResponse[];
   createdAt: string;
   updatedAt: string;
@@ -36,7 +36,6 @@ export interface TravelCreateRequest {
   endDate: string;
   durationDays: number;
   totalPrice?: number;
-  userId: number;
   destinations?: TravelDestinationCreateRequest[];
 }
 
