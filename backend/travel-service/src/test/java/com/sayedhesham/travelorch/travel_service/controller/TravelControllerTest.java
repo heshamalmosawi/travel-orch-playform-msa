@@ -339,4 +339,48 @@ class TravelControllerTest {
                 .exchange()
                 .expectStatus().isForbidden();
     }
+
+    @Test
+    void getUpcomingTravels_Success() {
+        TravelResponse upcomingResponse = TravelResponse.builder()
+                .id(200L)
+                .title("Beach Getaway")
+                .description("A relaxing beach trip")
+                .startDate(LocalDate.now().plusDays(10))
+                .endDate(LocalDate.now().plusDays(17))
+                .totalPrice(new BigDecimal("2000.00"))
+                .status(TravelStatus.confirmed)
+                .managerId(1L)
+                .destinations(List.of())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(travelService.getUpcomingTravels()).thenReturn(Flux.just(upcomingResponse, travelResponse));
+
+        webTestClient.get()
+                .uri("/travels/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(2)
+                .value(responses -> {
+                    assertEquals(200L, responses.get(0).getId());
+                    assertEquals("Beach Getaway", responses.get(0).getTitle());
+                    assertEquals(TravelStatus.confirmed, responses.get(0).getStatus());
+                    assertEquals(100L, responses.get(1).getId());
+                });
+    }
+
+    @Test
+    void getUpcomingTravels_EmptyList() {
+        when(travelService.getUpcomingTravels()).thenReturn(Flux.empty());
+
+        webTestClient.get()
+                .uri("/travels/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(0);
+    }
 }
