@@ -97,6 +97,12 @@ public class TravelController {
                         .<Flux<TravelResponse>>body(Flux.empty())));
     }
 
+    @GetMapping("/upcoming")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getUpcomingTravels() {
+        log.info("GET /travels/upcoming - Fetching upcoming travels");
+        return Mono.just(ResponseEntity.ok(travelService.getUpcomingTravels()));
+    }
+
     @GetMapping("/status/{status}")
     public Mono<ResponseEntity<Flux<TravelResponse>>> getTravelsByStatus(@PathVariable TravelStatus status) {
         log.info("GET /travels/status/{} - Fetching travels by status", status);

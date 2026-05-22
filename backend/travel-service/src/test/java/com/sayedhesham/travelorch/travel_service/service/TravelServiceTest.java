@@ -10,10 +10,13 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
@@ -74,6 +77,7 @@ class TravelServiceTest {
 
     private User testUser;
     private User testManager;
+    private User testAdmin;
     private Travel testTravel;
     private Destination testDestination;
     private TravelDestination testTravelDestination;
@@ -124,6 +128,29 @@ class TravelServiceTest {
         testManager.setUsername("testmanager");
         testManager.setEmail("manager@example.com");
         testManager.setRole(managerRole);
+
+        Permission adminPermission = new Permission();
+        adminPermission.setId(4L);
+        adminPermission.setName("admin:all");
+        adminPermission.setResource("admin");
+        adminPermission.setAction("all");
+
+        Set<Permission> adminPermissions = new HashSet<>();
+        adminPermissions.add(readPermission);
+        adminPermissions.add(writePermission);
+        adminPermissions.add(deletePermission);
+        adminPermissions.add(adminPermission);
+
+        Role adminRole = new Role();
+        adminRole.setId(3L);
+        adminRole.setName("admin");
+        adminRole.setPermissions(adminPermissions);
+
+        testAdmin = new User();
+        testAdmin.setId(3L);
+        testAdmin.setUsername("testadmin");
+        testAdmin.setEmail("admin@example.com");
+        testAdmin.setRole(adminRole);
 
         testDestination = new Destination();
         testDestination.setId(10L);
@@ -385,7 +412,7 @@ class TravelServiceTest {
     @Test
     void createTravel_DestinationNotFound() {
         setupTransactionTemplateInvocation();
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testadmin")).thenReturn(Optional.of(testAdmin));
         when(userRepository.findById(2L)).thenReturn(Optional.of(testManager));
         when(destinationRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -402,7 +429,7 @@ class TravelServiceTest {
                 .destinations(List.of(destRequest))
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request, "testuser"))
+        StepVerifier.create(travelService.createTravel(request, "testadmin"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
                                 && throwable.getMessage().equals("Destination not found with id: 99")
@@ -436,7 +463,7 @@ class TravelServiceTest {
     @Test
     void createTravel_WithExplicitManagerId_Success() {
         setupTransactionTemplateInvocation();
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testadmin")).thenReturn(Optional.of(testAdmin));
         when(userRepository.findById(2L)).thenReturn(Optional.of(testManager));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
             Travel t = invocation.getArgument(0);
@@ -454,7 +481,7 @@ class TravelServiceTest {
                 .managerId(2L)
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request, "testuser"))
+        StepVerifier.create(travelService.createTravel(request, "testadmin"))
                 .expectNextMatches(response -> {
                     assertEquals("Admin Created Trip", response.getTitle());
                     assertEquals(2L, response.getManagerId());
@@ -553,5 +580,69 @@ class TravelServiceTest {
                 .verify();
 
         verify(travelRepository, never()).delete(any());
+    }
+
+    @Test
+    void getUpcomingTravels_ReturnsUpcomingTravels() {
+        setupTransactionTemplateInvocation();
+        Travel plannedTravel = new Travel();
+        plannedTravel.setId(200L);
+        plannedTravel.setManager(testManager);
+        plannedTravel.setTitle("Beach Getaway");
+        plannedTravel.setStartDate(LocalDate.now().plusDays(10));
+        plannedTravel.setEndDate(LocalDate.now().plusDays(17));
+        plannedTravel.setTotalPrice(new BigDecimal("2000.00"));
+        plannedTravel.setStatus(TravelStatus.planned);
+        plannedTravel.setCreatedAt(LocalDateTime.now());
+        plannedTravel.setUpdatedAt(LocalDateTime.now());
+
+        when(travelRepository.findAllUpcomingTravels(any(LocalDate.class), any()))
+                .thenReturn(List.of(plannedTravel, testTravel));
+
+        StepVerifier.create(travelService.getUpcomingTravels())
+                .expectNextMatches(r -> r.getId().equals(200L) && r.getTitle().equals("Beach Getaway"))
+                .expectNextMatches(r -> r.getId().equals(100L) && r.getTitle().equals("Summer Trip"))
+                .verifyComplete();
+    }
+
+    @Test
+    void getUpcomingTravels_EmptyList() {
+        setupTransactionTemplateInvocation();
+        when(travelRepository.findAllUpcomingTravels(any(LocalDate.class), any()))
+                .thenReturn(List.of());
+
+        StepVerifier.create(travelService.getUpcomingTravels())
+                .verifyComplete();
+    }
+
+    @Test
+    void getUpcomingTravels_ExcludesCancelledAndCompleted() {
+        setupTransactionTemplateInvocation();
+        when(travelRepository.findAllUpcomingTravels(any(LocalDate.class), any()))
+                .thenReturn(List.of());
+
+        travelService.getUpcomingTravels().blockLast();
+
+        verify(travelRepository).findAllUpcomingTravels(
+                any(LocalDate.class),
+                argThat(excluded -> excluded.contains(TravelStatus.cancelled)
+                        && excluded.contains(TravelStatus.completed)
+                        && excluded.size() == 2)
+        );
+    }
+
+    @Test
+    void getUpcomingTravels_PassesTodayAsDateBoundary() {
+        setupTransactionTemplateInvocation();
+        LocalDate today = LocalDate.now();
+        when(travelRepository.findAllUpcomingTravels(any(LocalDate.class), any()))
+                .thenReturn(List.of());
+
+        travelService.getUpcomingTravels().blockLast();
+
+        verify(travelRepository).findAllUpcomingTravels(
+                argThat(date -> !date.isBefore(today) && !date.isAfter(today)),
+                any()
+        );
     }
 }
