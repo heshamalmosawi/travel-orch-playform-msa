@@ -25,6 +25,9 @@ public interface TravelRepository extends JpaRepository<Travel, Long> {
     @Query("SELECT t FROM Travel t LEFT JOIN FETCH t.destinations WHERE t.id = :id")
     Travel findByIdWithDestinations(@Param("id") Long id);
 
-    @Query("SELECT t FROM Travel t WHERE t.manager = :manager AND t.startDate >= :date ORDER BY t.startDate ASC")
+    @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.manager = :manager AND t.startDate >= :date ORDER BY t.startDate ASC")
     List<Travel> findUpcomingTravels(@Param("manager") User manager, @Param("date") LocalDate date);
+
+    @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.startDate >= :date AND t.status <> :excludedStatus ORDER BY t.startDate ASC")
+    List<Travel> findAllUpcomingTravels(@Param("date") LocalDate date, @Param("excludedStatus") TravelStatus excludedStatus);
 }

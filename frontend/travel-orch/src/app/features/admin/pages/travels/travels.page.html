@@ -27,9 +27,9 @@
         <span class="stat-value">{{ confirmedCount() }}</span>
         <span class="stat-label">Confirmed</span>
       </div>
-      <div class="stat-card stat-card--completed">
-        <span class="stat-value">{{ completedCount() }}</span>
-        <span class="stat-label">Completed</span>
+      <div class="stat-card stat-card--cancelled">
+        <span class="stat-value">{{ cancelledCount() }}</span>
+        <span class="stat-label">Cancelled</span>
       </div>
     </div>
 
@@ -371,7 +371,6 @@
           <div class="form-group">
             <label for="e-status">Status</label>
             <select id="e-status" formControlName="status">
-              <option value="">No change</option>
               @for (status of statusOptions; track status) {
                 <option [value]="status">{{ getStatusLabel(status) }}</option>
               }

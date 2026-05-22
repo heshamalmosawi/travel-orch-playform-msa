@@ -1,5 +1,8 @@
 package com.sayedhesham.travelorch.travel_service.service;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -126,6 +129,18 @@ public class TravelService {
         }))
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnNext(list -> log.info("getMyTravels - Found {} travels for user: {}", list.size(), currentUsername))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<TravelResponse> getUpcomingTravels() {
+        log.info("getUpcomingTravels - Fetching upcoming travels");
+        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
+                travelRepository.findAllUpcomingTravels(LocalDate.now(), TravelStatus.cancelled).stream()
+                        .map(TravelResponse::fromEntity)
+                        .toList()
+        ))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getUpcomingTravels - Found {} upcoming travels", list.size()))
                 .flatMapMany(Flux::fromIterable);
     }
 

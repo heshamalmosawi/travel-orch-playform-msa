@@ -54,7 +54,7 @@ export class TravelsPage {
     startDate: ['', [Validators.required]],
     endDate: ['', [Validators.required]],
     totalPrice: [null, [Validators.min(0)]],
-    status: [''],
+    status: ['draft'],
   });
 
   readonly createForm: FormGroup = this.fb.group({
@@ -83,9 +83,9 @@ export class TravelsPage {
   readonly totalTravels = computed(() => this.travels().length);
   readonly draftCount = computed(() => this.travels().filter((t) => t.status === 'draft').length);
   readonly confirmedCount = computed(() => this.travels().filter((t) => t.status === 'confirmed').length);
-  readonly completedCount = computed(() => this.travels().filter((t) => t.status === 'completed').length);
+  readonly cancelledCount = computed(() => this.travels().filter((t) => t.status === 'cancelled').length);
 
-  readonly statusOptions = ['draft', 'planned', 'confirmed', 'in_progress', 'completed', 'cancelled'];
+  readonly statusOptions = ['draft', 'confirmed', 'cancelled'];
 
   constructor() {
     this.loadTravels();
@@ -158,7 +158,7 @@ export class TravelsPage {
       startDate: this.editForm.value.startDate,
       endDate: this.editForm.value.endDate,
       totalPrice: this.editForm.value.totalPrice,
-      status: this.editForm.value.status || undefined,
+      status: this.editForm.value.status,
     };
 
     this.travelService.update(travel.id, data).subscribe({
@@ -295,10 +295,7 @@ export class TravelsPage {
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       draft: 'badge-draft',
-      planned: 'badge-planned',
       confirmed: 'badge-confirmed',
-      in_progress: 'badge-progress',
-      completed: 'badge-completed',
       cancelled: 'badge-cancelled',
     };
     return map[status] || 'badge-draft';
