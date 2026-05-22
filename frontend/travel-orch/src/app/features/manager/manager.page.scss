@@ -70,7 +70,7 @@ $font-body: 'Lora', Georgia, serif;
 
   &--draft { border-top-color: $accent-blue; }
   &--confirmed { border-top-color: $accent-green; }
-  &--completed { border-top-color: $mid-gray; }
+  &--cancelled { border-top-color: #e53e3e; }
 
   .stat-value {
     font-family: $font-heading;
@@ -319,12 +319,9 @@ $font-body: 'Lora', Georgia, serif;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 
-  &-draft    { background: rgba($accent-blue, 0.15); color: $accent-blue; }
-  &-planned  { background: rgba(#a78bfa, 0.15); color: #a78bfa; }
-  &-confirmed{ background: rgba($accent-green, 0.15); color: $accent-green; }
-  &-progress { background: rgba($accent-orange, 0.15); color: $accent-orange; }
-  &-completed{ background: rgba($mid-gray, 0.15); color: $mid-gray; }
-  &-cancelled{ background: rgba(#e53e3e, 0.15); color: #e53e3e; }
+  &-draft     { background: rgba($accent-blue, 0.15); color: $accent-blue; }
+  &-confirmed { background: rgba($accent-green, 0.15); color: $accent-green; }
+  &-cancelled { background: rgba(#e53e3e, 0.15); color: #e53e3e; }
 }
 
 // Icon buttons

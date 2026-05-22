@@ -349,7 +349,7 @@ class TravelControllerTest {
                 .startDate(LocalDate.now().plusDays(10))
                 .endDate(LocalDate.now().plusDays(17))
                 .totalPrice(new BigDecimal("2000.00"))
-                .status(TravelStatus.planned)
+                .status(TravelStatus.confirmed)
                 .managerId(1L)
                 .destinations(List.of())
                 .createdAt(LocalDateTime.now())
@@ -367,7 +367,7 @@ class TravelControllerTest {
                 .value(responses -> {
                     assertEquals(200L, responses.get(0).getId());
                     assertEquals("Beach Getaway", responses.get(0).getTitle());
-                    assertEquals(TravelStatus.planned, responses.get(0).getStatus());
+                    assertEquals(TravelStatus.confirmed, responses.get(0).getStatus());
                     assertEquals(100L, responses.get(1).getId());
                 });
     }

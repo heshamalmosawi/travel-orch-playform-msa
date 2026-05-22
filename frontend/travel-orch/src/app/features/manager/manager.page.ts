@@ -84,9 +84,9 @@ export class ManagerPage {
   readonly totalTravels = computed(() => this.travels().length);
   readonly draftCount = computed(() => this.travels().filter((t) => t.status === 'draft').length);
   readonly confirmedCount = computed(() => this.travels().filter((t) => t.status === 'confirmed').length);
-  readonly completedCount = computed(() => this.travels().filter((t) => t.status === 'completed').length);
+  readonly cancelledCount = computed(() => this.travels().filter((t) => t.status === 'cancelled').length);
 
-  readonly statusOptions = ['draft', 'planned', 'confirmed', 'in_progress', 'completed', 'cancelled'];
+  readonly statusOptions = ['draft', 'confirmed', 'cancelled'];
 
   constructor() {
     this.loadTravels();
@@ -247,10 +247,7 @@ export class ManagerPage {
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       draft: 'badge-draft',
-      planned: 'badge-planned',
       confirmed: 'badge-confirmed',
-      in_progress: 'badge-progress',
-      completed: 'badge-completed',
       cancelled: 'badge-cancelled',
     };
     return map[status] || 'badge-draft';

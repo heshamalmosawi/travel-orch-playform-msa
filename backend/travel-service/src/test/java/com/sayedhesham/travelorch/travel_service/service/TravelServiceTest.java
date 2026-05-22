@@ -10,7 +10,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +39,10 @@ import com.sayedhesham.travelorch.common.repository.travel.DestinationRepository
 import com.sayedhesham.travelorch.common.repository.travel.TravelDestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
-import com.sayedhesham.travelorch.travel_service.dto.*;
+import com.sayedhesham.travelorch.travel_service.dto.TravelCreateRequest;
+import com.sayedhesham.travelorch.travel_service.dto.TravelDestinationCreateRequest;
+import com.sayedhesham.travelorch.travel_service.dto.TravelResponse;
+import com.sayedhesham.travelorch.travel_service.dto.TravelUpdateRequest;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -592,7 +594,7 @@ class TravelServiceTest {
         plannedTravel.setStartDate(LocalDate.now().plusDays(10));
         plannedTravel.setEndDate(LocalDate.now().plusDays(17));
         plannedTravel.setTotalPrice(new BigDecimal("2000.00"));
-        plannedTravel.setStatus(TravelStatus.planned);
+        plannedTravel.setStatus(TravelStatus.confirmed);
         plannedTravel.setCreatedAt(LocalDateTime.now());
         plannedTravel.setUpdatedAt(LocalDateTime.now());
 
@@ -616,7 +618,7 @@ class TravelServiceTest {
     }
 
     @Test
-    void getUpcomingTravels_ExcludesCancelledAndCompleted() {
+    void getUpcomingTravels_ExcludesCancelled() {
         setupTransactionTemplateInvocation();
         when(travelRepository.findAllUpcomingTravels(any(LocalDate.class), any()))
                 .thenReturn(List.of());
@@ -625,9 +627,7 @@ class TravelServiceTest {
 
         verify(travelRepository).findAllUpcomingTravels(
                 any(LocalDate.class),
-                argThat(excluded -> excluded.contains(TravelStatus.cancelled)
-                        && excluded.contains(TravelStatus.completed)
-                        && excluded.size() == 2)
+                eq(TravelStatus.cancelled)
         );
     }
 
