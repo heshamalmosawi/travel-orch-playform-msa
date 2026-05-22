@@ -1,16 +1,21 @@
-$bg: #faf9f5;
-$text-dark: #141413;
-$text-mid: #6b6963;
-$text-muted: #b0aea5;
-$border: #e4e2dc;
-$white: #ffffff;
-$accent: #d97757;
+@use 'sass:color';
+
+$dark: #141413;
+$dark-card: #1e1e1c;
+$dark-elevated: #2a2a27;
+$light: #faf9f5;
+$mid-gray: #b0aea5;
+$dark-border: #333330;
+$accent-orange: #d97757;
+$accent-orange-hover: #c4623f;
+$accent-blue: #6a9bcc;
+$accent-green: #788c5d;
 $font-heading: 'Poppins', Arial, sans-serif;
 $font-body: 'Lora', Georgia, serif;
 
 .home-page {
   min-height: 100vh;
-  background: $bg;
+  background: $dark;
 }
 
 .home-content {
@@ -27,14 +32,14 @@ $font-body: 'Lora', Georgia, serif;
     font-family: $font-heading;
     font-size: 2.25rem;
     font-weight: 700;
-    color: $text-dark;
+    color: $light;
     margin: 0 0 0.75rem;
   }
 
   p {
     font-family: $font-body;
     font-size: 1.1rem;
-    color: $text-mid;
+    color: $mid-gray;
     margin: 0;
   }
 }
@@ -43,7 +48,7 @@ $font-body: 'Lora', Georgia, serif;
   font-family: $font-heading;
   font-size: 1.35rem;
   font-weight: 600;
-  color: $text-dark;
+  color: $light;
   margin: 0 0 1.5rem;
 }
 
@@ -57,14 +62,14 @@ $font-body: 'Lora', Georgia, serif;
   .state-message {
     font-family: $font-body;
     font-size: 1rem;
-    color: $text-muted;
+    color: $mid-gray;
     text-align: center;
     margin: 0;
   }
 
   p {
     font-family: $font-body;
-    color: $text-muted;
+    color: $mid-gray;
     margin: 0;
   }
 }
@@ -72,8 +77,8 @@ $font-body: 'Lora', Georgia, serif;
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid $border;
-  border-top-color: $accent;
+  border: 3px solid $dark-border;
+  border-top-color: $accent-orange;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -89,17 +94,17 @@ $font-body: 'Lora', Georgia, serif;
 }
 
 .package-card {
-  background: $white;
-  border: 1px solid $border;
+  background: $dark-card;
+  border: 1px solid $dark-border;
   border-radius: 12px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition: background 0.2s, transform 0.2s;
 
   &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background: $dark-elevated;
     transform: translateY(-2px);
   }
 }
@@ -115,14 +120,14 @@ $font-body: 'Lora', Georgia, serif;
   font-family: $font-heading;
   font-size: 1.1rem;
   font-weight: 700;
-  color: $text-dark;
+  color: $light;
 }
 
 .card-title {
   font-family: $font-heading;
   font-size: 1.05rem;
   font-weight: 600;
-  color: $text-dark;
+  color: $light;
   margin: 0;
   line-height: 1.4;
 }
@@ -130,7 +135,7 @@ $font-body: 'Lora', Georgia, serif;
 .card-desc {
   font-family: $font-body;
   font-size: 0.9rem;
-  color: $text-mid;
+  color: $mid-gray;
   margin: 0;
   line-height: 1.6;
 }
@@ -148,15 +153,13 @@ $font-body: 'Lora', Georgia, serif;
   gap: 0.35rem;
   font-family: $font-body;
   font-size: 0.85rem;
-  color: $text-muted;
+  color: $mid-gray;
 
   svg {
     flex-shrink: 0;
-    color: $text-muted;
   }
 }
 
-// Status badges
 .badge {
   display: inline-block;
   padding: 0.2rem 0.6rem;
@@ -168,9 +171,9 @@ $font-body: 'Lora', Georgia, serif;
   text-transform: uppercase;
 }
 
-.badge-draft    { background: #f0eeea; color: #6b6963; }
-.badge-planned  { background: #e8f0fb; color: #3a6bb5; }
-.badge-confirmed { background: #e6f4ea; color: #2e7d4f; }
-.badge-progress { background: #fff3e0; color: #b45309; }
-.badge-completed { background: #f3f3f3; color: #555; }
-.badge-cancelled { background: #fde8e8; color: #b91c1c; }
+.badge-draft     { background: rgba($mid-gray, 0.15);      color: $mid-gray; }
+.badge-planned   { background: rgba($accent-blue, 0.15);   color: $accent-blue; }
+.badge-confirmed { background: rgba($accent-green, 0.2);   color: color.adjust($accent-green, $lightness: 15%); }
+.badge-progress  { background: rgba($accent-orange, 0.15); color: $accent-orange; }
+.badge-completed { background: rgba($mid-gray, 0.1);       color: $mid-gray; }
+.badge-cancelled { background: rgba(#c53030, 0.15);        color: #f87171; }
