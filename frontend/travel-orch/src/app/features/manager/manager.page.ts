@@ -95,7 +95,7 @@ export class ManagerPage {
   loadTravels(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    this.travelService.getAll().subscribe({
+    this.travelService.getMyTravels().subscribe({
       next: (travels) => {
         this.travels.set(travels);
         this.isLoading.set(false);
