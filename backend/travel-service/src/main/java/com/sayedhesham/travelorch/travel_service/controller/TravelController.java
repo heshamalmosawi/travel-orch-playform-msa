@@ -42,6 +42,24 @@ public class TravelController {
         return Mono.just(ResponseEntity.ok(travelService.getAllTravels()));
     }
 
+    @GetMapping("/me")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getMyTravels() {
+        log.info("GET /travels/me - Fetching current user's travels");
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername
+                        -> travelService.getMyTravels(currentUsername)
+                        .collectList()
+                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
+                )
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /travels/me - Forbidden: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .<Flux<TravelResponse>>body(Flux.empty()));
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<TravelResponse>>body(Flux.empty())));
+    }
+
     @GetMapping("/{id}")
     public Mono<ResponseEntity<TravelResponse>> getTravelById(@PathVariable Long id) {
         log.info("GET /travels/{} - Fetching travel", id);

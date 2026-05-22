@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sayedhesham.travelorch.user_service.dto.RoleUpdateRequest;
@@ -34,7 +35,15 @@ public class UserController {
     }
 
     @GetMapping
-    public Mono<ResponseEntity<Flux<UserResponse>>> getAllUsers() {
+    public Mono<ResponseEntity<Flux<UserResponse>>> getAllUsers(
+            @RequestParam(required = false) String role) {
+        if (role != null && !role.isBlank()) {
+            log.info("GET /users?role={} - Fetching users by role", role);
+            return SecurityUtils.getCurrentUsername()
+                    .doOnNext(username -> log.debug("GET /users?role={} - Requested by user: {}", role, username))
+                    .then(Mono.just(ResponseEntity.ok(userService.getUsersByRole(role))))
+                    .doOnError(e -> log.error("GET /users?role={} - Error: {}", role, e.getMessage()));
+        }
         log.info("GET /users - Fetching all users");
         return SecurityUtils.getCurrentUsername()
                 .doOnNext(username -> log.debug("GET /users - Requested by user: {}", username))

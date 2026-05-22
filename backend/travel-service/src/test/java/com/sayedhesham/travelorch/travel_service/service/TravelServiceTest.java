@@ -73,6 +73,7 @@ class TravelServiceTest {
     private TravelService travelService;
 
     private User testUser;
+    private User testManager;
     private Travel testTravel;
     private Destination testDestination;
     private TravelDestination testTravelDestination;
@@ -113,6 +114,17 @@ class TravelServiceTest {
         testUser.setEmail("test@example.com");
         testUser.setRole(userRole);
 
+        Role managerRole = new Role();
+        managerRole.setId(2L);
+        managerRole.setName("travel_manager");
+        managerRole.setPermissions(permissions);
+
+        testManager = new User();
+        testManager.setId(2L);
+        testManager.setUsername("testmanager");
+        testManager.setEmail("manager@example.com");
+        testManager.setRole(managerRole);
+
         testDestination = new Destination();
         testDestination.setId(10L);
         testDestination.setName("Paris");
@@ -121,12 +133,11 @@ class TravelServiceTest {
 
         testTravel = new Travel();
         testTravel.setId(100L);
-        testTravel.setUser(testUser);
+        testTravel.setManager(testUser);
         testTravel.setTitle("Summer Trip");
         testTravel.setDescription("A summer vacation");
         testTravel.setStartDate(LocalDate.of(2026, 6, 1));
         testTravel.setEndDate(LocalDate.of(2026, 6, 15));
-        testTravel.setDurationDays(14);
         testTravel.setTotalPrice(new BigDecimal("5000.00"));
         testTravel.setStatus(TravelStatus.draft);
         testTravel.setCreatedAt(LocalDateTime.now());
@@ -162,7 +173,7 @@ class TravelServiceTest {
                     assertEquals(100L, response.getId());
                     assertEquals("Summer Trip", response.getTitle());
                     assertEquals(TravelStatus.draft, response.getStatus());
-                    assertEquals(1L, response.getUserId());
+                    assertEquals(1L, response.getManagerId());
                     return true;
                 })
                 .verifyComplete();
@@ -215,12 +226,12 @@ class TravelServiceTest {
         setupTransactionTemplateInvocation();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(travelRepository.findByUser(testUser)).thenReturn(List.of(testTravel));
+        when(travelRepository.findByManager(testUser)).thenReturn(List.of(testTravel));
 
         StepVerifier.create(travelService.getTravelsByUser(1L, "testuser"))
                 .expectNextMatches(response -> {
                     assertEquals("Summer Trip", response.getTitle());
-                    assertEquals(1L, response.getUserId());
+                    assertEquals(1L, response.getManagerId());
                     return true;
                 })
                 .verifyComplete();
@@ -256,8 +267,7 @@ class TravelServiceTest {
     @Test
     void createTravel_WithoutDestinations_Success() {
         setupTransactionTemplateInvocation();
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testmanager")).thenReturn(Optional.of(testManager));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
             Travel t = invocation.getArgument(0);
             t.setId(100L);
@@ -272,16 +282,14 @@ class TravelServiceTest {
                 .description("A winter getaway")
                 .startDate(LocalDate.of(2026, 12, 1))
                 .endDate(LocalDate.of(2026, 12, 10))
-                .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
-                .userId(1L)
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request, "testuser"))
+        StepVerifier.create(travelService.createTravel(request, "testmanager"))
                 .expectNextMatches(response -> {
                     assertNotNull(response.getId());
                     assertEquals("Winter Trip", response.getTitle());
-                    assertEquals(1L, response.getUserId());
+                    assertEquals(2L, response.getManagerId());
                     return true;
                 })
                 .verifyComplete();
@@ -292,8 +300,7 @@ class TravelServiceTest {
     @Test
     void createTravel_WithDestinations_Success() {
         setupTransactionTemplateInvocation();
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testmanager")).thenReturn(Optional.of(testManager));
         when(destinationRepository.findById(10L)).thenReturn(Optional.of(testDestination));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
             Travel t = invocation.getArgument(0);
@@ -305,11 +312,10 @@ class TravelServiceTest {
         when(travelRepository.findByIdWithDestinations(100L)).thenAnswer(invocation -> {
             Travel reload = new Travel();
             reload.setId(100L);
-            reload.setUser(testUser);
+            reload.setManager(testManager);
             reload.setTitle("Summer Trip");
             reload.setStartDate(LocalDate.of(2026, 6, 1));
             reload.setEndDate(LocalDate.of(2026, 6, 15));
-            reload.setDurationDays(14);
             reload.setStatus(TravelStatus.draft);
             reload.setCreatedAt(LocalDateTime.now());
             reload.setUpdatedAt(LocalDateTime.now());
@@ -340,12 +346,10 @@ class TravelServiceTest {
                 .title("Summer Trip")
                 .startDate(LocalDate.of(2026, 6, 1))
                 .endDate(LocalDate.of(2026, 6, 15))
-                .durationDays(14)
-                .userId(1L)
                 .destinations(List.of(destRequest))
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request, "testuser"))
+        StepVerifier.create(travelService.createTravel(request, "testmanager"))
                 .expectNextMatches(response -> {
                     assertEquals("Summer Trip", response.getTitle());
                     assertEquals(1, response.getDestinations().size());
@@ -358,23 +362,20 @@ class TravelServiceTest {
     }
 
     @Test
-    void createTravel_UserNotFound() {
+    void createTravel_CurrentUserNotFound() {
         setupTransactionTemplateInvocation();
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("unknownuser")).thenReturn(Optional.empty());
 
         TravelCreateRequest request = TravelCreateRequest.builder()
                 .title("Trip")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 5))
-                .durationDays(4)
-                .userId(99L)
                 .build();
 
-        StepVerifier.create(travelService.createTravel(request, "testuser"))
+        StepVerifier.create(travelService.createTravel(request, "unknownuser"))
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException
-                                && throwable.getMessage().equals("User not found with id: 99")
+                                && throwable.getMessage().equals("User not found: unknownuser")
                 )
                 .verify();
 
@@ -385,7 +386,7 @@ class TravelServiceTest {
     void createTravel_DestinationNotFound() {
         setupTransactionTemplateInvocation();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(testManager));
         when(destinationRepository.findById(99L)).thenReturn(Optional.empty());
 
         TravelDestinationCreateRequest destRequest = TravelDestinationCreateRequest.builder()
@@ -397,8 +398,7 @@ class TravelServiceTest {
                 .title("Trip")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 5))
-                .durationDays(4)
-                .userId(1L)
+                .managerId(2L)
                 .destinations(List.of(destRequest))
                 .build();
 
@@ -410,6 +410,59 @@ class TravelServiceTest {
                 .verify();
 
         verify(travelRepository, never()).save(any());
+    }
+
+    @Test
+    void createTravel_NonManagerForbidden() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+
+        TravelCreateRequest request = TravelCreateRequest.builder()
+                .title("Trip")
+                .startDate(LocalDate.of(2026, 1, 1))
+                .endDate(LocalDate.of(2026, 1, 5))
+                .build();
+
+        StepVerifier.create(travelService.createTravel(request, "testuser"))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof SecurityException
+                                && throwable.getMessage().equals("You must be a travel manager or provide an explicit managerId")
+                )
+                .verify();
+
+        verify(travelRepository, never()).save(any());
+    }
+
+    @Test
+    void createTravel_WithExplicitManagerId_Success() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(testManager));
+        when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
+            Travel t = invocation.getArgument(0);
+            t.setId(101L);
+            t.setCreatedAt(LocalDateTime.now());
+            t.setUpdatedAt(LocalDateTime.now());
+            return t;
+        });
+        when(travelRepository.findByIdWithDestinations(101L)).thenReturn(null);
+
+        TravelCreateRequest request = TravelCreateRequest.builder()
+                .title("Admin Created Trip")
+                .startDate(LocalDate.of(2026, 3, 1))
+                .endDate(LocalDate.of(2026, 3, 10))
+                .managerId(2L)
+                .build();
+
+        StepVerifier.create(travelService.createTravel(request, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals("Admin Created Trip", response.getTitle());
+                    assertEquals(2L, response.getManagerId());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(travelRepository).save(any(Travel.class));
     }
 
     @Test

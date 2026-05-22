@@ -26,8 +26,6 @@ public class TravelUpdateRequest {
 
     private LocalDate endDate;
 
-    private Integer durationDays;
-
     private BigDecimal totalPrice;
 
     private TravelStatus status;

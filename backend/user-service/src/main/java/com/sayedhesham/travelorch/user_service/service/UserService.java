@@ -147,6 +147,20 @@ public class UserService {
         })).subscribeOn(Schedulers.boundedElastic());
     }
 
+    @PreAuthorize("hasPermission('admin', 'all')")
+    public Flux<UserResponse> getUsersByRole(String role) {
+        String normalizedRole = role.trim().toLowerCase();
+        log.info("getUsersByRole - Fetching users with role: {}", normalizedRole);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status
+                -> userRepository.findByRole_Name(normalizedRole).stream()
+                        .map(UserResponse::fromEntity)
+                        .toList()
+        ))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getUsersByRole - Found {} users with role: {}", list.size(), normalizedRole))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     @PreAuthorize("hasPermission('users', 'delete')")
     public Mono<Void> deleteUser(Long id) {
         log.info("deleteUser - Deleting user with id: {}", id);

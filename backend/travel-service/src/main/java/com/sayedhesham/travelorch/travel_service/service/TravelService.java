@@ -67,8 +67,8 @@ public class TravelService {
             User currentUser = userRepository.findByUsername(currentUsername)
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
 
-            boolean isOwner = travel.getUser() != null
-                    && travel.getUser().getId().equals(currentUser.getId());
+            boolean isOwner = travel.getManager() != null
+                    && travel.getManager().getId().equals(currentUser.getId());
             boolean canReadAny = hasPermission(currentUser, "travels", "read");
 
             if (!isOwner && !canReadAny) {
@@ -98,12 +98,34 @@ public class TravelService {
 
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
-            return travelRepository.findByUser(user).stream()
+            return travelRepository.findByManager(user).stream()
                     .map(TravelResponse::fromEntity)
                     .toList();
         }))
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnNext(list -> log.info("getTravelsByUser - Found {} travels for userId: {}", list.size(), userId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<TravelResponse> getMyTravels(String currentUsername) {
+        log.info("getMyTravels - Fetching travels for current user: {}", currentUsername);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            boolean isManager = currentUser.getRole() != null
+                    && "travel_manager".equalsIgnoreCase(currentUser.getRole().getName());
+            if (!isManager) {
+                log.warn("getMyTravels - User {} is not a travel manager", currentUsername);
+                throw new SecurityException("Only travel managers can access this endpoint");
+            }
+
+            return travelRepository.findByManager(currentUser).stream()
+                    .map(TravelResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getMyTravels - Found {} travels for user: {}", list.size(), currentUsername))
                 .flatMapMany(Flux::fromIterable);
     }
 
@@ -121,31 +143,49 @@ public class TravelService {
     }
 
     public Mono<TravelResponse> createTravel(TravelCreateRequest request, String currentUsername) {
-        log.info("createTravel - Creating travel: {} by user: {}", request.getTitle(), currentUsername);
+        log.info("createTravel - Creating travel package: {} by user: {}", request.getTitle(), currentUsername);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
             User currentUser = userRepository.findByUsername(currentUsername)
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
 
-            Long targetUserId = request.getUserId() != null ? request.getUserId() : currentUser.getId();
-
-            boolean isSelf = currentUser.getId().equals(targetUserId);
-            boolean canWriteAny = hasPermission(currentUser, "travels", "write");
-
-            if (!isSelf && !canWriteAny) {
-                log.warn("createTravel - User {} denied creating travel for userId: {}", currentUsername, targetUserId);
-                throw new SecurityException("You do not have permission to create travels for other users");
+            boolean canWrite = hasPermission(currentUser, "travels", "write");
+            if (!canWrite) {
+                log.warn("createTravel - User {} denied creating travel package", currentUsername);
+                throw new SecurityException("You do not have permission to create travel packages");
             }
 
-            User user = userRepository.findById(targetUserId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + targetUserId));
+            User manager;
+            if (request.getManagerId() != null) {
+                boolean isAdmin = hasPermission(currentUser, "admin", "all");
+                if (!isAdmin) {
+                    log.warn("createTravel - User {} attempted to set managerId without admin permission", currentUsername);
+                    throw new SecurityException("Only admins can assign an explicit managerId");
+                }
+                manager = userRepository.findById(request.getManagerId())
+                        .orElseThrow(() -> new IllegalArgumentException("Manager not found with id: " + request.getManagerId()));
+            } else {
+                boolean isManager = currentUser.getRole() != null
+                        && "travel_manager".equalsIgnoreCase(currentUser.getRole().getName());
+                if (!isManager) {
+                    log.warn("createTravel - User {} is not a travel manager and no managerId provided", currentUsername);
+                    throw new SecurityException("You must be a travel manager or provide an explicit managerId");
+                }
+                manager = currentUser;
+            }
+
+            boolean resolvedIsManager = manager.getRole() != null
+                    && "travel_manager".equalsIgnoreCase(manager.getRole().getName());
+            if (!resolvedIsManager) {
+                log.warn("createTravel - Resolved manager id: {} does not have travel_manager role", manager.getId());
+                throw new SecurityException("The assigned manager does not have the travel_manager role");
+            }
 
             Travel travel = new Travel();
-            travel.setUser(user);
+            travel.setManager(manager);
             travel.setTitle(request.getTitle());
             travel.setDescription(request.getDescription());
             travel.setStartDate(request.getStartDate());
             travel.setEndDate(request.getEndDate());
-            travel.setDurationDays(request.getDurationDays());
             travel.setTotalPrice(request.getTotalPrice());
 
             if (request.getDestinations() != null && !request.getDestinations().isEmpty()) {
@@ -182,8 +222,8 @@ public class TravelService {
             User currentUser = userRepository.findByUsername(currentUsername)
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
 
-            boolean isOwner = travel.getUser() != null
-                    && travel.getUser().getId().equals(currentUser.getId());
+            boolean isOwner = travel.getManager() != null
+                    && travel.getManager().getId().equals(currentUser.getId());
             boolean canWriteAny = hasPermission(currentUser, "travels", "write");
 
             if (!isOwner && !canWriteAny) {
@@ -202,9 +242,6 @@ public class TravelService {
             }
             if (request.getEndDate() != null) {
                 travel.setEndDate(request.getEndDate());
-            }
-            if (request.getDurationDays() != null) {
-                travel.setDurationDays(request.getDurationDays());
             }
             if (request.getTotalPrice() != null) {
                 travel.setTotalPrice(request.getTotalPrice());
@@ -231,8 +268,8 @@ public class TravelService {
             User currentUser = userRepository.findByUsername(currentUsername)
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
 
-            boolean isOwner = travel.getUser() != null
-                    && travel.getUser().getId().equals(currentUser.getId());
+            boolean isOwner = travel.getManager() != null
+                    && travel.getManager().getId().equals(currentUser.getId());
             boolean canDeleteAny = hasPermission(currentUser, "travels", "delete");
 
             if (!isOwner && !canDeleteAny) {
