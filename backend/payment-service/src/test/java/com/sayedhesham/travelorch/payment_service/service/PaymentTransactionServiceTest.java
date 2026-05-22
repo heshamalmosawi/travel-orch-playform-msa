@@ -89,7 +89,7 @@ class PaymentTransactionServiceTest {
         testTravel = new Travel();
         testTravel.setId(1L);
         testTravel.setTitle("Test Trip");
-        testTravel.setUser(testUser);
+        testTravel.setManager(testUser);
 
         testPaymentMethod = new PaymentMethod();
         testPaymentMethod.setId(1L);
@@ -194,7 +194,7 @@ class PaymentTransactionServiceTest {
     void getTransactionsByUser_AsOwner_Success() {
         setupTransactionTemplateInvocation();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(paymentTransactionRepository.findByTravelUserId(1L)).thenReturn(java.util.List.of(testTransaction));
+        when(paymentTransactionRepository.findByTravelManagerId(1L)).thenReturn(java.util.List.of(testTransaction));
 
         StepVerifier.create(paymentTransactionService.getTransactionsByUser(1L, "testuser"))
                 .expectNextMatches(response -> {

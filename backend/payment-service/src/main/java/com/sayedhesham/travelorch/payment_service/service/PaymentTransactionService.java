@@ -65,8 +65,8 @@ public class PaymentTransactionService {
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
 
             boolean isOwner = transaction.getTravel() != null
-                    && transaction.getTravel().getUser() != null
-                    && transaction.getTravel().getUser().getId().equals(currentUser.getId());
+                    && transaction.getTravel().getManager() != null
+                    && transaction.getTravel().getManager().getId().equals(currentUser.getId());
             boolean canReadAny = hasPermission(currentUser, "payments", "read");
 
             if (!isOwner && !canReadAny) {
@@ -94,7 +94,7 @@ public class PaymentTransactionService {
                 throw new SecurityException("You do not have permission to view these transactions");
             }
 
-            return paymentTransactionRepository.findByTravelUserId(userId).stream()
+            return paymentTransactionRepository.findByTravelManagerId(userId).stream()
                     .map(PaymentTransactionResponse::fromEntity)
                     .toList();
         }))

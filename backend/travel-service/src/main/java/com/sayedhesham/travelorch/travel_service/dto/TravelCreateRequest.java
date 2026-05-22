@@ -31,13 +31,9 @@ public class TravelCreateRequest {
     @NotNull(message = "End date is required")
     private LocalDate endDate;
 
-    @NotNull(message = "Duration days is required")
-    private Integer durationDays;
-
     private BigDecimal totalPrice;
 
-    @NotNull(message = "User ID is required")
-    private Long userId;
+    private Long managerId;
 
     private List<TravelDestinationCreateRequest> destinations;
 }

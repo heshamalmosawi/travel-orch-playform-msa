@@ -13,6 +13,10 @@ export class AdminService {
     return this.http.get<UserResponse[]>(`${this.apiUrl}/api/user/users`);
   }
 
+  getUsersByRole(role: string): Observable<UserResponse[]> {
+    return this.http.get<UserResponse[]>(`${this.apiUrl}/api/user/users`, { params: { role } });
+  }
+
   getUser(id: number): Observable<UserResponse> {
     return this.http.get<UserResponse>(`${this.apiUrl}/api/user/users/${id}`);
   }

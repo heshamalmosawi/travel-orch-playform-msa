@@ -14,17 +14,17 @@ import java.util.List;
 @Repository
 public interface TravelRepository extends JpaRepository<Travel, Long> {
     
-    List<Travel> findByUser(User user);
-    
-    List<Travel> findByUserAndStatus(User user, TravelStatus status);
-    
+    List<Travel> findByManager(User manager);
+
+    List<Travel> findByManagerAndStatus(User manager, TravelStatus status);
+
     List<Travel> findByStatus(TravelStatus status);
-    
+
     List<Travel> findByStartDateBetween(LocalDate start, LocalDate end);
-    
+
     @Query("SELECT t FROM Travel t LEFT JOIN FETCH t.destinations WHERE t.id = :id")
     Travel findByIdWithDestinations(@Param("id") Long id);
-    
-    @Query("SELECT t FROM Travel t WHERE t.user = :user AND t.startDate >= :date ORDER BY t.startDate ASC")
-    List<Travel> findUpcomingTravels(@Param("user") User user, @Param("date") LocalDate date);
+
+    @Query("SELECT t FROM Travel t WHERE t.manager = :manager AND t.startDate >= :date ORDER BY t.startDate ASC")
+    List<Travel> findUpcomingTravels(@Param("manager") User manager, @Param("date") LocalDate date);
 }
