@@ -47,10 +47,6 @@ public class Travel extends BaseEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @NotNull
-    @Column(name = "duration_days", nullable = false)
-    private Integer durationDays;
-
     @Column(name = "total_price", precision = 12, scale = 2)
     private BigDecimal totalPrice;
 

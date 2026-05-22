@@ -9,6 +9,7 @@ import {
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { TravelService } from '../../travel/travel.service';
 import { DestinationService } from '../../travel/destination.service';
+import { AdminService } from '../../admin.service';
 import {
   TravelResponse,
   TravelCreateRequest,
@@ -16,6 +17,7 @@ import {
   TravelUpdateRequest,
 } from '../../travel/travel.model';
 import { DestinationResponse } from '../../travel/destination.model';
+import { UserResponse } from '../../admin.model';
 
 @Component({
   selector: 'app-travels-page',
@@ -27,6 +29,7 @@ import { DestinationResponse } from '../../travel/destination.model';
 export class TravelsPage {
   private readonly travelService = inject(TravelService);
   private readonly destinationService = inject(DestinationService);
+  private readonly adminService = inject(AdminService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
@@ -42,6 +45,7 @@ export class TravelsPage {
   readonly creatingTravel = signal(false);
   readonly availableDestinations = signal<DestinationResponse[]>([]);
   readonly pendingDestinations = signal<TravelDestinationCreateRequest[]>([]);
+  readonly managers = signal<UserResponse[]>([]);
   readonly isSubmitting = signal(false);
 
   readonly editForm: FormGroup = this.fb.group({
@@ -49,7 +53,6 @@ export class TravelsPage {
     description: ['', [Validators.maxLength(10000)]],
     startDate: ['', [Validators.required]],
     endDate: ['', [Validators.required]],
-    durationDays: [null, [Validators.required, Validators.min(1)]],
     totalPrice: [null, [Validators.min(0)]],
     status: [''],
   });
@@ -59,8 +62,8 @@ export class TravelsPage {
     description: ['', [Validators.maxLength(10000)]],
     startDate: ['', [Validators.required]],
     endDate: ['', [Validators.required]],
-    durationDays: [null, [Validators.required, Validators.min(1)]],
     totalPrice: [null, [Validators.min(0)]],
+    managerId: [null, [Validators.required]],
   });
 
   readonly filteredTravels = computed(() => {
@@ -121,7 +124,6 @@ export class TravelsPage {
       description: travel.description || '',
       startDate: travel.startDate,
       endDate: travel.endDate,
-      durationDays: travel.durationDays,
       totalPrice: travel.totalPrice,
       status: travel.status,
     });
@@ -155,7 +157,6 @@ export class TravelsPage {
       description: this.editForm.value.description || undefined,
       startDate: this.editForm.value.startDate,
       endDate: this.editForm.value.endDate,
-      durationDays: this.editForm.value.durationDays,
       totalPrice: this.editForm.value.totalPrice,
       status: this.editForm.value.status || undefined,
     };
@@ -211,6 +212,10 @@ export class TravelsPage {
       next: (dests) => this.availableDestinations.set(dests),
       error: () => this.availableDestinations.set([]),
     });
+    this.adminService.getUsersByRole('travel_manager').subscribe({
+      next: (users) => this.managers.set(users),
+      error: () => this.managers.set([]),
+    });
   }
 
   closeCreateModal(): void {
@@ -256,8 +261,8 @@ export class TravelsPage {
       description: this.createForm.value.description || undefined,
       startDate: this.createForm.value.startDate,
       endDate: this.createForm.value.endDate,
-      durationDays: this.createForm.value.durationDays,
       totalPrice: this.createForm.value.totalPrice || undefined,
+      managerId: this.createForm.value.managerId,
       destinations: destinations.length > 0 ? destinations : undefined,
     };
 

@@ -20,7 +20,6 @@ export interface TravelResponse {
   description: string | null;
   startDate: string;
   endDate: string;
-  durationDays: number;
   totalPrice: number | null;
   status: string;
   managerId: number;
@@ -34,8 +33,8 @@ export interface TravelCreateRequest {
   description?: string;
   startDate: string;
   endDate: string;
-  durationDays: number;
   totalPrice?: number;
+  managerId?: number;
   destinations?: TravelDestinationCreateRequest[];
 }
 
@@ -52,7 +51,6 @@ export interface TravelUpdateRequest {
   description?: string;
   startDate?: string;
   endDate?: string;
-  durationDays?: number;
   totalPrice?: number;
   status?: string;
 }

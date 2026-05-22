@@ -138,7 +138,6 @@ class TravelServiceTest {
         testTravel.setDescription("A summer vacation");
         testTravel.setStartDate(LocalDate.of(2026, 6, 1));
         testTravel.setEndDate(LocalDate.of(2026, 6, 15));
-        testTravel.setDurationDays(14);
         testTravel.setTotalPrice(new BigDecimal("5000.00"));
         testTravel.setStatus(TravelStatus.draft);
         testTravel.setCreatedAt(LocalDateTime.now());
@@ -283,7 +282,6 @@ class TravelServiceTest {
                 .description("A winter getaway")
                 .startDate(LocalDate.of(2026, 12, 1))
                 .endDate(LocalDate.of(2026, 12, 10))
-                .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
                 .build();
 
@@ -318,7 +316,6 @@ class TravelServiceTest {
             reload.setTitle("Summer Trip");
             reload.setStartDate(LocalDate.of(2026, 6, 1));
             reload.setEndDate(LocalDate.of(2026, 6, 15));
-            reload.setDurationDays(14);
             reload.setStatus(TravelStatus.draft);
             reload.setCreatedAt(LocalDateTime.now());
             reload.setUpdatedAt(LocalDateTime.now());
@@ -349,7 +346,6 @@ class TravelServiceTest {
                 .title("Summer Trip")
                 .startDate(LocalDate.of(2026, 6, 1))
                 .endDate(LocalDate.of(2026, 6, 15))
-                .durationDays(14)
                 .destinations(List.of(destRequest))
                 .build();
 
@@ -374,7 +370,6 @@ class TravelServiceTest {
                 .title("Trip")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 5))
-                .durationDays(4)
                 .build();
 
         StepVerifier.create(travelService.createTravel(request, "unknownuser"))
@@ -403,7 +398,6 @@ class TravelServiceTest {
                 .title("Trip")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 5))
-                .durationDays(4)
                 .managerId(2L)
                 .destinations(List.of(destRequest))
                 .build();
@@ -427,7 +421,6 @@ class TravelServiceTest {
                 .title("Trip")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 1, 5))
-                .durationDays(4)
                 .build();
 
         StepVerifier.create(travelService.createTravel(request, "testuser"))
@@ -458,7 +451,6 @@ class TravelServiceTest {
                 .title("Admin Created Trip")
                 .startDate(LocalDate.of(2026, 3, 1))
                 .endDate(LocalDate.of(2026, 3, 10))
-                .durationDays(9)
                 .managerId(2L)
                 .build();
 

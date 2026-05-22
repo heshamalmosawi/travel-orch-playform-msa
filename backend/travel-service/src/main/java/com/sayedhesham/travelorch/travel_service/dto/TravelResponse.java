@@ -23,7 +23,6 @@ public class TravelResponse {
     private String description;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Integer durationDays;
     private BigDecimal totalPrice;
     private TravelStatus status;
     private Long managerId;
@@ -38,7 +37,6 @@ public class TravelResponse {
                 .description(travel.getDescription())
                 .startDate(travel.getStartDate())
                 .endDate(travel.getEndDate())
-                .durationDays(travel.getDurationDays())
                 .totalPrice(travel.getTotalPrice())
                 .status(travel.getStatus())
                 .managerId(travel.getManager().getId())

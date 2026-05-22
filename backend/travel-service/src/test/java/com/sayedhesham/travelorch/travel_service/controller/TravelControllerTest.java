@@ -76,7 +76,6 @@ class TravelControllerTest {
                 .description("A summer vacation")
                 .startDate(LocalDate.of(2026, 6, 1))
                 .endDate(LocalDate.of(2026, 6, 15))
-                .durationDays(14)
                 .totalPrice(new BigDecimal("5000.00"))
                 .status(TravelStatus.draft)
                 .managerId(1L)
@@ -182,7 +181,6 @@ class TravelControllerTest {
                 .description("A winter getaway")
                 .startDate(LocalDate.of(2026, 12, 1))
                 .endDate(LocalDate.of(2026, 12, 10))
-                .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
                 .build();
 
@@ -192,7 +190,6 @@ class TravelControllerTest {
                 .description("A winter getaway")
                 .startDate(LocalDate.of(2026, 12, 1))
                 .endDate(LocalDate.of(2026, 12, 10))
-                .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
                 .status(TravelStatus.draft)
                 .managerId(1L)
@@ -231,7 +228,6 @@ class TravelControllerTest {
                 .description("A summer vacation")
                 .startDate(LocalDate.of(2026, 6, 1))
                 .endDate(LocalDate.of(2026, 6, 15))
-                .durationDays(14)
                 .totalPrice(new BigDecimal("5000.00"))
                 .status(TravelStatus.confirmed)
                 .managerId(1L)

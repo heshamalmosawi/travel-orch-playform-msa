@@ -79,7 +79,6 @@
                   <th>ID</th>
                   <th>Title</th>
                   <th>Dates</th>
-                  <th>Duration</th>
                   <th>Price</th>
                   <th>Status</th>
                   <th>Destinations</th>
@@ -100,7 +99,6 @@
                     <td class="td-dates">
                       {{ formatDate(travel.startDate) }} — {{ formatDate(travel.endDate) }}
                     </td>
-                    <td class="td-duration">{{ travel.durationDays }}d</td>
                     <td class="td-price">
                       @if (travel.totalPrice !== null) {
                         ${{ travel.totalPrice.toLocaleString() }}
@@ -163,10 +161,6 @@
             <div class="detail-item">
               <span class="detail-label">Dates</span>
               <span class="detail-value">{{ formatDate(viewTravel()!.startDate) }} — {{ formatDate(viewTravel()!.endDate) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Duration</span>
-              <span class="detail-value">{{ viewTravel()!.durationDays }} days</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Total Price</span>
@@ -232,6 +226,21 @@
             <label for="c-desc">Description</label>
             <textarea id="c-desc" formControlName="description" rows="3" placeholder="Optional trip description..."></textarea>
           </div>
+          <div class="form-group">
+            <label for="c-manager">Manager <span class="required-star">*</span></label>
+            <select id="c-manager" formControlName="managerId">
+              <option [ngValue]="null" disabled selected>Select a manager...</option>
+              @for (m of managers(); track m.id) {
+                <option [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }} ({{ m.username }})</option>
+              }
+            </select>
+            @if (managers().length === 0) {
+              <span class="hint-text">No managers found. Assign the manager role to a user first.</span>
+            }
+            @if (createForm.get('managerId')?.invalid && createForm.get('managerId')?.touched) {
+              <span class="field-error">Manager is required</span>
+            }
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="c-start">Start Date</label>
@@ -248,18 +257,9 @@
               }
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="c-duration">Duration (days)</label>
-              <input id="c-duration" type="number" min="1" formControlName="durationDays" placeholder="7" />
-              @if (createForm.get('durationDays')?.invalid && createForm.get('durationDays')?.touched) {
-                <span class="field-error">Duration is required</span>
-              }
-            </div>
-            <div class="form-group">
-              <label for="c-price">Total Price ($)</label>
-              <input id="c-price" type="number" step="0.01" min="0" formControlName="totalPrice" placeholder="Optional" />
-            </div>
+          <div class="form-group">
+            <label for="c-price">Total Price ($)</label>
+            <input id="c-price" type="number" step="0.01" min="0" formControlName="totalPrice" placeholder="Optional" />
           </div>
           <div class="form-group">
             <div class="dest-section-header">
@@ -358,18 +358,9 @@
               }
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="e-duration">Duration (days)</label>
-              <input id="e-duration" type="number" min="1" formControlName="durationDays" />
-              @if (editForm.get('durationDays')?.invalid && editForm.get('durationDays')?.touched) {
-                <span class="field-error">Duration is required</span>
-              }
-            </div>
-            <div class="form-group">
-              <label for="e-price">Total Price</label>
-              <input id="e-price" type="number" step="0.01" min="0" formControlName="totalPrice" />
-            </div>
+          <div class="form-group">
+            <label for="e-price">Total Price</label>
+            <input id="e-price" type="number" step="0.01" min="0" formControlName="totalPrice" />
           </div>
           <div class="form-group">
             <label for="e-status">Status</label>
