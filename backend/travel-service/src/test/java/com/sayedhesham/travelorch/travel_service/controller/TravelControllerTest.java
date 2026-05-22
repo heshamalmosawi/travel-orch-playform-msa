@@ -79,7 +79,7 @@ class TravelControllerTest {
                 .durationDays(14)
                 .totalPrice(new BigDecimal("5000.00"))
                 .status(TravelStatus.draft)
-                .userId(1L)
+                .managerId(1L)
                 .destinations(List.of(tdResponse))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -159,7 +159,7 @@ class TravelControllerTest {
                 .expectStatus().isOk()
                 .expectBodyList(TravelResponse.class)
                 .hasSize(1)
-                .value(responses -> assertEquals(1L, responses.getFirst().getUserId()));
+                .value(responses -> assertEquals(1L, responses.getFirst().getManagerId()));
     }
 
     @Test
@@ -184,7 +184,6 @@ class TravelControllerTest {
                 .endDate(LocalDate.of(2026, 12, 10))
                 .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
-                .userId(1L)
                 .build();
 
         TravelResponse createdResponse = TravelResponse.builder()
@@ -196,7 +195,7 @@ class TravelControllerTest {
                 .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
                 .status(TravelStatus.draft)
-                .userId(1L)
+                .managerId(1L)
                 .destinations(List.of())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -215,7 +214,7 @@ class TravelControllerTest {
                 .value(response -> {
                     assertEquals(101L, response.getId());
                     assertEquals("Winter Trip", response.getTitle());
-                    assertEquals(1L, response.getUserId());
+                    assertEquals(1L, response.getManagerId());
                 });
     }
 
@@ -235,7 +234,7 @@ class TravelControllerTest {
                 .durationDays(14)
                 .totalPrice(new BigDecimal("5000.00"))
                 .status(TravelStatus.confirmed)
-                .userId(1L)
+                .managerId(1L)
                 .destinations(List.of())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())

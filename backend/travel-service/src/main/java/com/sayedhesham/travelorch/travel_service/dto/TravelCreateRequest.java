@@ -36,8 +36,7 @@ public class TravelCreateRequest {
 
     private BigDecimal totalPrice;
 
-    @NotNull(message = "User ID is required")
-    private Long userId;
+    private Long managerId;
 
     private List<TravelDestinationCreateRequest> destinations;
 }

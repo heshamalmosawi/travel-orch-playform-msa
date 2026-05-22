@@ -26,7 +26,7 @@ public class TravelResponse {
     private Integer durationDays;
     private BigDecimal totalPrice;
     private TravelStatus status;
-    private Long userId;
+    private Long managerId;
     private List<TravelDestinationResponse> destinations;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -41,7 +41,7 @@ public class TravelResponse {
                 .durationDays(travel.getDurationDays())
                 .totalPrice(travel.getTotalPrice())
                 .status(travel.getStatus())
-                .userId(travel.getUser() != null ? travel.getUser().getId() : null)
+                .managerId(travel.getManager().getId())
                 .destinations(travel.getDestinations() != null
                         ? travel.getDestinations().stream()
                         .map(TravelDestinationResponse::fromEntity)

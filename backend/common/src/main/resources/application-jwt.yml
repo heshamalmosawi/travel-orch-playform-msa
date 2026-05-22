@@ -9,4 +9,4 @@ jwt:
 
 spring:
   elasticsearch:
-    uris: http://elasticsearch:9200
+    uris: http://${elasticsearch.host:localhost}:${elasticsearch.port:9200}

@@ -76,8 +76,8 @@ export const routes: Routes = [
     path: 'manager',
     canActivate: [managerGuard],
     loadComponent: () =>
-      import('./features/admin/pages/travels/travels.page').then(
-        (m) => m.TravelsPage
+      import('./features/manager/manager.page').then(
+        (m) => m.ManagerPage
       ),
   },
   {

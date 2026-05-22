@@ -6,25 +6,28 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { TravelService } from '../../travel/travel.service';
-import { DestinationService } from '../../travel/destination.service';
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { ToastService } from '../../shared/components/toast/toast.service';
+import { TravelService } from '../admin/travel/travel.service';
+import { DestinationService } from '../admin/travel/destination.service';
 import {
   TravelResponse,
   TravelCreateRequest,
   TravelDestinationCreateRequest,
-  TravelUpdateRequest,
-} from '../../travel/travel.model';
-import { DestinationResponse } from '../../travel/destination.model';
+} from '../admin/travel/travel.model';
+import {
+  DestinationResponse,
+  DestinationCreateRequest,
+} from '../admin/travel/destination.model';
 
 @Component({
-  selector: 'app-travels-page',
+  selector: 'app-manager-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './travels.page.html',
-  styleUrl: './travels.page.scss',
+  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
+  templateUrl: './manager.page.html',
+  styleUrl: './manager.page.scss',
 })
-export class TravelsPage {
+export class ManagerPage {
   private readonly travelService = inject(TravelService);
   private readonly destinationService = inject(DestinationService);
   private readonly fb = inject(FormBuilder);
@@ -36,23 +39,15 @@ export class TravelsPage {
   readonly searchTerm = signal('');
   readonly statusFilter = signal<string>('');
 
-  readonly editingTravel = signal<TravelResponse | null>(null);
-  readonly deletingTravel = signal<TravelResponse | null>(null);
-  readonly viewTravel = signal<TravelResponse | null>(null);
   readonly creatingTravel = signal(false);
   readonly availableDestinations = signal<DestinationResponse[]>([]);
   readonly pendingDestinations = signal<TravelDestinationCreateRequest[]>([]);
   readonly isSubmitting = signal(false);
 
-  readonly editForm: FormGroup = this.fb.group({
-    title: ['', [Validators.required, Validators.maxLength(255)]],
-    description: ['', [Validators.maxLength(10000)]],
-    startDate: ['', [Validators.required]],
-    endDate: ['', [Validators.required]],
-    durationDays: [null, [Validators.required, Validators.min(1)]],
-    totalPrice: [null, [Validators.min(0)]],
-    status: [''],
-  });
+  readonly showCreateDestinationModal = signal(false);
+  readonly isSubmittingDestination = signal(false);
+
+  readonly viewTravel = signal<TravelResponse | null>(null);
 
   readonly createForm: FormGroup = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -61,6 +56,16 @@ export class TravelsPage {
     endDate: ['', [Validators.required]],
     durationDays: [null, [Validators.required, Validators.min(1)]],
     totalPrice: [null, [Validators.min(0)]],
+  });
+
+  readonly destinationForm: FormGroup = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(255)]],
+    description: ['', [Validators.maxLength(10000)]],
+    country: ['', [Validators.required, Validators.maxLength(100)]],
+    city: ['', [Validators.required, Validators.maxLength(100)]],
+    region: ['', [Validators.maxLength(100)]],
+    latitude: [null],
+    longitude: [null],
   });
 
   readonly filteredTravels = computed(() => {
@@ -98,109 +103,18 @@ export class TravelsPage {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err.error?.message || 'Failed to load travels');
-        this.toastService.error('Failed to load travels');
+        this.errorMessage.set(err.error?.message || 'Failed to load travel packages');
+        this.toastService.error('Failed to load travel packages');
       },
     });
   }
 
   onSearch(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.searchTerm.set(input.value);
+    this.searchTerm.set((event.target as HTMLInputElement).value);
   }
 
   onStatusFilter(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.statusFilter.set(select.value);
-  }
-
-  openEditModal(travel: TravelResponse): void {
-    this.editingTravel.set(travel);
-    this.editForm.patchValue({
-      title: travel.title,
-      description: travel.description || '',
-      startDate: travel.startDate,
-      endDate: travel.endDate,
-      durationDays: travel.durationDays,
-      totalPrice: travel.totalPrice,
-      status: travel.status,
-    });
-  }
-
-  closeEditModal(): void {
-    this.editingTravel.set(null);
-    this.editForm.reset();
-  }
-
-  onViewDetails(travel: TravelResponse): void {
-    this.viewTravel.set(travel);
-  }
-
-  closeViewModal(): void {
-    this.viewTravel.set(null);
-  }
-
-  onSaveEdit(): void {
-    if (this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
-      return;
-    }
-
-    const travel = this.editingTravel();
-    if (!travel) return;
-
-    this.isSubmitting.set(true);
-    const data: TravelUpdateRequest = {
-      title: this.editForm.value.title,
-      description: this.editForm.value.description || undefined,
-      startDate: this.editForm.value.startDate,
-      endDate: this.editForm.value.endDate,
-      durationDays: this.editForm.value.durationDays,
-      totalPrice: this.editForm.value.totalPrice,
-      status: this.editForm.value.status || undefined,
-    };
-
-    this.travelService.update(travel.id, data).subscribe({
-      next: (updated) => {
-        this.isSubmitting.set(false);
-        this.travels.update((list) =>
-          list.map((t) => (t.id === updated.id ? updated : t))
-        );
-        this.closeEditModal();
-        this.toastService.success(`Travel "${updated.title}" updated successfully`);
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        this.toastService.error(err.error?.message || 'Failed to update travel');
-      },
-    });
-  }
-
-  confirmDelete(travel: TravelResponse): void {
-    this.deletingTravel.set(travel);
-  }
-
-  cancelDelete(): void {
-    this.deletingTravel.set(null);
-  }
-
-  onDeleteTravel(): void {
-    const travel = this.deletingTravel();
-    if (!travel) return;
-
-    this.isSubmitting.set(true);
-    this.travelService.delete(travel.id).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.travels.update((list) => list.filter((t) => t.id !== travel.id));
-        this.deletingTravel.set(null);
-        this.toastService.success(`Travel "${travel.title}" deleted successfully`);
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        this.toastService.error(err.error?.message || 'Failed to delete travel');
-      },
-    });
+    this.statusFilter.set((event.target as HTMLSelectElement).value);
   }
 
   openCreateModal(): void {
@@ -217,15 +131,14 @@ export class TravelsPage {
     this.creatingTravel.set(false);
     this.createForm.reset();
     this.pendingDestinations.set([]);
+    this.showCreateDestinationModal.set(false);
+    this.destinationForm.reset();
   }
 
   addDestination(): void {
     this.pendingDestinations.update((list) => [
       ...list,
-      {
-        destinationId: 0,
-        visitOrder: list.length + 1,
-      },
+      { destinationId: 0, visitOrder: list.length + 1 },
     ]);
   }
 
@@ -248,9 +161,7 @@ export class TravelsPage {
     }
 
     this.isSubmitting.set(true);
-    const destinations = this.pendingDestinations().filter(
-      (d) => d.destinationId > 0
-    );
+    const destinations = this.pendingDestinations().filter((d) => d.destinationId > 0);
     const data: TravelCreateRequest = {
       title: this.createForm.value.title,
       description: this.createForm.value.description || undefined,
@@ -266,24 +177,68 @@ export class TravelsPage {
         this.isSubmitting.set(false);
         this.travels.update((list) => [created, ...list]);
         this.closeCreateModal();
-        this.toastService.success(`Travel "${created.title}" created successfully`);
+        this.toastService.success(`Travel package "${created.title}" created successfully`);
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.toastService.error(err.error?.message || 'Failed to create travel');
+        this.toastService.error(err.error?.message || 'Failed to create travel package');
       },
     });
+  }
+
+  openCreateDestinationModal(): void {
+    this.showCreateDestinationModal.set(true);
+    this.destinationForm.reset();
+  }
+
+  closeCreateDestinationModal(): void {
+    this.showCreateDestinationModal.set(false);
+    this.destinationForm.reset();
+  }
+
+  onSubmitCreateDestination(): void {
+    if (this.destinationForm.invalid) {
+      this.destinationForm.markAllAsTouched();
+      return;
+    }
+    this.isSubmittingDestination.set(true);
+    const data: DestinationCreateRequest = {
+      name: this.destinationForm.value.name,
+      description: this.destinationForm.value.description || undefined,
+      country: this.destinationForm.value.country,
+      city: this.destinationForm.value.city,
+      region: this.destinationForm.value.region || undefined,
+      latitude: this.destinationForm.value.latitude,
+      longitude: this.destinationForm.value.longitude,
+    };
+
+    this.destinationService.create(data).subscribe({
+      next: (created) => {
+        this.isSubmittingDestination.set(false);
+        this.availableDestinations.update((list) => [...list, created]);
+        this.closeCreateDestinationModal();
+        this.toastService.success(`Destination "${created.name}" created`);
+      },
+      error: (err) => {
+        this.isSubmittingDestination.set(false);
+        this.toastService.error(err.error?.message || 'Failed to create destination');
+      },
+    });
+  }
+
+  onViewDetails(travel: TravelResponse): void {
+    this.viewTravel.set(travel);
+  }
+
+  closeViewModal(): void {
+    this.viewTravel.set(null);
   }
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
     const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   getStatusClass(status: string): string {
