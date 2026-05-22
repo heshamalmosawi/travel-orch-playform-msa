@@ -17,6 +17,10 @@ export class TravelService {
     return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels`);
   }
 
+  getMyTravels(): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/me`);
+  }
+
   getByUser(userId: number): Observable<TravelResponse[]> {
     return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/user/${userId}`);
   }

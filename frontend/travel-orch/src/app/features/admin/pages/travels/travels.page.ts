@@ -261,7 +261,7 @@ export class TravelsPage {
       description: this.createForm.value.description || undefined,
       startDate: this.createForm.value.startDate,
       endDate: this.createForm.value.endDate,
-      totalPrice: this.createForm.value.totalPrice || undefined,
+      totalPrice: this.createForm.value.totalPrice ?? undefined,
       managerId: this.createForm.value.managerId,
       destinations: destinations.length > 0 ? destinations : undefined,
     };

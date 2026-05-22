@@ -107,6 +107,28 @@ public class TravelService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    public Flux<TravelResponse> getMyTravels(String currentUsername) {
+        log.info("getMyTravels - Fetching travels for current user: {}", currentUsername);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            boolean isManager = currentUser.getRole() != null
+                    && "travel_manager".equalsIgnoreCase(currentUser.getRole().getName());
+            if (!isManager) {
+                log.warn("getMyTravels - User {} is not a travel manager", currentUsername);
+                throw new SecurityException("Only travel managers can access this endpoint");
+            }
+
+            return travelRepository.findByManager(currentUser).stream()
+                    .map(TravelResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getMyTravels - Found {} travels for user: {}", list.size(), currentUsername))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     @PreAuthorize("hasPermission('travels', 'read')")
     public Flux<TravelResponse> getTravelsByStatus(TravelStatus status) {
         log.info("getTravelsByStatus - Fetching travels with status: {}", status);
@@ -134,6 +156,11 @@ public class TravelService {
 
             User manager;
             if (request.getManagerId() != null) {
+                boolean isAdmin = hasPermission(currentUser, "admin", "all");
+                if (!isAdmin) {
+                    log.warn("createTravel - User {} attempted to set managerId without admin permission", currentUsername);
+                    throw new SecurityException("Only admins can assign an explicit managerId");
+                }
                 manager = userRepository.findById(request.getManagerId())
                         .orElseThrow(() -> new IllegalArgumentException("Manager not found with id: " + request.getManagerId()));
             } else {
@@ -144,6 +171,13 @@ public class TravelService {
                     throw new SecurityException("You must be a travel manager or provide an explicit managerId");
                 }
                 manager = currentUser;
+            }
+
+            boolean resolvedIsManager = manager.getRole() != null
+                    && "travel_manager".equalsIgnoreCase(manager.getRole().getName());
+            if (!resolvedIsManager) {
+                log.warn("createTravel - Resolved manager id: {} does not have travel_manager role", manager.getId());
+                throw new SecurityException("The assigned manager does not have the travel_manager role");
             }
 
             Travel travel = new Travel();
