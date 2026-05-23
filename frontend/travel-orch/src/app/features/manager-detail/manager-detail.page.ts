@@ -8,6 +8,9 @@ import { FeedbackService } from '../travel-detail/feedback.service';
 import { FeedbackResponse } from '../travel-detail/feedback.model';
 import { AdminService } from '../admin/admin.service';
 import { UserResponse } from '../admin/admin.model';
+import { AuthService } from '../auth/auth.service';
+import { ReportService } from './report.service';
+import { ToastService } from '../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-manager-detail-page',
@@ -22,6 +25,9 @@ export class ManagerDetailPage {
   private readonly adminService = inject(AdminService);
   private readonly travelService = inject(TravelService);
   private readonly feedbackService = inject(FeedbackService);
+  private readonly authService = inject(AuthService);
+  private readonly reportService = inject(ReportService);
+  private readonly toastService = inject(ToastService);
 
   readonly manager = signal<UserResponse | null>(null);
   readonly stats = signal<ManagerStatsResponse | null>(null);
@@ -30,6 +36,12 @@ export class ManagerDetailPage {
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
   readonly notFound = signal(false);
+
+  readonly canReport = computed(() => this.authService.isTraveler());
+  readonly hasReported = signal(false);
+  readonly showReportModal = signal(false);
+  readonly reportReason = signal('');
+  readonly isSubmittingReport = signal(false);
 
   readonly stars = [1, 2, 3, 4, 5];
 
@@ -83,6 +95,46 @@ export class ManagerDetailPage {
 
   goBack(): void {
     this.router.navigate(['/']);
+  }
+
+  openReportModal(): void {
+    this.reportReason.set('');
+    this.showReportModal.set(true);
+  }
+
+  closeReportModal(): void {
+    this.showReportModal.set(false);
+  }
+
+  onReasonInput(event: Event): void {
+    this.reportReason.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  submitReport(): void {
+    const mgr = this.manager();
+    if (!mgr) return;
+
+    this.isSubmittingReport.set(true);
+    const reason = this.reportReason().trim();
+    this.reportService.create({ managerId: mgr.id, reason: reason || undefined }).subscribe({
+      next: () => {
+        this.isSubmittingReport.set(false);
+        this.hasReported.set(true);
+        this.closeReportModal();
+        this.stats.update((s) => (s ? { ...s, totalReports: s.totalReports + 1 } : s));
+        this.toastService.success('Report submitted');
+      },
+      error: (err) => {
+        this.isSubmittingReport.set(false);
+        if (err.status === 409) {
+          this.hasReported.set(true);
+          this.closeReportModal();
+          this.toastService.error('You have already reported this manager');
+        } else {
+          this.toastService.error(err.error?.message || 'Failed to submit report');
+        }
+      },
+    });
   }
 
   formatDate(dateStr: string | null): string {
