@@ -14,4 +14,5 @@ public class ManagerStatsResponse {
     private long totalPackages;
     private double averageRating;
     private long totalReviews;
+    private long totalReports;
 }
