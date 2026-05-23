@@ -426,6 +426,230 @@ $font-body: 'Lora', Georgia, serif;
 .badge-completed { background: rgba($mid-gray, 0.1);       color: $mid-gray; }
 .badge-cancelled { background: rgba(#c53030, 0.15);        color: #f87171; }
 
+// ── Reviews ──────────────────────────────────────────────────────────────────
+
+.review-count {
+  font-family: $font-body;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: $mid-gray;
+  margin-left: 0.4rem;
+}
+
+.no-reviews {
+  font-family: $font-body;
+  font-size: 0.95rem;
+  color: $mid-gray;
+  margin: 0;
+}
+
+.reviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.review-item {
+  padding: 1.25rem;
+  background: $dark-elevated;
+  border: 1px solid $dark-border;
+  border-radius: 12px;
+
+  &.my-review {
+    border-color: rgba($accent-orange, 0.35);
+  }
+}
+
+.review-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.reviewer-name {
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $light;
+}
+
+.review-date {
+  font-family: $font-body;
+  font-size: 0.8rem;
+  color: $mid-gray;
+}
+
+.star-display {
+  display: flex;
+  gap: 0.1rem;
+  margin-bottom: 0.6rem;
+
+  .star {
+    font-size: 1.1rem;
+    color: $dark-border;
+
+    &.filled {
+      color: $accent-orange;
+    }
+  }
+}
+
+.review-comment {
+  font-family: $font-body;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: $light;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.review-own-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.review-action-btn {
+  padding: 0.3rem 0.8rem;
+  border-radius: 7px;
+  font-family: $font-heading;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid $dark-border;
+  background: transparent;
+  color: $mid-gray;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover:not(:disabled) {
+    color: $light;
+    border-color: $mid-gray;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.review-action-delete {
+  &:hover:not(:disabled) {
+    color: #f87171;
+    border-color: rgba(#c53030, 0.5);
+  }
+}
+
+// Write / edit form
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: $dark-elevated;
+  border: 1px solid rgba($accent-orange, 0.25);
+  border-radius: 12px;
+}
+
+.review-form-label {
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $light;
+  margin: 0;
+}
+
+.review-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.star-selector {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: $dark-border;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s, transform 0.1s;
+
+  &.active {
+    color: $accent-orange;
+  }
+
+  &:hover {
+    color: $accent-orange;
+    transform: scale(1.15);
+  }
+}
+
+.review-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  background: $dark;
+  border: 1px solid $dark-border;
+  border-radius: 9px;
+  color: $light;
+  font-family: $font-body;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s;
+
+  &::placeholder {
+    color: $mid-gray;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $accent-orange;
+  }
+}
+
+.submit-review-btn {
+  align-self: flex-start;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 9px;
+  background: $accent-orange;
+  color: $light;
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($accent-orange, $lightness: -6%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+// ── End Reviews ───────────────────────────────────────────────────────────────
+
 @media (max-width: 600px) {
   .detail-content {
     padding: 1.5rem 1rem 3rem;

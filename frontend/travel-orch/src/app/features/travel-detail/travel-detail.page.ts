@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, of } from 'rxjs';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { TravelService } from '../admin/travel/travel.service';
 import {
@@ -11,6 +12,8 @@ import { AuthService } from '../auth/auth.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { PurchaseService } from './purchase.service';
 import { PurchaseResponse } from './purchase.model';
+import { FeedbackService } from './feedback.service';
+import { FeedbackResponse } from './feedback.model';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -27,6 +30,7 @@ export class TravelDetailPage {
   private readonly travelService = inject(TravelService);
   private readonly authService = inject(AuthService);
   private readonly purchaseService = inject(PurchaseService);
+  private readonly feedbackService = inject(FeedbackService);
   private readonly toastService = inject(ToastService);
 
   readonly travel = signal<TravelResponse | null>(null);
@@ -38,6 +42,15 @@ export class TravelDetailPage {
   readonly showPurchaseModal = signal(false);
   readonly showCancelModal = signal(false);
   readonly isSubmitting = signal(false);
+
+  readonly feedbacks = signal<FeedbackResponse[]>([]);
+  readonly myFeedback = signal<FeedbackResponse | null>(null);
+  readonly pendingRating = signal<number>(0);
+  readonly editRating = signal<number>(0);
+  readonly editMode = signal(false);
+  readonly isSubmittingFeedback = signal(false);
+
+  readonly stars = [1, 2, 3, 4, 5];
 
   readonly minDaysBeforeStart = 3;
 
@@ -75,6 +88,12 @@ export class TravelDetailPage {
       this.daysUntilStart() < this.minDaysBeforeStart
     );
   });
+
+  readonly canReview = computed<boolean>(() =>
+    this.authService.isTraveler() &&
+    this.myPurchase()?.status === 'completed' &&
+    !this.myFeedback()
+  );
 
   readonly orderedDestinations = computed<TravelDestinationResponse[]>(() => {
     const t = this.travel();
@@ -114,8 +133,11 @@ export class TravelDetailPage {
       },
     });
 
+    this.loadFeedbacks(id);
+
     if (this.authService.isAuthenticated()) {
       this.loadMyPurchase(id);
+      this.loadMyFeedback(id);
     }
   }
 
@@ -127,8 +149,119 @@ export class TravelDetailPage {
         );
         this.myPurchase.set(active ?? null);
       },
+      error: () => {},
+    });
+  }
+
+  private loadFeedbacks(travelId: number): void {
+    this.feedbackService.getForTravel(travelId).subscribe({
+      next: (list) => this.feedbacks.set(list),
+      error: () => {},
+    });
+  }
+
+  private loadMyFeedback(travelId: number): void {
+    this.feedbackService.getMine(travelId).pipe(
+      catchError((err) => (err.status === 404 ? of(null) : of(null)))
+    ).subscribe({
+      next: (f) => {
+        if (f) this.myFeedback.set(f);
+      },
+    });
+  }
+
+  setRating(value: number): void {
+    this.pendingRating.set(value);
+  }
+
+  setEditRating(value: number): void {
+    this.editRating.set(value);
+  }
+
+  submitReview(comment: string): void {
+    const rating = this.pendingRating();
+    if (!rating) {
+      this.toastService.error('Please select a star rating before submitting.');
+      return;
+    }
+    const t = this.travel();
+    if (!t) return;
+
+    this.isSubmittingFeedback.set(true);
+    this.feedbackService.create({ travelId: t.id, rating, comment: comment.trim() || undefined }).subscribe({
+      next: (feedback) => {
+        this.isSubmittingFeedback.set(false);
+        this.myFeedback.set(feedback);
+        this.feedbacks.update((list) => [...list, feedback]);
+        this.pendingRating.set(0);
+        this.toastService.success('Your review was submitted.');
+      },
+      error: (err) => {
+        this.isSubmittingFeedback.set(false);
+        if (err.status === 409) {
+          this.toastService.error('You have already reviewed this package.');
+        } else if (err.status === 403) {
+          this.toastService.error('You must have a completed purchase to leave a review.');
+        } else {
+          this.toastService.error('Could not submit your review. Please try again.');
+        }
+      },
+    });
+  }
+
+  startEdit(): void {
+    const f = this.myFeedback();
+    if (!f) return;
+    this.editRating.set(f.rating);
+    this.editMode.set(true);
+  }
+
+  cancelEdit(): void {
+    this.editMode.set(false);
+  }
+
+  saveEdit(comment: string): void {
+    const f = this.myFeedback();
+    if (!f) return;
+    const rating = this.editRating();
+    if (!rating) {
+      this.toastService.error('Please select a rating.');
+      return;
+    }
+
+    this.isSubmittingFeedback.set(true);
+    this.feedbackService.update(f.id, { rating, comment: comment.trim() || undefined }).subscribe({
+      next: (updated) => {
+        this.isSubmittingFeedback.set(false);
+        this.myFeedback.set(updated);
+        this.feedbacks.update((list) =>
+          list.map((item) => (item.id === updated.id ? updated : item))
+        );
+        this.editMode.set(false);
+        this.toastService.success('Your review was updated.');
+      },
       error: () => {
-        // Non-blocking: viewing the package shouldn't fail if purchases can't load.
+        this.isSubmittingFeedback.set(false);
+        this.toastService.error('Could not update your review. Please try again.');
+      },
+    });
+  }
+
+  deleteReview(): void {
+    const f = this.myFeedback();
+    if (!f) return;
+
+    this.isSubmittingFeedback.set(true);
+    this.feedbackService.delete(f.id).subscribe({
+      next: () => {
+        this.isSubmittingFeedback.set(false);
+        this.feedbacks.update((list) => list.filter((item) => item.id !== f.id));
+        this.myFeedback.set(null);
+        this.toastService.success('Your review was deleted.');
+      },
+      error: () => {
+        this.isSubmittingFeedback.set(false);
+        this.toastService.error('Could not delete your review. Please try again.');
       },
     });
   }
@@ -221,8 +354,6 @@ export class TravelDetailPage {
     return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
-  // Treats a date as a calendar date pinned to UTC midnight so day-count math is
-  // timezone/DST-independent and consistent across nights() and daysUntilStart().
   private dateOnlyUtcMs(dateStr: string): number {
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
     return Date.UTC(y, m - 1, d);
