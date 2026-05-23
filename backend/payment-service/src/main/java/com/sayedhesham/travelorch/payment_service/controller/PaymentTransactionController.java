@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.payment_service.controller;
 
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionCreateRequest;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionResponse;
+import com.sayedhesham.travelorch.payment_service.dto.TravelPurchaseRequest;
 import com.sayedhesham.travelorch.payment_service.security.SecurityUtils;
 import com.sayedhesham.travelorch.payment_service.service.PaymentTransactionService;
 import jakarta.validation.Valid;
@@ -81,5 +82,56 @@ public class PaymentTransactionController {
                         ResponseEntity.status(HttpStatus.CREATED).body(created))
                 .doOnNext(response -> log.info("POST /transactions - Created id: {}",
                         response.getBody().getId()));
+    }
+
+    @PostMapping("/purchase")
+    public Mono<ResponseEntity<PaymentTransactionResponse>> purchaseTravel(
+            @Valid @RequestBody TravelPurchaseRequest request) {
+        log.info("POST /transactions/purchase - travelId={}", request.getTravelId());
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername -> paymentTransactionService.purchaseTravel(request, currentUsername)
+                        .<ResponseEntity<PaymentTransactionResponse>>map(created ->
+                                ResponseEntity.status(HttpStatus.CREATED).body(created)))
+                .onErrorResume(IllegalStateException.class, e -> {
+                    log.warn("POST /transactions/purchase - Conflict: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).build());
+                })
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    log.warn("POST /transactions/purchase - Not found: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.notFound().build());
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
+    }
+
+    @GetMapping("/mine")
+    public Mono<ResponseEntity<Flux<PaymentTransactionResponse>>> getMyPurchases() {
+        log.info("GET /transactions/mine - Fetching current user's purchases");
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername -> paymentTransactionService.getMyPurchases(currentUsername)
+                        .collectList()
+                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<PaymentTransactionResponse>>body(Flux.empty())));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public Mono<ResponseEntity<PaymentTransactionResponse>> cancelAndRefund(@PathVariable Long id) {
+        log.info("POST /transactions/{}/cancel - Cancelling purchase", id);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername -> paymentTransactionService.cancelAndRefund(id, currentUsername)
+                        .<ResponseEntity<PaymentTransactionResponse>>map(ResponseEntity::ok))
+                .onErrorResume(IllegalStateException.class, e -> {
+                    log.warn("POST /transactions/{}/cancel - Conflict: {}", id, e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).build());
+                })
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    log.warn("POST /transactions/{}/cancel - Not found", id);
+                    return Mono.just(ResponseEntity.notFound().build());
+                })
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("POST /transactions/{}/cancel - Forbidden: {}", id, e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
     }
 }

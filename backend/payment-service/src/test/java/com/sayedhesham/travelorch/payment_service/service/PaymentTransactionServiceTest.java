@@ -1,8 +1,10 @@
 package com.sayedhesham.travelorch.payment_service.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +34,7 @@ import com.sayedhesham.travelorch.common.repository.payment.PaymentTransactionRe
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionCreateRequest;
+import com.sayedhesham.travelorch.payment_service.dto.TravelPurchaseRequest;
 import com.stripe.StripeClient;
 import com.stripe.model.PaymentIntent;
 
@@ -351,5 +354,155 @@ class PaymentTransactionServiceTest {
                 .verifyComplete();
 
         verify(paymentMethodRepository).save(any(PaymentMethod.class));
+    }
+
+    private void stubStripeCreate() {
+        try {
+            when(stripeClient.v1().paymentIntents().create(any(com.stripe.param.PaymentIntentCreateParams.class)))
+                    .thenReturn(testPaymentIntent);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void purchaseTravel_Success() {
+        setupTransactionTemplateInvocation();
+        testTravel.setTotalPrice(new BigDecimal("100.00"));
+        testTravel.setStartDate(LocalDate.now().plusDays(10));
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(paymentTransactionRepository.findByBuyerIdAndTravelId(1L, 1L)).thenReturn(List.of());
+        when(paymentMethodRepository.findByProviderAndIsTestMode(PaymentProvider.stripe, true))
+                .thenReturn(Optional.of(testPaymentMethod));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> {
+            PaymentTransaction t = invocation.getArgument(0);
+            t.setId(200L);
+            t.setCreatedAt(LocalDateTime.now());
+            return t;
+        });
+        stubStripeCreate();
+
+        TravelPurchaseRequest request = TravelPurchaseRequest.builder().travelId(1L).build();
+
+        StepVerifier.create(paymentTransactionService.purchaseTravel(request, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(200L, response.getId());
+                    assertEquals(new BigDecimal("100.00"), response.getAmount());
+                    assertEquals(PaymentStatus.completed, response.getStatus());
+                    assertEquals(1L, response.getTravelId());
+                    assertEquals(1L, response.getBuyerId());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(paymentTransactionRepository).save(any(PaymentTransaction.class));
+    }
+
+    @Test
+    void purchaseTravel_TooCloseToStart_ThrowsIllegalState() {
+        setupTransactionTemplateInvocation();
+        testTravel.setTotalPrice(new BigDecimal("100.00"));
+        testTravel.setStartDate(LocalDate.now().plusDays(1));
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+
+        TravelPurchaseRequest request = TravelPurchaseRequest.builder().travelId(1L).build();
+
+        StepVerifier.create(paymentTransactionService.purchaseTravel(request, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException
+                        && throwable.getMessage().contains("days before departure"))
+                .verify();
+    }
+
+    @Test
+    void purchaseTravel_AlreadyPurchased_ThrowsIllegalState() {
+        setupTransactionTemplateInvocation();
+        testTravel.setTotalPrice(new BigDecimal("100.00"));
+        testTravel.setStartDate(LocalDate.now().plusDays(10));
+
+        PaymentTransaction existing = new PaymentTransaction();
+        existing.setId(150L);
+        existing.setStatus(PaymentStatus.completed);
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(paymentTransactionRepository.findByBuyerIdAndTravelId(1L, 1L)).thenReturn(List.of(existing));
+
+        TravelPurchaseRequest request = TravelPurchaseRequest.builder().travelId(1L).build();
+
+        StepVerifier.create(paymentTransactionService.purchaseTravel(request, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException
+                        && throwable.getMessage().equals("You have already purchased this travel package"))
+                .verify();
+    }
+
+    @Test
+    void getMyPurchases_Success() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getMyPurchases("testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(1L, response.getBuyerId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void cancelAndRefund_AsBuyer_Success() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        testTransaction.setStatus(PaymentStatus.completed);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(PaymentStatus.refunded, response.getStatus());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(paymentTransactionRepository).save(any(PaymentTransaction.class));
+    }
+
+    @Test
+    void cancelAndRefund_NotBuyer_ThrowsSecurity() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        testTransaction.setStatus(PaymentStatus.completed);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("otheruser")).thenReturn(Optional.of(otherUser));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "otheruser"))
+                .expectErrorMatches(throwable -> throwable instanceof SecurityException
+                        && throwable.getMessage().equals("You do not have permission to cancel this purchase"))
+                .verify();
+    }
+
+    @Test
+    void cancelAndRefund_AlreadyRefunded_ThrowsIllegalState() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        testTransaction.setStatus(PaymentStatus.refunded);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException
+                        && throwable.getMessage().equals("This purchase has already been refunded"))
+                .verify();
     }
 }
