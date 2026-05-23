@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.sayedhesham.travelorch.common.entity.feedback.TravelFeedback;
 import com.sayedhesham.travelorch.common.entity.travel.Destination;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.travel.TravelDestination;
@@ -16,11 +17,13 @@ import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.TravelStatus;
 import com.sayedhesham.travelorch.common.repository.accommodation.TravelAccommodationRepository;
 import com.sayedhesham.travelorch.common.repository.activity.TravelActivityRepository;
+import com.sayedhesham.travelorch.common.repository.feedback.TravelFeedbackRepository;
 import com.sayedhesham.travelorch.common.repository.transportation.TransportationSegmentRepository;
 import com.sayedhesham.travelorch.common.repository.travel.DestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelDestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
+import com.sayedhesham.travelorch.travel_service.dto.ManagerStatsResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelDestinationCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelResponse;
@@ -38,6 +41,7 @@ public class TravelService {
     private static final Logger log = LoggerFactory.getLogger(TravelService.class);
 
     private final TravelRepository travelRepository;
+    private final TravelFeedbackRepository travelFeedbackRepository;
     private final TravelDestinationRepository travelDestinationRepository;
     private final TravelActivityRepository travelActivityRepository;
     private final TravelAccommodationRepository travelAccommodationRepository;
@@ -155,6 +159,39 @@ public class TravelService {
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnNext(list -> log.info("getTravelsByStatus - Found {} travels", list.size()))
                 .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<TravelResponse> getUpcomingByManager(Long managerId) {
+        log.info("getUpcomingByManager - managerId: {}", managerId);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
+                travelRepository.findUpcomingTravelsByManagerId(managerId, LocalDate.now(), TravelStatus.cancelled)
+                        .stream()
+                        .map(TravelResponse::fromEntity)
+                        .toList()
+        ))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getUpcomingByManager - Found {} upcoming travels for managerId: {}", list.size(), managerId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Mono<ManagerStatsResponse> getManagerStats(Long managerId) {
+        log.info("getManagerStats - managerId: {}", managerId);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            long totalPackages = travelRepository.countByManagerId(managerId);
+            List<TravelFeedback> feedbacks = travelFeedbackRepository.findByManagerId(managerId);
+            long totalReviews = feedbacks.size();
+            double averageRating = feedbacks.stream()
+                    .mapToInt(TravelFeedback::getRating)
+                    .average()
+                    .orElse(0.0);
+            log.info("getManagerStats - managerId: {} packages={} reviews={} avgRating={}", managerId, totalPackages, totalReviews, averageRating);
+            return ManagerStatsResponse.builder()
+                    .totalPackages(totalPackages)
+                    .averageRating(averageRating)
+                    .totalReviews(totalReviews)
+                    .build();
+        }))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     public Mono<TravelResponse> createTravel(TravelCreateRequest request, String currentUsername) {

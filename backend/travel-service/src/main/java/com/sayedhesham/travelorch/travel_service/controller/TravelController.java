@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sayedhesham.travelorch.common.enums.TravelStatus;
+import com.sayedhesham.travelorch.travel_service.dto.ManagerStatsResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelUpdateRequest;
@@ -101,6 +102,19 @@ public class TravelController {
     public Mono<ResponseEntity<Flux<TravelResponse>>> getUpcomingTravels() {
         log.info("GET /travels/upcoming - Fetching upcoming travels");
         return Mono.just(ResponseEntity.ok(travelService.getUpcomingTravels()));
+    }
+
+    @GetMapping("/user/{userId}/upcoming")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getUpcomingTravelsByManager(@PathVariable Long userId) {
+        log.info("GET /travels/user/{}/upcoming - Fetching upcoming travels for manager", userId);
+        return Mono.just(ResponseEntity.ok(travelService.getUpcomingByManager(userId)));
+    }
+
+    @GetMapping("/manager/{managerId}/stats")
+    public Mono<ResponseEntity<ManagerStatsResponse>> getManagerStats(@PathVariable Long managerId) {
+        log.info("GET /travels/manager/{}/stats - Fetching manager stats", managerId);
+        return travelService.getManagerStats(managerId)
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/status/{status}")
