@@ -30,4 +30,9 @@ public interface TravelRepository extends JpaRepository<Travel, Long> {
 
     @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.startDate >= :date AND t.status <> :excludedStatus ORDER BY t.startDate ASC")
     List<Travel> findAllUpcomingTravels(@Param("date") LocalDate date, @Param("excludedStatus") TravelStatus excludedStatus);
+
+    @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.manager.id = :managerId AND t.startDate >= :date AND t.status <> :excludedStatus ORDER BY t.startDate ASC")
+    List<Travel> findUpcomingTravelsByManagerId(@Param("managerId") Long managerId, @Param("date") LocalDate date, @Param("excludedStatus") TravelStatus excludedStatus);
+
+    long countByManagerId(Long managerId);
 }

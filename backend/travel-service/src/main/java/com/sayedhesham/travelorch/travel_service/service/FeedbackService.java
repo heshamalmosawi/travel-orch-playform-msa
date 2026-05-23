@@ -98,7 +98,6 @@ public class FeedbackService {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
-    @PreAuthorize("hasPermission('feedbacks', 'read')")
     public Flux<FeedbackResponse> getFeedbacksForManager(Long managerId) {
         log.info("getFeedbacksForManager - managerId: {}", managerId);
         return Mono.fromCallable(() -> transactionTemplate.execute(status ->
