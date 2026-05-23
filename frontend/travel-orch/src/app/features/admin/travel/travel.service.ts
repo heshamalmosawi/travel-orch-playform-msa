@@ -6,6 +6,8 @@ import {
   TravelResponse,
   TravelCreateRequest,
   TravelUpdateRequest,
+
+  ManagerStatsResponse,
 } from './travel.model';
 
 @Injectable({ providedIn: 'root' })
@@ -47,5 +49,17 @@ export class TravelService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/api/travel/travels/${id}`);
+  }
+
+  getUpcomingByManager(managerId: number): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(
+      `${this.apiUrl}/api/travel/travels/user/${managerId}/upcoming`
+    );
+  }
+
+  getManagerStats(managerId: number): Observable<ManagerStatsResponse> {
+    return this.http.get<ManagerStatsResponse>(
+      `${this.apiUrl}/api/travel/travels/manager/${managerId}/stats`
+    );
   }
 }
