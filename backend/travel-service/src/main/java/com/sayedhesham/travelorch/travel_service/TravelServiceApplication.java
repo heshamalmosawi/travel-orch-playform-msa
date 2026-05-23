@@ -18,7 +18,8 @@ import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
     "com.sayedhesham.travelorch.common.repository.rbac",
     "com.sayedhesham.travelorch.common.repository.transportation",
     "com.sayedhesham.travelorch.common.repository.travel",
-    "com.sayedhesham.travelorch.common.repository.user"
+    "com.sayedhesham.travelorch.common.repository.user",
+    "com.sayedhesham.travelorch.common.repository.report"
 })
 @EnableNeo4jRepositories("com.sayedhesham.travelorch.common.repository.neo4j")
 @EnableReactiveElasticsearchRepositories("com.sayedhesham.travelorch.common.repository.elasticsearch")

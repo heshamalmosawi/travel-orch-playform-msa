@@ -50,6 +50,7 @@ class ReportControllerTest {
         reportResponse = ReportResponse.builder()
                 .id(1L)
                 .managerId(20L)
+                .managerName("Mary Manager")
                 .reporterId(10L)
                 .reporterUsername("reporter")
                 .reason("Unprofessional conduct")
@@ -59,6 +60,7 @@ class ReportControllerTest {
         anotherReportResponse = ReportResponse.builder()
                 .id(2L)
                 .managerId(21L)
+                .managerName("Pat Planner")
                 .reporterId(10L)
                 .reporterUsername("reporter")
                 .reason("Late refund")
@@ -96,6 +98,7 @@ class ReportControllerTest {
                 .value(r -> {
                     assertEquals(1L, r.getId());
                     assertEquals(20L, r.getManagerId());
+                    assertEquals("Mary Manager", r.getManagerName());
                     assertEquals("reporter", r.getReporterUsername());
                     assertEquals("Unprofessional conduct", r.getReason());
                 });

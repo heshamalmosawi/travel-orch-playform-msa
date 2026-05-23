@@ -58,6 +58,8 @@ class ReportServiceTest {
         manager.setId(20L);
         manager.setUsername("manager");
         manager.setEmail("manager@example.com");
+        manager.setFirstName("Mary");
+        manager.setLastName("Manager");
         manager.setRole(managerRole);
 
         report = new ManagerReport();
@@ -101,6 +103,7 @@ class ReportServiceTest {
         StepVerifier.create(reportService.createReport("reporter", request))
                 .expectNextMatches(response -> {
                     assertEquals(20L, response.getManagerId());
+                    assertEquals("Mary Manager", response.getManagerName());
                     assertEquals(10L, response.getReporterId());
                     assertEquals("reporter", response.getReporterUsername());
                     assertEquals("Unprofessional conduct", response.getReason());
@@ -211,10 +214,13 @@ class ReportServiceTest {
         second.setUpdatedAt(LocalDateTime.now());
 
         when(reportRepository.findAll()).thenReturn(List.of(report, second));
+        when(userRepository.findAllById(any())).thenReturn(List.of(manager));
 
         StepVerifier.create(reportService.getAllReports())
-                .expectNextMatches(r -> r.getId().equals(1L) && r.getManagerId().equals(20L))
-                .expectNextMatches(r -> r.getId().equals(2L) && r.getManagerId().equals(21L))
+                .expectNextMatches(r -> r.getId().equals(1L) && r.getManagerId().equals(20L)
+                        && "Mary Manager".equals(r.getManagerName()))
+                .expectNextMatches(r -> r.getId().equals(2L) && r.getManagerId().equals(21L)
+                        && r.getManagerName() == null)
                 .verifyComplete();
     }
 
