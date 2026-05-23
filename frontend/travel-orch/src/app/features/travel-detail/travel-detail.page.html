@@ -131,6 +131,126 @@
             </ol>
           </section>
         }
+
+        <!-- Reviews section -->
+        <section class="detail-section">
+          <h2 class="section-heading">
+            Reviews
+            @if (feedbacks().length > 0) {
+              <span class="review-count">({{ feedbacks().length }})</span>
+            }
+          </h2>
+
+          <!-- Write a review form -->
+          @if (canReview()) {
+            <div class="review-form" #writeForm>
+              <p class="review-form-label">Share your experience</p>
+              <div class="star-selector">
+                @for (star of stars; track star) {
+                  <button
+                    type="button"
+                    class="star-btn"
+                    [class.active]="star <= pendingRating()"
+                    (click)="setRating(star)"
+                    [attr.aria-label]="'Rate ' + star + ' out of 5'"
+                  >★</button>
+                }
+              </div>
+              <textarea
+                #newComment
+                class="review-textarea"
+                placeholder="Tell others about your experience (optional)…"
+                rows="4"
+              ></textarea>
+              <button
+                type="button"
+                class="submit-review-btn"
+                (click)="submitReview(newComment.value)"
+                [disabled]="isSubmittingFeedback() || pendingRating() === 0"
+              >
+                @if (isSubmittingFeedback()) { Submitting… } @else { Submit Review }
+              </button>
+            </div>
+          }
+
+          <!-- Reviews list -->
+          @if (feedbacks().length === 0) {
+            <p class="no-reviews">No reviews yet for this package.</p>
+          } @else {
+            <ul class="reviews-list">
+              @for (review of feedbacks(); track review.id) {
+                <li class="review-item" [class.my-review]="review.id === myFeedback()?.id">
+
+                  @if (review.id === myFeedback()?.id && editMode()) {
+                    <!-- Inline edit form -->
+                    <div class="review-edit-form" #editForm>
+                      <div class="star-selector">
+                        @for (star of stars; track star) {
+                          <button
+                            type="button"
+                            class="star-btn"
+                            [class.active]="star <= editRating()"
+                            (click)="setEditRating(star)"
+                            [attr.aria-label]="'Rate ' + star + ' out of 5'"
+                          >★</button>
+                        }
+                      </div>
+                      <textarea
+                        #editComment
+                        class="review-textarea"
+                        rows="4"
+                        [value]="review.comment || ''"
+                      ></textarea>
+                      <div class="edit-actions">
+                        <button
+                          type="button"
+                          class="btn-secondary"
+                          (click)="cancelEdit()"
+                          [disabled]="isSubmittingFeedback()"
+                        >Cancel</button>
+                        <button
+                          type="button"
+                          class="btn-confirm"
+                          (click)="saveEdit(editComment.value)"
+                          [disabled]="isSubmittingFeedback() || editRating() === 0"
+                        >
+                          @if (isSubmittingFeedback()) { Saving… } @else { Save }
+                        </button>
+                      </div>
+                    </div>
+
+                  } @else {
+                    <!-- Review display -->
+                    <div class="review-header">
+                      <span class="reviewer-name">{{ review.reviewerUsername }}</span>
+                      <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+                    </div>
+                    <div class="star-display">
+                      @for (star of stars; track star) {
+                        <span class="star" [class.filled]="star <= review.rating">★</span>
+                      }
+                    </div>
+                    @if (review.comment) {
+                      <p class="review-comment">{{ review.comment }}</p>
+                    }
+                    @if (review.id === myFeedback()?.id) {
+                      <div class="review-own-actions">
+                        <button type="button" class="review-action-btn" (click)="startEdit()">Edit</button>
+                        <button
+                          type="button"
+                          class="review-action-btn review-action-delete"
+                          (click)="deleteReview()"
+                          [disabled]="isSubmittingFeedback()"
+                        >Delete</button>
+                      </div>
+                    }
+                  }
+
+                </li>
+              }
+            </ul>
+          }
+        </section>
       </article>
     }
   </main>
