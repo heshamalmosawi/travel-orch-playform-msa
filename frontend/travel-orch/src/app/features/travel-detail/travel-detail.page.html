@@ -143,8 +143,13 @@
           <button type="button" class="modal-close" (click)="closePurchaseModal()">&times;</button>
         </div>
         <div class="modal-body">
+          @let pkg = travel();
           <p class="modal-text">
-            Purchase <strong>{{ travel()?.title }}</strong>@if (travel()?.totalPrice !== null && travel()?.totalPrice !== undefined) { for <strong>${{ travel()!.totalPrice!.toLocaleString() }}</strong>}?
+            @if (pkg?.totalPrice) {
+              Purchase <strong>{{ pkg!.title }}</strong> for <strong>${{ pkg!.totalPrice!.toLocaleString() }}</strong>?
+            } @else {
+              Purchase <strong>{{ pkg?.title }}</strong>?
+            }
           </p>
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="closePurchaseModal()" [disabled]="isSubmitting()">

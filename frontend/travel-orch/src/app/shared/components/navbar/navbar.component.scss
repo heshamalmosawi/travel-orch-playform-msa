@@ -1,52 +1,108 @@
+$dark: #141413;
+$dark-elevated: #2a2a27;
+$light: #faf9f5;
+$mid-gray: #b0aea5;
+$dark-border: #333330;
+$accent-orange: #d97757;
+$accent-orange-hover: #c4623f;
+$accent-blue: #6a9bcc;
+$accent-blue-hover: #5889b8;
+
 .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding: 1rem 2rem;
-  background: #141413;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(42, 42, 39, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid $dark-border;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   margin: 0;
   font-family: 'Poppins', Arial, sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  color: #faf9f5;
+  color: $light;
   letter-spacing: -0.5px;
   cursor: pointer;
+  transition: color 0.2s;
+
+  &::before {
+    content: '';
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: $accent-orange;
+    box-shadow: 0 0 0 4px rgba(217, 119, 87, 0.18);
+  }
+
+  &:hover {
+    color: $accent-orange;
+  }
 }
 
 .navbar-actions {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
   cursor: pointer;
   font-family: 'Poppins', Arial, sans-serif;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s, transform 0.05s;
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-orange;
+    outline-offset: 2px;
+  }
 
   &.btn-primary {
-    background: #d97757;
-    color: #faf9f5;
+    background: $accent-orange;
+    color: $light;
 
     &:hover {
-      background: #c4623f;
+      background: $accent-orange-hover;
     }
   }
 
   &.btn-secondary {
-    background: #6a9bcc;
-    color: #faf9f5;
+    background: transparent;
+    color: $light;
+    border-color: $dark-border;
 
     &:hover {
-      background: #5889b8;
+      border-color: $accent-blue;
+      color: $accent-blue;
     }
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 0.85rem 1rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.2rem;
   }
 }
