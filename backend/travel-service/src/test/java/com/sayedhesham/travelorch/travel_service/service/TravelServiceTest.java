@@ -37,6 +37,7 @@ import com.sayedhesham.travelorch.common.enums.TravelStatus;
 import com.sayedhesham.travelorch.common.repository.accommodation.TravelAccommodationRepository;
 import com.sayedhesham.travelorch.common.repository.activity.TravelActivityRepository;
 import com.sayedhesham.travelorch.common.repository.feedback.TravelFeedbackRepository;
+import com.sayedhesham.travelorch.common.repository.report.ManagerReportRepository;
 import com.sayedhesham.travelorch.common.repository.transportation.TransportationSegmentRepository;
 import com.sayedhesham.travelorch.common.repository.travel.DestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelDestinationRepository;
@@ -59,6 +60,9 @@ class TravelServiceTest {
 
     @Mock
     private TravelFeedbackRepository travelFeedbackRepository;
+
+    @Mock
+    private ManagerReportRepository managerReportRepository;
 
     @Mock
     private TravelDestinationRepository travelDestinationRepository;
@@ -765,12 +769,14 @@ class TravelServiceTest {
         f3.setRating(5);
 
         when(travelFeedbackRepository.findByManagerId(2L)).thenReturn(List.of(f1, f2, f3));
+        when(managerReportRepository.countByManagerId(2L)).thenReturn(7L);
 
         StepVerifier.create(travelService.getManagerStats(2L))
                 .expectNextMatches(stats -> {
                     assertEquals(3L, stats.getTotalPackages());
                     assertEquals(3L, stats.getTotalReviews());
                     assertEquals((4 + 2 + 5) / 3.0, stats.getAverageRating(), 0.001);
+                    assertEquals(7L, stats.getTotalReports());
                     return true;
                 })
                 .verifyComplete();

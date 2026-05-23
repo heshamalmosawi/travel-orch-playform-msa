@@ -18,6 +18,7 @@ import com.sayedhesham.travelorch.common.enums.TravelStatus;
 import com.sayedhesham.travelorch.common.repository.accommodation.TravelAccommodationRepository;
 import com.sayedhesham.travelorch.common.repository.activity.TravelActivityRepository;
 import com.sayedhesham.travelorch.common.repository.feedback.TravelFeedbackRepository;
+import com.sayedhesham.travelorch.common.repository.report.ManagerReportRepository;
 import com.sayedhesham.travelorch.common.repository.transportation.TransportationSegmentRepository;
 import com.sayedhesham.travelorch.common.repository.travel.DestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelDestinationRepository;
@@ -42,6 +43,7 @@ public class TravelService {
 
     private final TravelRepository travelRepository;
     private final TravelFeedbackRepository travelFeedbackRepository;
+    private final ManagerReportRepository managerReportRepository;
     private final TravelDestinationRepository travelDestinationRepository;
     private final TravelActivityRepository travelActivityRepository;
     private final TravelAccommodationRepository travelAccommodationRepository;
@@ -184,11 +186,13 @@ public class TravelService {
                     .mapToInt(TravelFeedback::getRating)
                     .average()
                     .orElse(0.0);
-            log.info("getManagerStats - managerId: {} packages={} reviews={} avgRating={}", managerId, totalPackages, totalReviews, averageRating);
+            long totalReports = managerReportRepository.countByManagerId(managerId);
+            log.info("getManagerStats - managerId: {} packages={} reviews={} avgRating={} reports={}", managerId, totalPackages, totalReviews, averageRating, totalReports);
             return ManagerStatsResponse.builder()
                     .totalPackages(totalPackages)
                     .averageRating(averageRating)
                     .totalReviews(totalReviews)
+                    .totalReports(totalReports)
                     .build();
         }))
                 .subscribeOn(Schedulers.boundedElastic());
