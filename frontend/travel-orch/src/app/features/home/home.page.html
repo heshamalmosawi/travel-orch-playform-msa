@@ -8,7 +8,17 @@
     </header>
 
     <section class="packages-section">
-      <h2 class="section-title">Upcoming Travel Packages</h2>
+      <div class="section-head">
+        <h2 class="section-title">Upcoming Travel Packages</h2>
+
+        <div class="search-bar">
+          <app-autocomplete
+            placeholder="Search destinations by name, city, country…"
+            (selected)="onDestinationSelected($event)"
+            (queryChange)="onSearchTermChange($event)"
+          />
+        </div>
+      </div>
 
       @if (isLoading()) {
         <div class="state-centered">
@@ -23,10 +33,21 @@
         <div class="state-centered">
           <p class="state-message">No upcoming travel packages at the moment. Check back soon!</p>
         </div>
+      } @else if (filteredPackages().length === 0) {
+        <div class="state-centered">
+          <p class="state-message">No packages match “{{ searchTerm() }}”. Try a different search.</p>
+        </div>
       } @else {
         <div class="packages-grid">
-          @for (pkg of packages(); track pkg.id) {
-            <div class="package-card">
+          @for (pkg of filteredPackages(); track pkg.id) {
+            <div
+              class="package-card"
+              role="button"
+              tabindex="0"
+              (click)="openDetail(pkg.id)"
+              (keydown.enter)="openDetail(pkg.id)"
+              (keydown.space)="openDetail(pkg.id)"
+            >
               <div class="card-header">
                 <span class="badge" [class]="getStatusClass(pkg.status)">
                   {{ getStatusLabel(pkg.status) }}
