@@ -12,6 +12,7 @@ import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionCreateRequest;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionResponse;
+import com.sayedhesham.travelorch.payment_service.dto.TravelPurchaseRequest;
 import com.stripe.StripeClient;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -28,12 +29,16 @@ import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentTransactionService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentTransactionService.class);
+
+    private static final long MIN_DAYS_BEFORE_START = 3;
 
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
@@ -135,6 +140,110 @@ public class PaymentTransactionService {
 
             PaymentTransaction saved = paymentTransactionRepository.save(transaction);
             log.info("createTransaction - Saved transaction id: {}", saved.getId());
+
+            return PaymentTransactionResponse.fromEntity(saved);
+        }))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<PaymentTransactionResponse> purchaseTravel(TravelPurchaseRequest request, String currentUsername) {
+        log.info("purchaseTravel - User {} purchasing travelId={}", currentUsername, request.getTravelId());
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User buyer = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            Travel travel = travelRepository.findById(request.getTravelId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Travel not found with id: " + request.getTravelId()));
+
+            BigDecimal price = travel.getTotalPrice();
+            if (price == null || price.signum() <= 0) {
+                throw new IllegalStateException("This travel package is not available for purchase");
+            }
+
+            if (travel.getStartDate() == null
+                    || ChronoUnit.DAYS.between(LocalDate.now(), travel.getStartDate()) < MIN_DAYS_BEFORE_START) {
+                throw new IllegalStateException(
+                        "Purchases close " + MIN_DAYS_BEFORE_START + " days before departure");
+            }
+
+            boolean alreadyPurchased = paymentTransactionRepository
+                    .findByBuyerIdAndTravelId(buyer.getId(), travel.getId()).stream()
+                    .anyMatch(t -> t.getStatus() != PaymentStatus.refunded
+                            && t.getStatus() != PaymentStatus.failed);
+            if (alreadyPurchased) {
+                throw new IllegalStateException("You have already purchased this travel package");
+            }
+
+            long amountInCents = price
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .longValueExact();
+
+            PaymentIntent paymentIntent = createStripePaymentIntent(amountInCents, "usd");
+            log.info("purchaseTravel - Stripe PaymentIntent created: id={}, status={}",
+                    paymentIntent.getId(), paymentIntent.getStatus());
+
+            PaymentMethod paymentMethod = resolveStripePaymentMethod();
+
+            PaymentTransaction transaction = new PaymentTransaction();
+            transaction.setTravel(travel);
+            transaction.setBuyer(buyer);
+            transaction.setPaymentMethod(paymentMethod);
+            transaction.setAmount(price);
+            transaction.setCurrency("USD");
+            transaction.setStatus(PaymentStatus.completed);
+            transaction.setProviderTransactionId(paymentIntent.getId());
+            transaction.setPaymentIntentId(paymentIntent.getId());
+
+            PaymentTransaction saved = paymentTransactionRepository.save(transaction);
+            log.info("purchaseTravel - Saved purchase id: {} for buyer: {}", saved.getId(), buyer.getId());
+
+            return PaymentTransactionResponse.fromEntity(saved);
+        }))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Flux<PaymentTransactionResponse> getMyPurchases(String currentUsername) {
+        log.info("getMyPurchases - Fetching purchases for user: {}", currentUsername);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User buyer = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            return paymentTransactionRepository.findByBuyerId(buyer.getId()).stream()
+                    .map(PaymentTransactionResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getMyPurchases - Found {} purchases", list.size()))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Mono<PaymentTransactionResponse> cancelAndRefund(Long id, String currentUsername) {
+        log.info("cancelAndRefund - User {} cancelling transaction id: {}", currentUsername, id);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            PaymentTransaction transaction = paymentTransactionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Transaction not found with id: " + id));
+
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            boolean isBuyer = transaction.getBuyer() != null
+                    && transaction.getBuyer().getId().equals(currentUser.getId());
+            boolean isAdmin = hasPermission(currentUser, "admin", "all");
+
+            if (!isBuyer && !isAdmin) {
+                log.warn("cancelAndRefund - User {} denied cancel of transaction id: {}", currentUsername, id);
+                throw new SecurityException("You do not have permission to cancel this purchase");
+            }
+
+            if (transaction.getStatus() == PaymentStatus.refunded) {
+                throw new IllegalStateException("This purchase has already been refunded");
+            }
+
+            transaction.setStatus(PaymentStatus.refunded);
+            PaymentTransaction saved = paymentTransactionRepository.save(transaction);
+            log.info("cancelAndRefund - Transaction id: {} marked refunded", saved.getId());
 
             return PaymentTransactionResponse.fromEntity(saved);
         }))

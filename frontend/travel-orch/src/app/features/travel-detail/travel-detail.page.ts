@@ -7,6 +7,10 @@ import {
   TravelResponse,
   TravelDestinationResponse,
 } from '../admin/travel/travel.model';
+import { AuthService } from '../auth/auth.service';
+import { ToastService } from '../../shared/components/toast/toast.service';
+import { PurchaseService } from './purchase.service';
+import { PurchaseResponse } from './purchase.model';
 
 @Component({
   selector: 'app-travel-detail-page',
@@ -19,11 +23,60 @@ export class TravelDetailPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly travelService = inject(TravelService);
+  private readonly authService = inject(AuthService);
+  private readonly purchaseService = inject(PurchaseService);
+  private readonly toastService = inject(ToastService);
 
   readonly travel = signal<TravelResponse | null>(null);
   readonly isLoading = signal(true);
   readonly notFound = signal(false);
   readonly hasError = signal(false);
+
+  readonly myPurchase = signal<PurchaseResponse | null>(null);
+  readonly showPurchaseModal = signal(false);
+  readonly showCancelModal = signal(false);
+  readonly isSubmitting = signal(false);
+
+  readonly minDaysBeforeStart = 3;
+
+  readonly daysUntilStart = computed<number>(() => {
+    const t = this.travel();
+    if (!t || !t.startDate) return Number.NEGATIVE_INFINITY;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [y, m, d] = t.startDate.split('T')[0].split('-').map(Number);
+    const start = new Date(y, m - 1, d);
+    return Math.round((start.getTime() - today.getTime()) / 86400000);
+  });
+
+  readonly hasActivePurchase = computed<boolean>(() => {
+    const p = this.myPurchase();
+    return !!p && p.status !== 'refunded';
+  });
+
+  readonly canPurchase = computed<boolean>(() => {
+    const t = this.travel();
+    return (
+      this.authService.isTraveler() &&
+      !this.hasActivePurchase() &&
+      !!t &&
+      t.totalPrice !== null &&
+      t.totalPrice > 0 &&
+      this.daysUntilStart() >= this.minDaysBeforeStart
+    );
+  });
+
+  readonly purchaseClosed = computed<boolean>(() => {
+    const t = this.travel();
+    return (
+      this.authService.isTraveler() &&
+      !this.hasActivePurchase() &&
+      !!t &&
+      t.totalPrice !== null &&
+      t.totalPrice > 0 &&
+      this.daysUntilStart() < this.minDaysBeforeStart
+    );
+  });
 
   readonly orderedDestinations = computed<TravelDestinationResponse[]>(() => {
     const t = this.travel();
@@ -62,10 +115,90 @@ export class TravelDetailPage {
         }
       },
     });
+
+    if (this.authService.isAuthenticated()) {
+      this.loadMyPurchase(id);
+    }
+  }
+
+  private loadMyPurchase(travelId: number): void {
+    this.purchaseService.getMine().subscribe({
+      next: (purchases) => {
+        const active = purchases.find(
+          (p) => p.travelId === travelId && p.status !== 'refunded'
+        );
+        this.myPurchase.set(active ?? null);
+      },
+      error: () => {
+        // Non-blocking: viewing the package shouldn't fail if purchases can't load.
+      },
+    });
   }
 
   goBack(): void {
     this.router.navigate(['/']);
+  }
+
+  openPurchaseModal(): void {
+    this.showPurchaseModal.set(true);
+  }
+
+  closePurchaseModal(): void {
+    if (this.isSubmitting()) return;
+    this.showPurchaseModal.set(false);
+  }
+
+  confirmPurchase(): void {
+    const t = this.travel();
+    if (!t) return;
+    this.isSubmitting.set(true);
+    this.purchaseService.purchase(t.id).subscribe({
+      next: (purchase) => {
+        this.isSubmitting.set(false);
+        this.showPurchaseModal.set(false);
+        this.myPurchase.set(purchase);
+        this.toastService.success(`You purchased "${t.title}"`);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.showPurchaseModal.set(false);
+        if (err.status === 409) {
+          this.toastService.error(
+            'This package can no longer be purchased (it may be too close to departure or already purchased).'
+          );
+        } else {
+          this.toastService.error('Could not complete the purchase. Please try again.');
+        }
+      },
+    });
+  }
+
+  openCancelModal(): void {
+    this.showCancelModal.set(true);
+  }
+
+  closeCancelModal(): void {
+    if (this.isSubmitting()) return;
+    this.showCancelModal.set(false);
+  }
+
+  confirmCancel(): void {
+    const purchase = this.myPurchase();
+    if (!purchase) return;
+    this.isSubmitting.set(true);
+    this.purchaseService.cancelRefund(purchase.id).subscribe({
+      next: (updated) => {
+        this.isSubmitting.set(false);
+        this.showCancelModal.set(false);
+        this.myPurchase.set(updated);
+        this.toastService.success('Your purchase was cancelled and a refund was requested');
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+        this.showCancelModal.set(false);
+        this.toastService.error('Could not cancel the purchase. Please try again.');
+      },
+    });
   }
 
   formatDate(dateStr: string | null): string {
