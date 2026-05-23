@@ -37,6 +37,16 @@
             <p class="profile-since">Member since {{ memberSince() }}</p>
           }
         </div>
+        @if (canReport()) {
+          <button
+            type="button"
+            class="report-btn"
+            [disabled]="hasReported()"
+            (click)="openReportModal()"
+          >
+            @if (hasReported()) { Reported } @else { Report Manager }
+          </button>
+        }
       </div>
 
       <!-- Stats bar -->
@@ -62,6 +72,11 @@
           <div class="stat-item">
             <span class="stat-value">{{ s.totalReviews }}</span>
             <span class="stat-label">Reviews</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-value">{{ s.totalReports }}</span>
+            <span class="stat-label">Reports</span>
           </div>
           @if (upcomingPackages().length > 0) {
             <div class="stat-divider"></div>
@@ -173,4 +188,41 @@
 
     }
   </main>
+
+  @if (showReportModal()) {
+    <div class="modal-overlay" (click)="closeReportModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Report {{ managerFullName() }}</h3>
+          <button type="button" class="modal-close" (click)="closeReportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="report-hint">
+            Reports are reviewed by administrators. Add an optional note describing the issue.
+          </p>
+          <div class="form-group">
+            <label for="report-reason">Reason (optional)</label>
+            <textarea
+              id="report-reason"
+              rows="4"
+              placeholder="Describe the problem…"
+              [value]="reportReason()"
+              (input)="onReasonInput($event)"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-cancel" (click)="closeReportModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="isSubmittingReport()"
+              (click)="submitReport()"
+            >
+              @if (isSubmittingReport()) { Submitting… } @else { Submit Report }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

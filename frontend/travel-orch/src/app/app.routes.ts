@@ -74,6 +74,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/admin/pages/reports/reports.page').then(
+            (m) => m.ReportsPage
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/admin/pages/settings/settings.page').then(

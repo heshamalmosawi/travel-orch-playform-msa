@@ -1,5 +1,10 @@
 package com.sayedhesham.travelorch.travel_service.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import com.sayedhesham.travelorch.common.entity.feedback.TravelFeedback;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.user.User;
@@ -11,17 +16,11 @@ import com.sayedhesham.travelorch.common.repository.user.UserRepository;
 import com.sayedhesham.travelorch.travel_service.dto.FeedbackCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.FeedbackResponse;
 import com.sayedhesham.travelorch.travel_service.dto.FeedbackUpdateRequest;
+
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -76,8 +75,8 @@ public class FeedbackService {
 
     public Flux<FeedbackResponse> getFeedbacksForTravel(Long travelId) {
         log.info("getFeedbacksForTravel - travelId: {}", travelId);
-        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
-                feedbackRepository.findByTravelId(travelId).stream()
+        return Mono.fromCallable(() -> transactionTemplate.execute(status
+                -> feedbackRepository.findByTravelId(travelId).stream()
                         .map(FeedbackResponse::fromEntity)
                         .toList()
         ))
@@ -100,8 +99,8 @@ public class FeedbackService {
 
     public Flux<FeedbackResponse> getFeedbacksForManager(Long managerId) {
         log.info("getFeedbacksForManager - managerId: {}", managerId);
-        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
-                feedbackRepository.findByManagerId(managerId).stream()
+        return Mono.fromCallable(() -> transactionTemplate.execute(status
+                -> feedbackRepository.findByManagerId(managerId).stream()
                         .map(FeedbackResponse::fromEntity)
                         .toList()
         ))
@@ -164,6 +163,6 @@ public class FeedbackService {
     private boolean hasPermission(User user, String resource, String action) {
         return user.getRole() != null && user.getRole().getPermissions().stream()
                 .anyMatch(p -> resource.equalsIgnoreCase(p.getResource())
-                        && action.equalsIgnoreCase(p.getAction()));
+                && action.equalsIgnoreCase(p.getAction()));
     }
 }
