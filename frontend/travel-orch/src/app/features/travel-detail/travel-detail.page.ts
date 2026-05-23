@@ -12,6 +12,8 @@ import { ToastService } from '../../shared/components/toast/toast.service';
 import { PurchaseService } from './purchase.service';
 import { PurchaseResponse } from './purchase.model';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 @Component({
   selector: 'app-travel-detail-page',
   standalone: true,
@@ -42,11 +44,7 @@ export class TravelDetailPage {
   readonly daysUntilStart = computed<number>(() => {
     const t = this.travel();
     if (!t || !t.startDate) return Number.NEGATIVE_INFINITY;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const [y, m, d] = t.startDate.split('T')[0].split('-').map(Number);
-    const start = new Date(y, m - 1, d);
-    return Math.round((start.getTime() - today.getTime()) / 86400000);
+    return Math.floor((this.dateOnlyUtcMs(t.startDate) - this.todayUtcMs()) / DAY_MS);
   });
 
   readonly hasActivePurchase = computed<boolean>(() => {
@@ -87,9 +85,9 @@ export class TravelDetailPage {
   readonly nights = computed<number>(() => {
     const t = this.travel();
     if (!t || !t.startDate || !t.endDate) return 0;
-    const s = new Date(t.startDate.split('T')[0]).getTime();
-    const e = new Date(t.endDate.split('T')[0]).getTime();
-    const diff = Math.round((e - s) / (1000 * 60 * 60 * 24));
+    const diff = Math.floor(
+      (this.dateOnlyUtcMs(t.endDate) - this.dateOnlyUtcMs(t.startDate)) / DAY_MS
+    );
     return diff > 0 ? diff : 0;
   });
 
@@ -221,5 +219,17 @@ export class TravelDetailPage {
 
   getStatusLabel(status: string): string {
     return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  // Treats a date as a calendar date pinned to UTC midnight so day-count math is
+  // timezone/DST-independent and consistent across nights() and daysUntilStart().
+  private dateOnlyUtcMs(dateStr: string): number {
+    const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  }
+
+  private todayUtcMs(): number {
+    const now = new Date();
+    return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   }
 }
