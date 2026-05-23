@@ -1,0 +1,422 @@
+@use 'sass:color';
+
+$dark: #141413;
+$dark-card: #1e1e1c;
+$dark-elevated: #2a2a27;
+$light: #faf9f5;
+$mid-gray: #b0aea5;
+$dark-border: #333330;
+$accent-orange: #d97757;
+$accent-orange-hover: #c4623f;
+$accent-blue: #6a9bcc;
+$accent-green: #788c5d;
+$font-heading: 'Poppins', Arial, sans-serif;
+$font-body: 'Lora', Georgia, serif;
+
+.manager-page {
+  min-height: 100vh;
+  background: $dark;
+}
+
+.manager-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 2rem 4rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.75rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: $mid-gray;
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover { color: $accent-orange; }
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+.state-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+
+  p { font-family: $font-body; color: $mid-gray; margin: 0; }
+}
+
+.state-message {
+  font-family: $font-body;
+  font-size: 1rem;
+  color: $mid-gray;
+  text-align: center;
+  margin: 0;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid $dark-border;
+  border-top-color: $accent-orange;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Profile card ─────────────────────────────────────────────────────────────
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 16px;
+}
+
+.profile-avatar {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba($accent-orange, 0.15);
+  border: 2px solid rgba($accent-orange, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: $font-heading;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: $accent-orange;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-name {
+  font-family: $font-heading;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: $light;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.profile-email {
+  font-family: $font-body;
+  font-size: 0.95rem;
+  color: $accent-blue;
+  margin: 0;
+}
+
+.profile-since {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: $mid-gray;
+  margin: 0;
+}
+
+// ── Stats bar ────────────────────────────────────────────────────────────────
+
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 1.25rem 2rem;
+  margin-bottom: 2rem;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 14px;
+  overflow-x: auto;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 1.75rem;
+  flex: 1;
+  min-width: 80px;
+}
+
+.stat-value {
+  font-family: $font-heading;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $light;
+  line-height: 1.1;
+}
+
+.stat-rating {
+  color: $accent-orange;
+}
+
+.stat-star {
+  font-size: 1.1rem;
+}
+
+.stat-label {
+  font-family: $font-body;
+  font-size: 0.8rem;
+  color: $mid-gray;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 2.5rem;
+  background: $dark-border;
+  flex-shrink: 0;
+}
+
+// ── Sections ─────────────────────────────────────────────────────────────────
+
+.content-section {
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 16px;
+}
+
+.section-heading {
+  font-family: $font-heading;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: $light;
+  margin: 0 0 1.25rem;
+}
+
+.empty-state {
+  font-family: $font-body;
+  font-size: 0.95rem;
+  color: $mid-gray;
+  margin: 0;
+}
+
+// ── Packages grid ─────────────────────────────────────────────────────────────
+
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.package-card {
+  background: $dark-elevated;
+  border: 1px solid $dark-border;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: color.adjust($dark-elevated, $lightness: 3%);
+    border-color: $accent-orange;
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $accent-orange;
+    box-shadow: 0 0 0 3px rgba($accent-orange, 0.18);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-price {
+  font-family: $font-heading;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $light;
+}
+
+.card-title {
+  font-family: $font-heading;
+  font-size: 1rem;
+  font-weight: 600;
+  color: $light;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card-desc {
+  font-family: $font-body;
+  font-size: 0.88rem;
+  color: $mid-gray;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: auto;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: $font-body;
+  font-size: 0.82rem;
+  color: $mid-gray;
+
+  svg { flex-shrink: 0; }
+}
+
+// ── Badge ────────────────────────────────────────────────────────────────────
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-family: $font-heading;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.badge-draft     { background: rgba($mid-gray, 0.15);       color: $mid-gray; }
+.badge-planned   { background: rgba($accent-blue, 0.15);    color: $accent-blue; }
+.badge-confirmed { background: rgba($accent-green, 0.2);    color: color.adjust($accent-green, $lightness: 15%); }
+.badge-progress  { background: rgba($accent-orange, 0.15);  color: $accent-orange; }
+.badge-completed { background: rgba($mid-gray, 0.1);        color: $mid-gray; }
+.badge-cancelled { background: rgba(#c53030, 0.15);         color: #f87171; }
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+
+.review-count {
+  font-family: $font-body;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: $mid-gray;
+  margin-left: 0.4rem;
+}
+
+.reviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.review-item {
+  padding: 1.25rem;
+  background: $dark-elevated;
+  border: 1px solid $dark-border;
+  border-radius: 12px;
+}
+
+.review-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.reviewer-name {
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $light;
+}
+
+.review-package-link {
+  font-family: $font-heading;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: $accent-blue;
+  text-decoration: none;
+  transition: color 0.15s;
+
+  &:hover { color: color.adjust($accent-blue, $lightness: 12%); text-decoration: underline; }
+}
+
+.review-date {
+  font-family: $font-body;
+  font-size: 0.8rem;
+  color: $mid-gray;
+  margin-left: auto;
+}
+
+.star-display {
+  display: flex;
+  gap: 0.1rem;
+  margin-bottom: 0.6rem;
+
+  .star {
+    font-size: 1.05rem;
+    color: $dark-border;
+
+    &.filled { color: $accent-orange; }
+  }
+}
+
+.review-comment {
+  font-family: $font-body;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: $light;
+  margin: 0;
+  white-space: pre-line;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 640px) {
+  .manager-content {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .profile-name { font-size: 1.3rem; }
+
+  .stats-bar { padding: 1rem; }
+
+  .stat-item { padding: 0 1rem; }
+
+  .content-section { padding: 1.5rem; }
+
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+}

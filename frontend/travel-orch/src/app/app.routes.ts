@@ -21,6 +21,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'managers/:id',
+    loadComponent: () =>
+      import('./features/manager-detail/manager-detail.page').then(
+        (m) => m.ManagerDetailPage
+      ),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
