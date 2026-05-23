@@ -13,6 +13,7 @@ import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 @EnableJpaRepositories(basePackages = {
     "com.sayedhesham.travelorch.common.repository.accommodation",
     "com.sayedhesham.travelorch.common.repository.activity",
+    "com.sayedhesham.travelorch.common.repository.feedback",
     "com.sayedhesham.travelorch.common.repository.payment",
     "com.sayedhesham.travelorch.common.repository.rbac",
     "com.sayedhesham.travelorch.common.repository.transportation",
