@@ -31,6 +31,15 @@ export class TravelDetailPage {
     return [...t.destinations].sort((a, b) => a.visitOrder - b.visitOrder);
   });
 
+  readonly nights = computed<number>(() => {
+    const t = this.travel();
+    if (!t || !t.startDate || !t.endDate) return 0;
+    const s = new Date(t.startDate.split('T')[0]).getTime();
+    const e = new Date(t.endDate.split('T')[0]).getTime();
+    const diff = Math.round((e - s) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  });
+
   constructor() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id || Number.isNaN(id)) {
@@ -63,14 +72,6 @@ export class TravelDetailPage {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
     return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
-  }
-
-  nights(start: string, end: string): number {
-    if (!start || !end) return 0;
-    const s = new Date(start.split('T')[0]).getTime();
-    const e = new Date(end.split('T')[0]).getTime();
-    const diff = Math.round((e - s) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 0;
   }
 
   getStatusClass(status: string): string {
