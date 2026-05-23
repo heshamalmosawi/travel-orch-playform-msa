@@ -23,6 +23,7 @@ public class PaymentTransactionResponse {
     private String providerTransactionId;
     private String paymentIntentId;
     private Long travelId;
+    private Long buyerId;
     private LocalDateTime createdAt;
 
     public static PaymentTransactionResponse fromEntity(PaymentTransaction transaction) {
@@ -34,6 +35,7 @@ public class PaymentTransactionResponse {
                 .providerTransactionId(transaction.getProviderTransactionId())
                 .paymentIntentId(transaction.getPaymentIntentId())
                 .travelId(transaction.getTravel() != null ? transaction.getTravel().getId() : null)
+                .buyerId(transaction.getBuyer() != null ? transaction.getBuyer().getId() : null)
                 .createdAt(transaction.getCreatedAt())
                 .build();
     }

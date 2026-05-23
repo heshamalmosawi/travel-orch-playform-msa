@@ -229,6 +229,185 @@ $font-body: 'Lora', Georgia, serif;
   margin: 0.25rem 0 0;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.purchase-btn,
+.cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 10px;
+  font-family: $font-heading;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.purchase-btn {
+  background: $accent-orange;
+  color: $light;
+
+  &:hover {
+    background: color.adjust($accent-orange, $lightness: -6%);
+  }
+}
+
+.cancel-btn {
+  background: rgba(#c53030, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(#c53030, 0.4);
+
+  &:hover {
+    background: rgba(#c53030, 0.28);
+  }
+}
+
+.owned-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: rgba($accent-green, 0.2);
+  color: color.adjust($accent-green, $lightness: 15%);
+  font-family: $font-heading;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.purchase-note {
+  margin: 0;
+  font-family: $font-body;
+  font-size: 0.92rem;
+  color: $mid-gray;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid $dark-border;
+
+  h3 {
+    margin: 0;
+    font-family: $font-heading;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $light;
+  }
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: $mid-gray;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: $light;
+  }
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-text {
+  margin: 0 0 1.5rem;
+  font-family: $font-body;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: $light;
+
+  strong {
+    color: $light;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-secondary,
+.btn-confirm,
+.btn-danger {
+  padding: 0.6rem 1.2rem;
+  border-radius: 9px;
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, opacity 0.2s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background: transparent;
+  border-color: $dark-border;
+  color: $mid-gray;
+
+  &:hover:not(:disabled) {
+    color: $light;
+    border-color: $mid-gray;
+  }
+}
+
+.btn-confirm {
+  background: $accent-orange;
+  color: $light;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($accent-orange, $lightness: -6%);
+  }
+}
+
+.btn-danger {
+  background: #c53030;
+  color: $light;
+
+  &:hover:not(:disabled) {
+    background: color.adjust(#c53030, $lightness: -6%);
+  }
+}
+
 .badge {
   display: inline-block;
   padding: 0.25rem 0.7rem;
