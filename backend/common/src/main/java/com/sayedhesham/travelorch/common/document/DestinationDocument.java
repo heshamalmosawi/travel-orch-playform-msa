@@ -9,6 +9,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
+import org.springframework.data.elasticsearch.annotations.MultiField;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,13 +31,22 @@ public class DestinationDocument {
     @Field(type = FieldType.Text)
     private String description;
 
-    @Field(type = FieldType.Keyword)
+    @MultiField(
+            mainField = @Field(type = FieldType.Text),
+            otherFields = @InnerField(suffix = "keyword", type = FieldType.Keyword)
+    )
     private String country;
 
-    @Field(type = FieldType.Keyword)
+    @MultiField(
+            mainField = @Field(type = FieldType.Text),
+            otherFields = @InnerField(suffix = "keyword", type = FieldType.Keyword)
+    )
     private String city;
 
-    @Field(type = FieldType.Keyword)
+    @MultiField(
+            mainField = @Field(type = FieldType.Text),
+            otherFields = @InnerField(suffix = "keyword", type = FieldType.Keyword)
+    )
     private String region;
 
     @Field(type = FieldType.Double)
