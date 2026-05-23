@@ -16,6 +16,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ReportService {
@@ -59,7 +64,7 @@ public class ReportService {
 
             ManagerReport saved = reportRepository.save(report);
             log.info("createReport - Created report id: {}", saved.getId());
-            return ReportResponse.fromEntity(saved);
+            return ReportResponse.fromEntity(saved, displayName(manager));
         }))
                 .subscribeOn(Schedulers.boundedElastic());
     }
@@ -67,13 +72,27 @@ public class ReportService {
     @PreAuthorize("hasPermission('admin', 'all')")
     public Flux<ReportResponse> getAllReports() {
         log.info("getAllReports");
-        return Mono.fromCallable(() -> transactionTemplate.execute(status ->
-                reportRepository.findAll().stream()
-                        .map(ReportResponse::fromEntity)
-                        .toList()
-        ))
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            List<ManagerReport> reports = reportRepository.findAll();
+            List<Long> managerIds = reports.stream().map(ManagerReport::getManagerId).distinct().toList();
+            Map<Long, User> managers = userRepository.findAllById(managerIds).stream()
+                    .collect(Collectors.toMap(User::getId, Function.identity()));
+            return reports.stream()
+                    .map(r -> ReportResponse.fromEntity(r, displayName(managers.get(r.getManagerId()))))
+                    .toList();
+        }))
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnNext(list -> log.info("getAllReports - Found {} reports", list.size()))
                 .flatMapMany(Flux::fromIterable);
+    }
+
+    // Reported managers may be deleted; managerId has no FK, so the user can be absent
+    private String displayName(User user) {
+        if (user == null) {
+            return null;
+        }
+        String full = ((user.getFirstName() != null ? user.getFirstName() : "") + " "
+                + (user.getLastName() != null ? user.getLastName() : "")).trim();
+        return full.isEmpty() ? user.getUsername() : full;
     }
 }

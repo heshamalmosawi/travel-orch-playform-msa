@@ -154,8 +154,19 @@ $font-body: 'Lora', Georgia, serif;
   }
 
   .td-manager {
-    color: $mid-gray;
-    font-size: 0.8rem;
+    .manager-name {
+      display: block;
+      font-family: $font-heading;
+      font-size: 0.85rem;
+      color: $light;
+    }
+
+    .manager-id {
+      display: block;
+      font-size: 0.72rem;
+      color: $mid-gray;
+      margin-top: 0.15rem;
+    }
   }
 
   .td-reason {

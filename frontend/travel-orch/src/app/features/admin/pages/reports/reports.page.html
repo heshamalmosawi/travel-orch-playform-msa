@@ -42,7 +42,7 @@
               <thead>
                 <tr>
                   <th>Reporter</th>
-                  <th>Manager ID</th>
+                  <th>Manager</th>
                   <th>Reason</th>
                   <th>Date</th>
                 </tr>
@@ -51,7 +51,10 @@
                 @for (report of reports(); track report.id) {
                   <tr>
                     <td class="td-reporter">{{ report.reporterUsername || '—' }}</td>
-                    <td class="td-manager">{{ report.managerId }}</td>
+                    <td class="td-manager">
+                      <span class="manager-name">{{ report.managerName || 'Unknown' }}</span>
+                      <span class="manager-id">#{{ report.managerId }}</span>
+                    </td>
                     <td class="td-reason">{{ report.reason || '—' }}</td>
                     <td class="td-date">{{ formatDate(report.createdAt) }}</td>
                   </tr>

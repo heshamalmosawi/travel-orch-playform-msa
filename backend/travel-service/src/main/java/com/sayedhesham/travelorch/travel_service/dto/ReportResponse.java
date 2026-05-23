@@ -16,15 +16,17 @@ public class ReportResponse {
 
     private Long id;
     private Long managerId;
+    private String managerName;
     private Long reporterId;
     private String reporterUsername;
     private String reason;
     private LocalDateTime createdAt;
 
-    public static ReportResponse fromEntity(ManagerReport report) {
+    public static ReportResponse fromEntity(ManagerReport report, String managerName) {
         return ReportResponse.builder()
                 .id(report.getId())
                 .managerId(report.getManagerId())
+                .managerName(managerName)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
                 .reporterUsername(report.getReporter() != null ? report.getReporter().getUsername() : null)
                 .reason(report.getReason())
