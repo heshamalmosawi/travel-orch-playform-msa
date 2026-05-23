@@ -2,13 +2,15 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { AutocompleteComponent } from '../../shared/components/autocomplete/autocomplete.component';
 import { TravelService } from '../admin/travel/travel.service';
 import { TravelResponse } from '../admin/travel/travel.model';
+import { DestinationResponse } from '../admin/travel/destination.model';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, NavbarComponent],
+  imports: [CommonModule, NavbarComponent, AutocompleteComponent],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
 })
@@ -53,12 +55,12 @@ export class HomePage {
     });
   }
 
-  onSearch(event: Event): void {
-    this.searchTerm.set((event.target as HTMLInputElement).value);
+  onSearchTermChange(term: string): void {
+    this.searchTerm.set(term);
   }
 
-  clearSearch(): void {
-    this.searchTerm.set('');
+  onDestinationSelected(dest: DestinationResponse): void {
+    this.searchTerm.set(dest.name);
   }
 
   openDetail(id: number): void {
