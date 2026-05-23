@@ -23,6 +23,7 @@ export interface TravelResponse {
   totalPrice: number | null;
   status: string;
   managerId: number;
+  managerName: string | null;
   destinations: TravelDestinationResponse[];
   createdAt: string;
   updatedAt: string;
@@ -53,4 +54,10 @@ export interface TravelUpdateRequest {
   endDate?: string;
   totalPrice?: number;
   status?: string;
+}
+
+export interface ManagerStatsResponse {
+  totalPackages: number;
+  averageRating: number;
+  totalReviews: number;
 }

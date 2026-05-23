@@ -115,6 +115,26 @@ $font-body: 'Lora', Georgia, serif;
   margin: 0 0 1.25rem;
 }
 
+.manager-profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  font-family: $font-heading;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: $accent-blue;
+  text-decoration: none;
+  transition: color 0.15s;
+
+  &:hover {
+    color: color.adjust($accent-blue, $lightness: 12%);
+    text-decoration: underline;
+  }
+
+  svg { flex-shrink: 0; }
+}
+
 .hero-meta {
   display: flex;
   flex-wrap: wrap;
