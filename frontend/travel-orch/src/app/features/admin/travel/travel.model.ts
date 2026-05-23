@@ -60,4 +60,5 @@ export interface ManagerStatsResponse {
   totalPackages: number;
   averageRating: number;
   totalReviews: number;
+  totalReports: number;
 }
