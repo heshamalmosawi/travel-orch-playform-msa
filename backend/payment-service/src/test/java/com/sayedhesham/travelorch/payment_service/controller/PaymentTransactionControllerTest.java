@@ -22,6 +22,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionCreateRequest;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionResponse;
+import com.sayedhesham.travelorch.payment_service.dto.TravelPurchaseRequest;
 import com.sayedhesham.travelorch.payment_service.service.PaymentTransactionService;
 
 import reactor.core.publisher.Flux;
@@ -184,5 +185,93 @@ class PaymentTransactionControllerTest {
                     assertEquals(new BigDecimal("100.00"), response.getAmount());
                     assertEquals("pi_test_456", response.getPaymentIntentId());
                 });
+    }
+
+    @Test
+    void purchaseTravel_Success() {
+        PaymentTransactionResponse purchased = PaymentTransactionResponse.builder()
+                .id(201L)
+                .amount(new BigDecimal("100.00"))
+                .currency("USD")
+                .status(PaymentStatus.completed)
+                .travelId(1L)
+                .buyerId(5L)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(paymentTransactionService.purchaseTravel(any(TravelPurchaseRequest.class), any(String.class)))
+                .thenReturn(Mono.just(purchased));
+
+        webTestClient.post()
+                .uri("/transactions/purchase")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(TravelPurchaseRequest.builder().travelId(1L).build())
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(PaymentTransactionResponse.class)
+                .value(response -> {
+                    assertEquals(201L, response.getId());
+                    assertEquals(PaymentStatus.completed, response.getStatus());
+                    assertEquals(5L, response.getBuyerId());
+                });
+    }
+
+    @Test
+    void purchaseTravel_Conflict() {
+        when(paymentTransactionService.purchaseTravel(any(TravelPurchaseRequest.class), any(String.class)))
+                .thenReturn(Mono.error(new IllegalStateException("Purchases close 3 days before departure")));
+
+        webTestClient.post()
+                .uri("/transactions/purchase")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(TravelPurchaseRequest.builder().travelId(1L).build())
+                .exchange()
+                .expectStatus().isEqualTo(409);
+    }
+
+    @Test
+    void getMyPurchases_Success() {
+        when(paymentTransactionService.getMyPurchases("admin")).thenReturn(Flux.just(transactionResponse));
+
+        webTestClient.get()
+                .uri("/transactions/mine")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(PaymentTransactionResponse.class)
+                .hasSize(1)
+                .value(responses -> assertEquals(100L, responses.getFirst().getId()));
+    }
+
+    @Test
+    void cancelAndRefund_Success() {
+        PaymentTransactionResponse refunded = PaymentTransactionResponse.builder()
+                .id(100L)
+                .amount(new BigDecimal("100.00"))
+                .currency("USD")
+                .status(PaymentStatus.refunded)
+                .travelId(1L)
+                .buyerId(5L)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(paymentTransactionService.cancelAndRefund(100L, "admin")).thenReturn(Mono.just(refunded));
+
+        webTestClient.post()
+                .uri("/transactions/100/cancel")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PaymentTransactionResponse.class)
+                .value(response -> assertEquals(PaymentStatus.refunded, response.getStatus()));
+    }
+
+    @Test
+    void cancelAndRefund_Forbidden() {
+        when(paymentTransactionService.cancelAndRefund(100L, "admin"))
+                .thenReturn(Mono.error(new SecurityException("You do not have permission to cancel this purchase")));
+
+        webTestClient.post()
+                .uri("/transactions/100/cancel")
+                .exchange()
+                .expectStatus().isForbidden();
     }
 }

@@ -67,6 +67,27 @@
               </span>
             }
           </div>
+
+          @if (canPurchase()) {
+            <div class="hero-actions">
+              <button type="button" class="purchase-btn" (click)="openPurchaseModal()">
+                Purchase package
+              </button>
+            </div>
+          } @else if (hasActivePurchase()) {
+            <div class="hero-actions">
+              <span class="owned-tag">Purchased</span>
+              <button type="button" class="cancel-btn" (click)="openCancelModal()">
+                Cancel &amp; Request Refund
+              </button>
+            </div>
+          } @else if (purchaseClosed()) {
+            <div class="hero-actions">
+              <p class="purchase-note">
+                Purchases close {{ minDaysBeforeStart }} days before departure.
+              </p>
+            </div>
+          }
         </header>
 
         @if (pkg.description) {
@@ -113,4 +134,57 @@
       </article>
     }
   </main>
+
+  @if (showPurchaseModal()) {
+    <div class="modal-overlay" (click)="closePurchaseModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Confirm Purchase</h3>
+          <button type="button" class="modal-close" (click)="closePurchaseModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          @let pkg = travel();
+          <p class="modal-text">
+            @if (pkg?.totalPrice) {
+              Purchase <strong>{{ pkg!.title }}</strong> for <strong>${{ pkg!.totalPrice!.toLocaleString() }}</strong>?
+            } @else {
+              Purchase <strong>{{ pkg?.title }}</strong>?
+            }
+          </p>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closePurchaseModal()" [disabled]="isSubmitting()">
+              Cancel
+            </button>
+            <button type="button" class="btn-confirm" (click)="confirmPurchase()" [disabled]="isSubmitting()">
+              @if (isSubmitting()) { Processing… } @else { Confirm Purchase }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showCancelModal()) {
+    <div class="modal-overlay" (click)="closeCancelModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Cancel &amp; Request Refund</h3>
+          <button type="button" class="modal-close" (click)="closeCancelModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-text">
+            Cancel your purchase of <strong>{{ travel()?.title }}</strong> and request a refund?
+          </p>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeCancelModal()" [disabled]="isSubmitting()">
+              Keep Purchase
+            </button>
+            <button type="button" class="btn-danger" (click)="confirmCancel()" [disabled]="isSubmitting()">
+              @if (isSubmitting()) { Cancelling… } @else { Cancel &amp; Request Refund }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>
