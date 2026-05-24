@@ -1,0 +1,3 @@
+[   10630ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ https://localhost:8443/api/user/auth/register:0
+[   25875ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://localhost:8443/api/user/auth/login:0
+[   38504ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ https://localhost:8443/api/travel/travels/upcoming:0

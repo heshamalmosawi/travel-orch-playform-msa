@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sayedhesham.travelorch.user_service.dto.RoleUpdateRequest;
+import com.sayedhesham.travelorch.user_service.dto.TravelerStatsResponse;
 import com.sayedhesham.travelorch.user_service.dto.UserResponse;
 import com.sayedhesham.travelorch.user_service.dto.UserUpdateRequest;
 import com.sayedhesham.travelorch.user_service.security.SecurityUtils;
+import com.sayedhesham.travelorch.user_service.service.TravelerStatsService;
 import com.sayedhesham.travelorch.user_service.service.UserService;
 
 import jakarta.validation.Valid;
@@ -29,9 +31,11 @@ public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
+    private final TravelerStatsService travelerStatsService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, TravelerStatsService travelerStatsService) {
         this.userService = userService;
+        this.travelerStatsService = travelerStatsService;
     }
 
     @GetMapping
@@ -60,6 +64,18 @@ public class UserController {
                 .<ResponseEntity<UserResponse>>map(ResponseEntity::ok)
                 .onErrorResume(IllegalArgumentException.class, e -> {
                     log.warn("GET /users/{} - User not found", id);
+                    return Mono.just(ResponseEntity.notFound().build());
+                });
+    }
+
+    @GetMapping("/{id}/stats")
+    public Mono<ResponseEntity<TravelerStatsResponse>> getUserStats(@PathVariable Long id) {
+        log.info("GET /users/{}/stats - Fetching traveler stats", id);
+        return travelerStatsService.getStats(id)
+                .doOnNext(stats -> log.info("GET /users/{}/stats - Stats computed: {}", id, stats))
+                .<ResponseEntity<TravelerStatsResponse>>map(ResponseEntity::ok)
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    log.warn("GET /users/{}/stats - Error: {}", id, e.getMessage());
                     return Mono.just(ResponseEntity.notFound().build());
                 });
     }

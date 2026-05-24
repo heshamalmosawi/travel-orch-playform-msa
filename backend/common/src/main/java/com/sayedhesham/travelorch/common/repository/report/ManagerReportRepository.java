@@ -9,5 +9,7 @@ public interface ManagerReportRepository extends JpaRepository<ManagerReport, Lo
 
     long countByManagerId(Long managerId);
 
+    long countByReporterId(Long reporterId);
+
     boolean existsByManagerIdAndReporterId(Long managerId, Long reporterId);
 }
