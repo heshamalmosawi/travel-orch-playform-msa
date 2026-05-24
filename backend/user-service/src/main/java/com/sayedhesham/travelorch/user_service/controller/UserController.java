@@ -71,12 +71,18 @@ public class UserController {
     @GetMapping("/{id}/stats")
     public Mono<ResponseEntity<TravelerStatsResponse>> getUserStats(@PathVariable Long id) {
         log.info("GET /users/{}/stats - Fetching traveler stats", id);
-        return travelerStatsService.getStats(id)
+        return SecurityUtils.getCurrentUsername()
+                .doOnNext(username -> log.info("GET /users/{}/stats - Requested by user: {}", id, username))
+                .flatMap(currentUsername -> travelerStatsService.getStats(id, currentUsername))
                 .doOnNext(stats -> log.info("GET /users/{}/stats - Stats computed: {}", id, stats))
                 .<ResponseEntity<TravelerStatsResponse>>map(ResponseEntity::ok)
                 .onErrorResume(IllegalArgumentException.class, e -> {
                     log.warn("GET /users/{}/stats - Error: {}", id, e.getMessage());
                     return Mono.just(ResponseEntity.notFound().build());
+                })
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /users/{}/stats - Forbidden: {}", id, e.getMessage());
+                    return Mono.just(ResponseEntity.status(403).build());
                 });
     }
 
