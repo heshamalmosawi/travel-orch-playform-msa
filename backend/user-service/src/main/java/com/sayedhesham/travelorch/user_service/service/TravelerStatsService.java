@@ -7,10 +7,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sayedhesham.travelorch.common.entity.payment.PaymentTransaction;
 import com.sayedhesham.travelorch.common.entity.payment.PaymentMethod;
+import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
 import com.sayedhesham.travelorch.common.repository.feedback.TravelFeedbackRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentTransactionRepository;
 import com.sayedhesham.travelorch.common.repository.report.ManagerReportRepository;
+import com.sayedhesham.travelorch.common.repository.user.UserRepository;
 import com.sayedhesham.travelorch.user_service.dto.TravelerStatsResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -31,11 +33,28 @@ public class TravelerStatsService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final TravelFeedbackRepository travelFeedbackRepository;
     private final ManagerReportRepository managerReportRepository;
+    private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
 
-    public Mono<TravelerStatsResponse> getStats(Long userId) {
-        log.info("getStats - Computing stats for user id: {}", userId);
+    public Mono<TravelerStatsResponse> getStats(Long userId, String currentUsername) {
+        log.info("getStats - Computing stats for user id: {} by user: {}", userId, currentUsername);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User targetUser = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + currentUsername));
+
+            boolean isOwner = targetUser.getUsername().equals(currentUsername);
+            boolean isAdmin = currentUser.isAdmin();
+            boolean isManager = currentUser.hasRole("travel_manager");
+            log.debug("getStats - isOwner: {}, isAdmin: {}, isManager: {}", isOwner, isAdmin, isManager);
+
+            if (!isOwner && !isAdmin && !isManager) {
+                log.warn("getStats - User {} denied access to stats for user id: {}", currentUsername, userId);
+                throw new SecurityException("You do not have permission to view these statistics");
+            }
+
             List<PaymentTransaction> transactions = paymentTransactionRepository.findByBuyerId(userId);
 
             long completed = transactions.stream()
