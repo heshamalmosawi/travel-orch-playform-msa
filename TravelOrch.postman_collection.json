@@ -49,6 +49,16 @@
       "key": "password",
       "value": "Password123!",
       "type": "string"
+    },
+    {
+      "key": "managerId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "feedbackId",
+      "value": "1",
+      "type": "string"
     }
   ],
   "item": [
@@ -176,6 +186,35 @@
           }
         },
         {
+          "name": "Get Users By Role",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/users?role=travel_manager",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "travel_manager"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get User By ID",
           "request": {
             "method": "GET",
@@ -250,9 +289,34 @@
           }
         },
         {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/users/{{userId}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "users",
+                "{{userId}}",
+                "stats"
+              ]
+            }
+          }
+        },
+        {
           "name": "Update User",
           "request": {
-            "method": "PUT",
+            "method": "PATCH",
             "header": [
               {
                 "key": "Authorization",
@@ -277,6 +341,39 @@
                 "user",
                 "users",
                 "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\": \"travel_manager\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user/users/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "users",
+                "{{userId}}",
+                "role"
               ]
             }
           }
@@ -559,6 +656,30 @@
           }
         },
         {
+          "name": "Get My Travels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/travels/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "travels",
+                "me"
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Travel By ID",
           "request": {
             "method": "GET",
@@ -603,6 +724,82 @@
                 "travels",
                 "user",
                 "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Upcoming Travels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/travels/upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "travels",
+                "upcoming"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Upcoming Travels By Manager",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/travels/user/{{userId}}/upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "travels",
+                "user",
+                "{{userId}}",
+                "upcoming"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Manager Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/travels/manager/{{managerId}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "travels",
+                "manager",
+                "{{managerId}}",
+                "stats"
               ]
             }
           }
@@ -663,7 +860,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"title\": \"Summer Vacation in Paris\", \"description\": \"A wonderful week exploring Paris.\", \"startDate\": \"2026-07-01\", \"endDate\": \"2026-07-08\", \"durationDays\": 7, \"totalPrice\": 2500.0, \"userId\": \"{{userId}}\", \"destinations\": [{\"destinationId\": \"{{destinationId}}\", \"visitOrder\": 1, \"arrivalDate\": \"2026-07-01\", \"departureDate\": \"2026-07-08\", \"notes\": \"Main destination\"}]}"
+              "raw": "{\"title\": \"Summer Vacation in Paris\", \"description\": \"A wonderful week exploring Paris.\", \"startDate\": \"2026-07-01\", \"endDate\": \"2026-07-08\", \"totalPrice\": 2500.0, \"destinations\": [{\"destinationId\": \"{{destinationId}}\", \"visitOrder\": 1, \"arrivalDate\": \"2026-07-01\", \"departureDate\": \"2026-07-08\", \"notes\": \"Main destination\"}]}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/travel/travels",
@@ -694,7 +891,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"title\": \"Summer Vacation in Paris - Updated\", \"totalPrice\": 3000.0, \"status\": \"planned\"}"
+              "raw": "{\"title\": \"Summer Vacation in Paris - Updated\", \"totalPrice\": 3000.0, \"status\": \"confirmed\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/travel/travels/{{travelId}}",
@@ -730,6 +927,247 @@
                 "travel",
                 "travels",
                 "{{travelId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedbacks",
+      "description": "Travel feedback/review endpoints.",
+      "item": [
+        {
+          "name": "Create Feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"travelId\": \"{{travelId}}\", \"rating\": 5, \"comment\": \"Amazing trip!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/feedbacks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "feedbacks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Feedbacks By Travel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/feedbacks?travelId={{travelId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "feedbacks"
+              ],
+              "query": [
+                {
+                  "key": "travelId",
+                  "value": "{{travelId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Feedbacks By Manager",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/feedbacks?managerId={{managerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "feedbacks"
+              ],
+              "query": [
+                {
+                  "key": "managerId",
+                  "value": "{{managerId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Feedback For Travel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/feedbacks/me?travelId={{travelId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "feedbacks",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "travelId",
+                  "value": "{{travelId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Feedback",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"rating\": 4, \"comment\": \"Updated review - still great!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/feedbacks/{{feedbackId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "feedbacks",
+                "{{feedbackId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Feedback",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/feedbacks/{{feedbackId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "feedbacks",
+                "{{feedbackId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "description": "Manager report endpoints.",
+      "item": [
+        {
+          "name": "Create Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"managerId\": \"{{managerId}}\", \"reason\": \"Inappropriate content in travel listing\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "reports"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/travel/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "travel",
+                "reports"
               ]
             }
           }
@@ -783,6 +1221,30 @@
                 "payment",
                 "transactions",
                 "{{transactionId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Purchases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/transactions/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "transactions",
+                "mine"
               ]
             }
           }
@@ -854,6 +1316,109 @@
                 "api",
                 "payment",
                 "transactions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Purchase Travel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('transactionId', json.id);",
+                  "    console.log('Transaction ID saved: ' + json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"travelId\": \"{{travelId}}\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/transactions/purchase",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "transactions",
+                "purchase"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel & Refund Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/transactions/{{transactionId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "transactions",
+                "{{transactionId}}",
+                "cancel"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gateway",
+      "description": "API Gateway utility endpoints.",
+      "item": [
+        {
+          "name": "Ping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ping"
               ]
             }
           }

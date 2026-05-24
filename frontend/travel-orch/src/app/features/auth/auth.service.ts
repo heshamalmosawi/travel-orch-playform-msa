@@ -50,6 +50,17 @@ export class AuthService {
     return atob(base64);
   }
 
+  getUsername(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(this.decodeBase64Url(token.split('.')[1]));
+      return payload['sub'] || null;
+    } catch {
+      return null;
+    }
+  }
+
   hasRole(role: string): boolean {
     const token = this.getToken();
     if (!token) return false;

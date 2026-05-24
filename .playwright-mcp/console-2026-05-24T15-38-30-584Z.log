@@ -1,0 +1,2 @@
+[   20890ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://localhost:8443/api/user/auth/login:0
+[   50099ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ https://localhost:8443/api/travel/travels/upcoming:0

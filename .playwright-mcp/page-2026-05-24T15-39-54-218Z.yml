@@ -1,0 +1,22 @@
+- generic [ref=e2]:
+  - alert [ref=e21]:
+    - generic [ref=e22]: ✓
+    - generic [ref=e23]: Login successful! Welcome back.
+    - button "Dismiss" [ref=e24] [cursor=pointer]: ✕
+  - generic [ref=e26]:
+    - banner [ref=e28]:
+      - heading "TravelOrch" [level=1] [ref=e29] [cursor=pointer]
+      - generic [ref=e30]:
+        - button "My Profile" [ref=e31] [cursor=pointer]
+        - button "Logout" [ref=e32] [cursor=pointer]
+    - main [ref=e33]:
+      - generic [ref=e34]:
+        - heading "Welcome to TravelOrch" [level=1] [ref=e35]
+        - paragraph [ref=e36]: Discover upcoming travel packages curated by our expert managers.
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - heading "Upcoming Travel Packages" [level=2] [ref=e39]
+          - generic [ref=e43]:
+            - img
+            - textbox "Search destinations by name, city, country…" [ref=e44]
+        - paragraph [ref=e46]: Could not load packages. Please log in and try again.

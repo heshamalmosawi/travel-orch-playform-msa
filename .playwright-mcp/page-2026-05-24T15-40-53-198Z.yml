@@ -1,0 +1,39 @@
+- generic [ref=e5]:
+  - generic [ref=e6]:
+    - heading "TravelOrch" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Travel Management System
+  - tablist [ref=e9]:
+    - tab "Login" [ref=e10] [cursor=pointer]
+    - tab "Register" [active] [selected] [ref=e11] [cursor=pointer]
+  - generic [ref=e20]:
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]: First Name
+        - textbox "First Name" [ref=e24]:
+          - /placeholder: First name
+      - generic [ref=e25]:
+        - generic [ref=e26]: Last Name
+        - textbox "Last Name" [ref=e27]:
+          - /placeholder: Last name
+    - generic [ref=e28]:
+      - generic [ref=e29]: Username
+      - textbox "Username" [ref=e30]:
+        - /placeholder: Choose a username
+    - generic [ref=e31]:
+      - generic [ref=e32]: Email
+      - textbox "Email" [ref=e33]:
+        - /placeholder: you@example.com
+    - generic [ref=e34]:
+      - generic [ref=e35]: Password
+      - textbox "Password" [ref=e36]:
+        - /placeholder: At least 8 characters
+    - generic [ref=e37]:
+      - generic [ref=e38]: Phone (optional)
+      - textbox "Phone (optional)" [ref=e39]:
+        - /placeholder: +1 234 567 890
+    - generic [ref=e40]:
+      - generic [ref=e41]: Account Type
+      - combobox "Account Type" [ref=e42] [cursor=pointer]:
+        - option "Traveler" [selected]
+        - option "Travel Manager"
+    - button "Create Account" [ref=e43] [cursor=pointer]

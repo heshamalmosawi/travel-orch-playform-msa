@@ -1,0 +1,17 @@
+- generic [ref=e81]:
+  - generic [ref=e82]:
+    - heading "TravelOrch" [level=1] [ref=e83]
+    - paragraph [ref=e84]: Travel Management System
+  - tablist [ref=e85]:
+    - tab "Login" [selected] [ref=e86] [cursor=pointer]
+    - tab "Register" [ref=e87] [cursor=pointer]
+  - generic [ref=e88]:
+    - generic [ref=e89]:
+      - generic [ref=e90]: Username
+      - textbox "Username" [ref=e91]:
+        - /placeholder: Enter your username
+    - generic [ref=e92]:
+      - generic [ref=e93]: Password
+      - textbox "Password" [ref=e94]:
+        - /placeholder: Enter your password
+    - button "Sign In" [ref=e95] [cursor=pointer]
