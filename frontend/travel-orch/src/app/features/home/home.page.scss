@@ -27,21 +27,17 @@ $font-body: 'Lora', Georgia, serif;
 .home-hero {
   text-align: center;
   margin-bottom: 3rem;
-
-  h1 {
-    font-family: $font-heading;
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: $light;
-    margin: 0 0 0.75rem;
-  }
-
+  
   p {
     font-family: $font-body;
     font-size: 1.1rem;
     color: $mid-gray;
     margin: 0;
   }
+}
+
+.packages-section + .packages-section {
+  margin-top: 3rem;
 }
 
 .section-head {
@@ -61,10 +57,16 @@ $font-body: 'Lora', Georgia, serif;
   margin: 0;
 }
 
+.home-search {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
 .search-bar {
   position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 480px;
 }
 
 .state-centered {
