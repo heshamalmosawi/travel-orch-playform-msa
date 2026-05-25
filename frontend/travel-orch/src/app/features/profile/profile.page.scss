@@ -1,0 +1,294 @@
+@use 'sass:color';
+
+$dark: #141413;
+$dark-card: #1e1e1c;
+$dark-elevated: #2a2a27;
+$light: #faf9f5;
+$mid-gray: #b0aea5;
+$dark-border: #333330;
+$accent-orange: #d97757;
+$accent-orange-hover: #c4623f;
+$accent-blue: #6a9bcc;
+$accent-green: #788c5d;
+$accent-red: #f87171;
+$font-heading: 'Poppins', Arial, sans-serif;
+$font-body: 'Lora', Georgia, serif;
+
+.profile-page {
+  min-height: 100vh;
+  background: $dark;
+}
+
+.profile-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 2rem 4rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-family: $font-heading;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $light;
+    margin: 0;
+  }
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid $dark-border;
+  color: $mid-gray;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: $font-heading;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: $light;
+    border-color: $accent-blue;
+  }
+}
+
+.state-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+
+  .state-message {
+    font-family: $font-body;
+    font-size: 1rem;
+    color: $mid-gray;
+    text-align: center;
+    margin: 0;
+  }
+
+  p {
+    font-family: $font-body;
+    color: $mid-gray;
+    margin: 0;
+  }
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid $dark-border;
+  border-top-color: $accent-orange;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn {
+  padding: 0.55rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: $font-heading;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.2s;
+
+  &.btn-primary {
+    background: $accent-orange;
+    color: $light;
+
+    &:hover {
+      background: $accent-orange-hover;
+    }
+  }
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: $accent-orange;
+  color: $light;
+  font-family: $font-heading;
+  font-size: 1.4rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-info {
+  h2 {
+    font-family: $font-heading;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: $light;
+    margin: 0 0 0.25rem;
+  }
+
+  p {
+    font-family: $font-body;
+    font-size: 0.9rem;
+    color: $mid-gray;
+    margin: 0;
+  }
+
+  .user-username {
+    color: $accent-orange;
+    font-size: 0.95rem;
+  }
+
+  .user-email {
+    margin-top: 0.15rem;
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-family: $font-heading;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+
+.badge-admin   { background: rgba($accent-red, 0.15);    color: $accent-red; }
+.badge-manager { background: rgba($accent-blue, 0.15);   color: $accent-blue; }
+.badge-user    { background: rgba($accent-green, 0.2);   color: color.adjust($accent-green, $lightness: 15%); }
+
+.section-title {
+  font-family: $font-heading;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: $light;
+  margin: 0 0 1rem;
+}
+
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: $accent-orange;
+  }
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.stat-icon-trips    { background: rgba($accent-green, 0.15);  color: $accent-green; }
+.stat-icon-cancelled { background: rgba($accent-red, 0.15);    color: $accent-red; }
+.stat-icon-spent    { background: rgba($accent-orange, 0.15); color: $accent-orange; }
+.stat-icon-rating   { background: rgba(#facc15, 0.15);        color: #facc15; }
+.stat-icon-reviews  { background: rgba($accent-blue, 0.15);   color: $accent-blue; }
+.stat-icon-reports  { background: rgba($accent-red, 0.15);    color: $accent-red; }
+
+.stat-value {
+  font-family: $font-heading;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: $light;
+}
+
+.stat-label {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: $mid-gray;
+}
+
+.payment-section {
+  margin-bottom: 2rem;
+}
+
+.payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: $accent-blue;
+  }
+}
+
+.payment-name {
+  font-family: $font-heading;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $light;
+}
+
+.payment-count {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: $mid-gray;
+}
+
+

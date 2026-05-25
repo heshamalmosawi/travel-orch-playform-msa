@@ -27,7 +27,7 @@
         </div>
       } @else if (hasError()) {
         <div class="state-centered">
-          <p class="state-message">Could not load packages. Please log in and try again.</p>
+          <p class="state-message">{{ errorMessage() }}</p>
         </div>
       } @else if (packages().length === 0) {
         <div class="state-centered">

@@ -17,4 +17,6 @@ public interface TravelFeedbackRepository extends JpaRepository<TravelFeedback, 
     Optional<TravelFeedback> findByTravelIdAndReviewerId(Long travelId, Long reviewerId);
 
     boolean existsByTravelIdAndReviewerId(Long travelId, Long reviewerId);
+
+    List<TravelFeedback> findByReviewerId(Long reviewerId);
 }
