@@ -37,6 +37,11 @@ public class RecommendationController {
                         .collectList()
                         .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
                 )
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    log.warn("GET /recommendations - User not found: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .<Flux<TravelResponse>>body(Flux.empty()));
+                })
                 .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .<Flux<TravelResponse>>body(Flux.empty())));
     }
