@@ -85,6 +85,9 @@ class TravelServiceTest {
     @Mock
     private TransactionTemplate transactionTemplate;
 
+    @Mock
+    private GraphSyncService graphSyncService;
+
     @InjectMocks
     private TravelService travelService;
 
@@ -335,6 +338,7 @@ class TravelServiceTest {
                 .verifyComplete();
 
         verify(travelRepository).save(any(Travel.class));
+        verify(graphSyncService).syncTravel(any(TravelResponse.class));
     }
 
     @Test
@@ -578,6 +582,7 @@ class TravelServiceTest {
         verify(transportationSegmentRepository).deleteByTravel(testTravel);
         verify(travelDestinationRepository).deleteByTravel(testTravel);
         verify(travelRepository).delete(testTravel);
+        verify(graphSyncService).removeTravel(100L);
     }
 
     @Test

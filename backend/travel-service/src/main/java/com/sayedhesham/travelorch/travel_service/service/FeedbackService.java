@@ -33,6 +33,7 @@ public class FeedbackService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
+    private final GraphSyncService graphSyncService;
 
     public Mono<FeedbackResponse> createFeedback(String username, FeedbackCreateRequest request) {
         Long travelId = request.getTravelId();
@@ -70,7 +71,8 @@ public class FeedbackService {
             log.info("createFeedback - Created feedback id: {}", saved.getId());
             return FeedbackResponse.fromEntity(saved);
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(resp -> graphSyncService.recordReview(resp.getReviewerId(), resp.getTravelId(), resp.getRating()));
     }
 
     public Flux<FeedbackResponse> getFeedbacksForTravel(Long travelId) {
@@ -131,7 +133,8 @@ public class FeedbackService {
             log.info("updateFeedback - Updated feedback id: {}", feedbackId);
             return FeedbackResponse.fromEntity(updated);
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(resp -> graphSyncService.recordReview(resp.getReviewerId(), resp.getTravelId(), resp.getRating()));
     }
 
     public Mono<Void> deleteFeedback(Long feedbackId, String username) {
@@ -152,11 +155,15 @@ public class FeedbackService {
                 throw new SecurityException("You do not have permission to delete this review");
             }
 
+            Long reviewerId = feedback.getReviewer() != null ? feedback.getReviewer().getId() : null;
+            Long travelId = feedback.getTravelId();
+
             feedbackRepository.delete(feedback);
             log.info("deleteFeedback - Deleted feedback id: {}", feedbackId);
-            return null;
+            return new Long[]{reviewerId, travelId};
         }))
                 .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(ids -> graphSyncService.removeReview(ids[0], ids[1]))
                 .then();
     }
 

@@ -45,6 +45,7 @@ class FeedbackServiceTest {
     @Mock private PaymentTransactionRepository paymentTransactionRepository;
     @Mock private UserRepository userRepository;
     @Mock private TransactionTemplate transactionTemplate;
+    @Mock private GraphSyncService graphSyncService;
 
     @InjectMocks
     private FeedbackService feedbackService;
@@ -186,6 +187,7 @@ class FeedbackServiceTest {
                 .verifyComplete();
 
         verify(feedbackRepository).save(any(TravelFeedback.class));
+        verify(graphSyncService).recordReview(10L, 100L, 5);
     }
 
     @Test
@@ -434,6 +436,7 @@ class FeedbackServiceTest {
                 .verifyComplete();
 
         verify(feedbackRepository).save(any(TravelFeedback.class));
+        verify(graphSyncService).recordReview(10L, 100L, 5);
     }
 
     @Test
@@ -523,6 +526,7 @@ class FeedbackServiceTest {
                 .verifyComplete();
 
         verify(feedbackRepository).delete(feedback);
+        verify(graphSyncService).removeReview(10L, 100L);
     }
 
     @Test

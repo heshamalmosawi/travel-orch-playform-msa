@@ -31,6 +31,10 @@ export class TravelService {
     return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/upcoming`);
   }
 
+  getRecommendations(): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/recommendations`);
+  }
+
   getByStatus(status: string): Observable<TravelResponse[]> {
     return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/status/${status}`);
   }
