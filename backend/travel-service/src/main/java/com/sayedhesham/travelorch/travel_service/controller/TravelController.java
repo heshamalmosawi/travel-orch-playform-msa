@@ -101,7 +101,13 @@ public class TravelController {
     @GetMapping("/upcoming")
     public Mono<ResponseEntity<Flux<TravelResponse>>> getUpcomingTravels() {
         log.info("GET /travels/upcoming - Fetching upcoming travels");
-        return Mono.just(ResponseEntity.ok(travelService.getUpcomingTravels()));
+        return travelService.getUpcomingTravels()
+                .collectList()
+                .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
+                .onErrorResume(e -> {
+                    log.error("GET /travels/upcoming - Error: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+                });
     }
 
     @GetMapping("/user/{userId}/upcoming")

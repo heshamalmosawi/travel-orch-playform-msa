@@ -94,6 +94,13 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'profile',
+    loadComponent: () =>
+      import('./features/profile/profile.page').then(
+        (m) => m.ProfilePage
+      ),
+  },
+  {
     path: 'manager',
     canActivate: [managerGuard],
     loadComponent: () =>

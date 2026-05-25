@@ -21,6 +21,7 @@ export class HomePage {
   readonly packages = signal<TravelResponse[]>([]);
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
+  readonly errorMessage = signal('');
   readonly searchTerm = signal('');
 
   readonly filteredPackages = computed(() => {
@@ -48,9 +49,16 @@ export class HomePage {
         this.packages.set(data);
         this.isLoading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
         this.hasError.set(true);
+        if (err.status === 401 || err.status === 403) {
+          this.errorMessage.set('Please log in to view upcoming packages.');
+        } else if (err.status === 429) {
+          this.errorMessage.set('Too many requests. Please wait a moment and try again.');
+        } else {
+          this.errorMessage.set('Could not load packages. Please try again later.');
+        }
       },
     });
   }
