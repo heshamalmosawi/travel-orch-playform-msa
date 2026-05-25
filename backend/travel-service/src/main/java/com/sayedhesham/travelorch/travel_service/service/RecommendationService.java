@@ -44,6 +44,7 @@ public class RecommendationService {
     private final TravelFeedbackRepository travelFeedbackRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final UserRepository userRepository;
+    private final GraphSyncService graphSyncService;
     private final TransactionTemplate transactionTemplate;
 
     public Flux<TravelResponse> getRecommendations(String currentUsername) {
@@ -103,7 +104,7 @@ public class RecommendationService {
         return Mono.fromRunnable(() -> transactionTemplate.executeWithoutResult(status -> {
             int travels = 0;
             for (Travel travel : travelRepository.findAll()) {
-                syncTravelGraph(travel);
+                graphSyncService.syncTravel(TravelResponse.fromEntity(travel));
                 travels++;
             }
 
@@ -138,29 +139,5 @@ public class RecommendationService {
         }))
                 .subscribeOn(Schedulers.boundedElastic())
                 .then();
-    }
-
-    private void syncTravelGraph(Travel travel) {
-        try {
-            Double price = travel.getTotalPrice() != null ? travel.getTotalPrice().doubleValue() : null;
-            Long startEpochDay = travel.getStartDate() != null ? travel.getStartDate().toEpochDay() : null;
-            String status = travel.getStatus() != null ? travel.getStatus().name() : null;
-            Long managerId = travel.getManager() != null ? travel.getManager().getId() : null;
-
-            travelGraphRepository.upsertTravel(
-                    travel.getId(), travel.getTitle(), managerId, price, startEpochDay, status);
-            travelGraphRepository.clearVisits(travel.getId());
-
-            List<String> countries = travel.getDestinations().stream()
-                    .map(td -> td.getDestination() != null ? td.getDestination().getCountry() : null)
-                    .filter(c -> c != null && !c.isBlank())
-                    .distinct()
-                    .toList();
-            if (!countries.isEmpty()) {
-                travelGraphRepository.linkCountries(travel.getId(), countries);
-            }
-        } catch (Exception e) {
-            log.warn("backfill - travel sync failed for travelId {}: {}", travel.getId(), e.getMessage());
-        }
     }
 }
