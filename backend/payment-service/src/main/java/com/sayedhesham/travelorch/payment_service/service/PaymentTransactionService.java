@@ -6,6 +6,7 @@ import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.PaymentProvider;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
+import com.sayedhesham.travelorch.common.repository.neo4j.TravelGraphRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentMethodRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentTransactionRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
@@ -46,6 +47,7 @@ public class PaymentTransactionService {
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
     private final StripeClient stripeClient;
+    private final TravelGraphRepository travelGraphRepository;
 
     @PreAuthorize("hasPermission('payments', 'read')")
     public Flux<PaymentTransactionResponse> getAllTransactions() {
@@ -201,7 +203,19 @@ public class PaymentTransactionService {
 
             return PaymentTransactionResponse.fromEntity(saved);
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(resp -> recordPurchaseEdge(resp.getBuyerId(), resp.getTravelId()));
+    }
+
+    private void recordPurchaseEdge(Long buyerId, Long travelId) {
+        if (buyerId == null || travelId == null) {
+            return;
+        }
+        try {
+            travelGraphRepository.recordPurchase(buyerId, travelId);
+        } catch (Exception e) {
+            log.warn("recordPurchaseEdge - graph write failed for buyer {} travel {}: {}", buyerId, travelId, e.getMessage());
+        }
     }
 
     public Flux<PaymentTransactionResponse> getMyPurchases(String currentUsername) {

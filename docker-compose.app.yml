@@ -98,6 +98,7 @@ services:
       - app-network
     depends_on:
       - db
+      - neo4j
     environment:
       - VAULT_ENABLED=false
       - DB_HOST=db
@@ -106,6 +107,10 @@ services:
       - DB_USER=${DB_USER:-myuser}
       - DB_PASSWORD=${DB_PASSWORD:-mypassword}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password123}
 
   db:
     image: postgres:latest

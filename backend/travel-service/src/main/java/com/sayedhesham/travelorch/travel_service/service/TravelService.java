@@ -51,6 +51,7 @@ public class TravelService {
     private final DestinationRepository destinationRepository;
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
+    private final GraphSyncService graphSyncService;
 
     @PreAuthorize("hasPermission('travels', 'read')")
     public Flux<TravelResponse> getAllTravels() {
@@ -266,7 +267,8 @@ public class TravelService {
             Travel reloaded = travelRepository.findByIdWithDestinations(saved.getId());
             return TravelResponse.fromEntity(reloaded != null ? reloaded : saved);
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(graphSyncService::syncTravel);
     }
 
     public Mono<TravelResponse> updateTravel(Long id, TravelUpdateRequest request, String currentUsername) {
@@ -312,7 +314,8 @@ public class TravelService {
             Travel reloaded = travelRepository.findByIdWithDestinations(updated.getId());
             return TravelResponse.fromEntity(reloaded != null ? reloaded : updated);
         }))
-                .subscribeOn(Schedulers.boundedElastic());
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(graphSyncService::syncTravel);
     }
 
     public Mono<Void> deleteTravel(Long id, String currentUsername) {
@@ -340,9 +343,10 @@ public class TravelService {
             travelRepository.delete(travel);
 
             log.info("deleteTravel - Deleted travel id: {}", id);
-            return null;
+            return id;
         }))
                 .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(graphSyncService::removeTravel)
                 .then();
     }
 

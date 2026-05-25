@@ -6,6 +6,7 @@ import { AutocompleteComponent } from '../../shared/components/autocomplete/auto
 import { TravelService } from '../admin/travel/travel.service';
 import { TravelResponse } from '../admin/travel/travel.model';
 import { DestinationResponse } from '../admin/travel/destination.model';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-home-page',
@@ -16,12 +17,16 @@ import { DestinationResponse } from '../admin/travel/destination.model';
 })
 export class HomePage {
   private readonly travelService = inject(TravelService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly packages = signal<TravelResponse[]>([]);
+  readonly recommendations = signal<TravelResponse[]>([]);
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
   readonly searchTerm = signal('');
+
+  readonly isSearching = computed(() => this.searchTerm().trim().length > 0);
 
   readonly filteredPackages = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -53,6 +58,13 @@ export class HomePage {
         this.hasError.set(true);
       },
     });
+
+    if (this.authService.isAuthenticated()) {
+      this.travelService.getRecommendations().subscribe({
+        next: (data) => this.recommendations.set(data),
+        error: () => this.recommendations.set([]),
+      });
+    }
   }
 
   onSearchTermChange(term: string): void {

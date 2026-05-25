@@ -29,6 +29,7 @@ import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.PaymentProvider;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
+import com.sayedhesham.travelorch.common.repository.neo4j.TravelGraphRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentMethodRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentTransactionRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
@@ -60,6 +61,9 @@ class PaymentTransactionServiceTest {
 
     @Mock(answer = RETURNS_DEEP_STUBS)
     private StripeClient stripeClient;
+
+    @Mock
+    private TravelGraphRepository travelGraphRepository;
 
     @InjectMocks
     private PaymentTransactionService paymentTransactionService;
@@ -398,6 +402,7 @@ class PaymentTransactionServiceTest {
                 .verifyComplete();
 
         verify(paymentTransactionRepository).save(any(PaymentTransaction.class));
+        verify(travelGraphRepository).recordPurchase(1L, 1L);
     }
 
     @Test
