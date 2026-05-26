@@ -54,6 +54,8 @@ export class UsersPage {
   // Resolved travel titles, keyed by travelId (purchases/feedbacks only carry the id)
   readonly travelNames = signal<Record<number, string>>({});
 
+  private detailVersion = 0;
+
   readonly pagedPurchases = computed(() => {
     const start = this.purchasesPage() * this.pageSize;
     return this.userPurchases().slice(start, start + this.pageSize);
@@ -264,6 +266,8 @@ export class UsersPage {
   }
 
   openDetailModal(user: UserResponse): void {
+    const version = ++this.detailVersion;
+
     this.viewingUser.set(user);
     this.userPurchases.set([]);
     this.userFeedbacks.set([]);
@@ -280,14 +284,16 @@ export class UsersPage {
 
     this.purchaseService.getByUser(user.id).subscribe({
       next: (list) => {
+        if (this.detailVersion !== version) return;
         this.userPurchases.set(list);
-        this.loadTravelNames(list.map((p) => p.travelId));
+        this.loadTravelNames(list.map((p) => p.travelId), version);
         done();
       },
       error: (err) => {
+        if (this.detailVersion !== version) return;
         done();
         if (err.status === 403) {
-          this.detailError.set('You do not have permission to view this user’s data.');
+          this.detailError.set("You do not have permission to view this user's data.");
         } else if (err.status !== 404) {
           this.toastService.error('Failed to load travel history');
         }
@@ -296,14 +302,16 @@ export class UsersPage {
 
     this.feedbackService.getByReviewer(user.id).subscribe({
       next: (list) => {
+        if (this.detailVersion !== version) return;
         this.userFeedbacks.set(list);
-        this.loadTravelNames(list.map((f) => f.travelId));
+        this.loadTravelNames(list.map((f) => f.travelId), version);
         done();
       },
       error: (err) => {
+        if (this.detailVersion !== version) return;
         done();
         if (err.status === 403) {
-          this.detailError.set('You do not have permission to view this user’s data.');
+          this.detailError.set("You do not have permission to view this user's data.");
         } else if (err.status !== 404) {
           this.toastService.error('Failed to load feedbacks');
         }
@@ -312,6 +320,7 @@ export class UsersPage {
   }
 
   closeDetailModal(): void {
+    this.detailVersion++;
     this.viewingUser.set(null);
     this.userPurchases.set([]);
     this.userFeedbacks.set([]);
@@ -357,14 +366,17 @@ export class UsersPage {
     return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
-  private loadTravelNames(travelIds: Array<number | null | undefined>): void {
+  private loadTravelNames(travelIds: Array<number | null | undefined>, version?: number): void {
     const ids = Array.from(
       new Set(travelIds.filter((id): id is number => id != null))
     );
     for (const id of ids) {
       if (this.travelNames()[id] !== undefined) continue;
       this.travelService.getById(id).subscribe({
-        next: (t) => this.travelNames.update((m) => ({ ...m, [id]: t.title })),
+        next: (t) => {
+          if (version != null && this.detailVersion !== version) return;
+          this.travelNames.update((m) => ({ ...m, [id]: t.title }));
+        },
         error: () => {},
       });
     }
