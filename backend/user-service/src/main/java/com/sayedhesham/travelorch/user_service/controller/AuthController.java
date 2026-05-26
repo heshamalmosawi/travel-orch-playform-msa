@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.user_service.controller;
 
 import com.sayedhesham.travelorch.user_service.dto.AuthResponse;
 import com.sayedhesham.travelorch.user_service.dto.LoginRequest;
+import com.sayedhesham.travelorch.user_service.dto.RefreshRequest;
 import com.sayedhesham.travelorch.user_service.dto.RegistrationRequest;
 import com.sayedhesham.travelorch.user_service.service.AuthService;
 import jakarta.validation.Valid;
@@ -68,6 +69,29 @@ public class AuthController {
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                             AuthResponse.builder()
                                     .message("An error occurred during login: " + e.getMessage())
+                                    .build()
+                    ));
+                });
+    }
+
+    @PostMapping("/refresh")
+    public Mono<ResponseEntity<AuthResponse>> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
+        logger.info("Token refresh request received");
+        return authService.refresh(refreshRequest.getRefreshToken())
+                .map(response -> ResponseEntity.ok(response))
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    logger.warn("Token refresh failed: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                            AuthResponse.builder()
+                                    .message(e.getMessage())
+                                    .build()
+                    ));
+                })
+                .onErrorResume(e -> {
+                    logger.error("Unexpected error during token refresh", e);
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                            AuthResponse.builder()
+                                    .message("An error occurred during token refresh: " + e.getMessage())
                                     .build()
                     ));
                 });
