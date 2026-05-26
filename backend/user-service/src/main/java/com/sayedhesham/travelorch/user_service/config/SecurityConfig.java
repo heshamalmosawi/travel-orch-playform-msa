@@ -29,7 +29,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .securityContextRepository(new JwtSecurityContextRepository(jwtUtil))
             .authorizeExchange(auth -> auth
-                .pathMatchers("/auth/register", "/auth/login").permitAll()
+                .pathMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
                 .anyExchange().authenticated()
             );
 

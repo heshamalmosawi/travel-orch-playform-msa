@@ -1,5 +1,6 @@
 package com.sayedhesham.travelorch.user_service.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,11 +10,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
+public class RefreshRequest {
 
-    private String message;
-    private String username;
-    private String email;
-    private String token;
+    @NotBlank(message = "Refresh token is required")
     private String refreshToken;
 }

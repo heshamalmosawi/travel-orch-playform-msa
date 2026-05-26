@@ -71,6 +71,9 @@ $font-body: 'Lora', Georgia, serif;
   &--draft { border-top-color: $accent-blue; }
   &--confirmed { border-top-color: $accent-green; }
   &--cancelled { border-top-color: #e53e3e; }
+  &--income { border-top-color: $accent-orange; }
+  &--trips { border-top-color: $accent-blue; }
+  &--travelers { border-top-color: $accent-teal; }
 
   .stat-value {
     font-family: $font-heading;
@@ -85,6 +88,83 @@ $font-body: 'Lora', Georgia, serif;
     font-size: 0.85rem;
     color: $mid-gray;
     margin-top: 0.4rem;
+  }
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-section {
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+
+  .section-title {
+    font-family: $font-heading;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $light;
+    margin: 0 0 1.25rem;
+  }
+}
+
+.income-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.income-bar-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.income-bar-track {
+  flex: 1;
+  height: 24px;
+  background: $dark-elevated;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.income-bar-fill {
+  height: 100%;
+  background: $accent-orange;
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.4s ease;
+}
+
+.income-bar-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 130px;
+}
+
+.income-bar-amount {
+  font-family: $font-heading;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $light;
+}
+
+.income-bar-month {
+  font-family: $font-body;
+  font-size: 0.7rem;
+  color: $mid-gray;
+}
+
+@media (max-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
   }
 }
 

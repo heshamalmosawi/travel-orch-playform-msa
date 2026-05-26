@@ -60,6 +60,21 @@ public class AuthService {
         })).subscribeOn(Schedulers.boundedElastic());
     }
 
+    public Mono<AuthResponse> refresh(String refreshToken) {
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            if (refreshToken == null || !jwtUtil.isRefreshToken(refreshToken) || !jwtUtil.validateToken(refreshToken)) {
+                throw new IllegalArgumentException("Invalid or expired refresh token");
+            }
+
+            String username = jwtUtil.extractUsername(refreshToken);
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid or expired refresh token"));
+
+            logger.info("Refreshing tokens for user: {}", username);
+            return generateAuthResponse(user, user.getRole(), "Token refreshed");
+        })).subscribeOn(Schedulers.boundedElastic());
+    }
+
     private User findUserByUsernameOrEmail(String username) {
         return userRepository.findByUsername(username)
                 .or(() -> userRepository.findByEmail(username))
@@ -104,15 +119,17 @@ public class AuthService {
     }
 
     private AuthResponse generateAuthResponse(User user, Role role, String message) {
-        logger.debug("Generating JWT token for user: {}", user.getUsername());
+        logger.debug("Generating JWT tokens for user: {}", user.getUsername());
         String token = jwtUtil.generateToken(user.getUsername(), role.getName(), false);
-        logger.debug("Token generated successfully");
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+        logger.debug("Tokens generated successfully");
 
         return AuthResponse.builder()
                 .message(message)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .token(token)
+                .refreshToken(refreshToken)
                 .build();
     }
 }
