@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/transactions")
 public class PaymentTransactionController {
@@ -55,25 +57,26 @@ public class PaymentTransactionController {
     }
 
     @GetMapping("/travel/{travelId}")
-    public Mono<ResponseEntity<Flux<PaymentTransactionResponse>>> getTransactionsByTravel(@PathVariable Long travelId) {
+    public Mono<ResponseEntity<List<PaymentTransactionResponse>>> getTransactionsByTravel(@PathVariable Long travelId) {
         log.info("GET /transactions/travel/{} - Fetching purchases for travel", travelId);
+        // collectList() is deliberate: it materializes the result (and surfaces the service's
+        // 404/403 errors) before the ResponseEntity is built, so error mapping below can set the
+        // status. Returning the raw Flux would commit a 200 and let those errors escape mid-stream.
+        // Returning the List (not re-wrapping it in a Flux) avoids the redundant list->flux hop.
         return SecurityUtils.getCurrentUsername()
                 .flatMap(currentUsername ->
                         paymentTransactionService.getTransactionsByTravel(travelId, currentUsername)
                                 .collectList()
-                                .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                                .<ResponseEntity<List<PaymentTransactionResponse>>>map(ResponseEntity::ok))
                 .onErrorResume(IllegalArgumentException.class, e -> {
                     log.warn("GET /transactions/travel/{} - Not found: {}", travelId, e.getMessage());
-                    return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .<Flux<PaymentTransactionResponse>>body(Flux.empty()));
+                    return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                 })
                 .onErrorResume(SecurityException.class, e -> {
                     log.warn("GET /transactions/travel/{} - Forbidden: {}", travelId, e.getMessage());
-                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .<Flux<PaymentTransactionResponse>>body(Flux.empty()));
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
                 })
-                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .<Flux<PaymentTransactionResponse>>body(Flux.empty())));
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
     }
 
     @GetMapping("/{id}")
