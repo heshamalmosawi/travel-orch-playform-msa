@@ -1,12 +1,13 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
+import { Observable, catchError, finalize, map, share, switchMap, take, tap, throwError } from 'rxjs';
 import { AuthService } from '../../features/auth/auth.service';
 
-// Module-level single-flight state so concurrent 401s share one refresh call.
-let isRefreshing = false;
-const refreshedToken$ = new BehaviorSubject<string | null>(null);
+// Module-level single-flight: concurrent 401s share one refresh call. The shared
+// observable emits the new token on success (waiters retry) or errors on failure
+// (waiters propagate the error), so queued requests never hang.
+let refreshInFlight$: Observable<string> | null = null;
 
 function isAuthEndpoint(url: string): boolean {
   return url.includes('/auth/login')
@@ -33,31 +34,25 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // A refresh is already in flight: wait for the new token, then retry.
-      if (isRefreshing) {
-        return refreshedToken$.pipe(
-          filter((t): t is string => t !== null),
-          take(1),
-          switchMap((newToken) => next(withToken(req, newToken)))
+      if (!refreshInFlight$) {
+        refreshInFlight$ = auth.refresh().pipe(
+          map((res) => res.token!),
+          tap({
+            error: () => {
+              auth.logout();
+              router.navigate(['/auth']);
+            },
+          }),
+          finalize(() => {
+            refreshInFlight$ = null;
+          }),
+          share()
         );
       }
 
-      isRefreshing = true;
-      refreshedToken$.next(null);
-
-      return auth.refresh().pipe(
-        switchMap((res) => {
-          isRefreshing = false;
-          const newToken = res.token!;
-          refreshedToken$.next(newToken);
-          return next(withToken(req, newToken));
-        }),
-        catchError((refreshError) => {
-          isRefreshing = false;
-          auth.logout();
-          router.navigate(['/auth']);
-          return throwError(() => refreshError);
-        })
+      return refreshInFlight$.pipe(
+        take(1),
+        switchMap((newToken) => next(withToken(req, newToken)))
       );
     })
   );
