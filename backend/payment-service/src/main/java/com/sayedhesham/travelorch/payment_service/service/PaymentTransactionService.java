@@ -110,6 +110,33 @@ public class PaymentTransactionService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    public Flux<PaymentTransactionResponse> getTransactionsByTravel(Long travelId, String currentUsername) {
+        log.info("getTransactionsByTravel - Fetching purchases for travelId: {} requested by: {}", travelId, currentUsername);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            Travel travel = travelRepository.findById(travelId)
+                    .orElseThrow(() -> new IllegalArgumentException("Travel not found with id: " + travelId));
+
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            boolean isManager = travel.getManager() != null
+                    && travel.getManager().getId().equals(currentUser.getId());
+            boolean canReadAny = hasPermission(currentUser, "payments", "read");
+
+            if (!isManager && !canReadAny) {
+                log.warn("getTransactionsByTravel - User {} denied access to travelId: {}", currentUsername, travelId);
+                throw new SecurityException("You do not have permission to view these purchases");
+            }
+
+            return paymentTransactionRepository.findByTravelId(travelId).stream()
+                    .map(PaymentTransactionResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getTransactionsByTravel - Found {} purchases for travelId: {}", list.size(), travelId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     @PreAuthorize("hasPermission('payments', 'write')")
     public Mono<PaymentTransactionResponse> createTransaction(PaymentTransactionCreateRequest request) {
         log.info("createTransaction - Creating payment: amount={}, currency={}, travelId={}",
@@ -244,9 +271,12 @@ public class PaymentTransactionService {
 
             boolean isBuyer = transaction.getBuyer() != null
                     && transaction.getBuyer().getId().equals(currentUser.getId());
+            boolean isManager = transaction.getTravel() != null
+                    && transaction.getTravel().getManager() != null
+                    && transaction.getTravel().getManager().getId().equals(currentUser.getId());
             boolean isAdmin = hasPermission(currentUser, "admin", "all");
 
-            if (!isBuyer && !isAdmin) {
+            if (!isBuyer && !isManager && !isAdmin) {
                 log.warn("cancelAndRefund - User {} denied cancel of transaction id: {}", currentUsername, id);
                 throw new SecurityException("You do not have permission to cancel this purchase");
             }

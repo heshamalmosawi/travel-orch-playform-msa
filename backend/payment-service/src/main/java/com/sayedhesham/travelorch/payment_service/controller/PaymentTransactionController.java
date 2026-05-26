@@ -54,6 +54,28 @@ public class PaymentTransactionController {
                         .<Flux<PaymentTransactionResponse>>body(Flux.empty())));
     }
 
+    @GetMapping("/travel/{travelId}")
+    public Mono<ResponseEntity<Flux<PaymentTransactionResponse>>> getTransactionsByTravel(@PathVariable Long travelId) {
+        log.info("GET /transactions/travel/{} - Fetching purchases for travel", travelId);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername ->
+                        paymentTransactionService.getTransactionsByTravel(travelId, currentUsername)
+                                .collectList()
+                                .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    log.warn("GET /transactions/travel/{} - Not found: {}", travelId, e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .<Flux<PaymentTransactionResponse>>body(Flux.empty()));
+                })
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /transactions/travel/{} - Forbidden: {}", travelId, e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .<Flux<PaymentTransactionResponse>>body(Flux.empty()));
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<PaymentTransactionResponse>>body(Flux.empty())));
+    }
+
     @GetMapping("/{id}")
     public Mono<ResponseEntity<PaymentTransactionResponse>> getTransactionById(@PathVariable Long id) {
         log.info("GET /transactions/{} - Fetching transaction", id);

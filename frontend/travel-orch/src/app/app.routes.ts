@@ -109,6 +109,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'manager/travels/:id/subscribers',
+    canActivate: [managerGuard],
+    loadComponent: () =>
+      import('./features/manager-subscribers/manager-subscribers.page').then(
+        (m) => m.ManagerSubscribersPage
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },
