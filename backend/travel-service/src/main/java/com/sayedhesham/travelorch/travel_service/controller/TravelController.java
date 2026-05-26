@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sayedhesham.travelorch.common.enums.TravelStatus;
+import com.sayedhesham.travelorch.travel_service.dto.ManagerDashboardResponse;
 import com.sayedhesham.travelorch.travel_service.dto.ManagerStatsResponse;
+import com.sayedhesham.travelorch.travel_service.dto.MonthlyIncomeResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelUpdateRequest;
@@ -62,6 +64,40 @@ public class TravelController {
                 })
                 .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .<Flux<TravelResponse>>body(Flux.empty())));
+    }
+
+    @GetMapping("/me/dashboard")
+    public Mono<ResponseEntity<ManagerDashboardResponse>> getMyDashboard() {
+        log.info("GET /travels/me/dashboard - Fetching current manager's dashboard stats");
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername
+                        -> travelService.getMyDashboard(currentUsername)
+                        .<ResponseEntity<ManagerDashboardResponse>>map(ResponseEntity::ok)
+                )
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /travels/me/dashboard - Forbidden: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
+    }
+
+    @GetMapping("/me/income")
+    public Mono<ResponseEntity<Flux<MonthlyIncomeResponse>>> getMyIncome(
+            @RequestParam(defaultValue = "6") int months) {
+        log.info("GET /travels/me/income?months={} - Fetching current manager's monthly income", months);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername
+                        -> travelService.getMyIncome(currentUsername, months)
+                        .collectList()
+                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
+                )
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /travels/me/income - Forbidden: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .<Flux<MonthlyIncomeResponse>>body(Flux.empty()));
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<MonthlyIncomeResponse>>body(Flux.empty())));
     }
 
     @GetMapping("/{id}")
