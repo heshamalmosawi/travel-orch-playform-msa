@@ -1,16 +1,28 @@
 package com.sayedhesham.travelorch.travel_service.controller;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.sayedhesham.travelorch.travel_service.dto.FeedbackCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.FeedbackResponse;
 import com.sayedhesham.travelorch.travel_service.dto.FeedbackUpdateRequest;
 import com.sayedhesham.travelorch.travel_service.security.SecurityUtils;
 import com.sayedhesham.travelorch.travel_service.service.FeedbackService;
+
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -77,6 +89,27 @@ public class FeedbackController {
                 .onErrorResume(IllegalArgumentException.class, e ->
                         Mono.just(ResponseEntity.notFound().build()))
                 .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
+    }
+
+    // GET /feedbacks/user/{userId} — feedbacks raised by a user (admin or self)
+        @GetMapping("/user/{userId}")
+        public Mono<ResponseEntity<List<FeedbackResponse>>> getFeedbacksByReviewer(@PathVariable Long userId) {
+        log.info("GET /feedbacks/user/{} - Fetching feedbacks raised by user", userId);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(username -> feedbackService.getFeedbacksByReviewer(userId, username)
+                        .collectList()
+                .map(ResponseEntity::ok))
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /feedbacks/user/{} - Forbidden: {}", userId, e.getMessage());
+                return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .<List<FeedbackResponse>>body(List.of()));
+                })
+            .onErrorResume(IllegalArgumentException.class, e -> {
+                log.warn("GET /feedbacks/user/{} - Not found: {}", userId, e.getMessage());
+                return Mono.just(ResponseEntity.notFound().build());
+            })
+            .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .<List<FeedbackResponse>>body(List.of())));
     }
 
     @PutMapping("/{id}")
