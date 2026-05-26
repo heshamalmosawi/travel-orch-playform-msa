@@ -617,4 +617,88 @@ class PaymentTransactionServiceTest {
                         && throwable.getMessage().equals("This purchase has already been refunded"))
                 .verify();
     }
+
+    @Test
+    void getPurchasesByUser_AsOwner_Success() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(1L, response.getBuyerId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getPurchasesByUser_WithPaymentsReadPermission_Success() {
+        setupTransactionTemplateInvocation();
+        Permission readPerm = new Permission();
+        readPerm.setResource("payments");
+        readPerm.setAction("read");
+        Role staffRole = new Role();
+        staffRole.setId(3L);
+        staffRole.setName("staff");
+        HashSet<Permission> perms = new HashSet<>();
+        perms.add(readPerm);
+        staffRole.setPermissions(perms);
+        User staff = new User();
+        staff.setId(9L);
+        staff.setUsername("staff");
+        staff.setRole(staffRole);
+
+        when(userRepository.findByUsername("staff")).thenReturn(Optional.of(staff));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "staff"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getPurchasesByUser_WithAdminAllPermission_Success() {
+        setupTransactionTemplateInvocation();
+        // admin role has admin:all but NOT payments:read — exercises the admin.all branch
+        Permission adminPerm = new Permission();
+        adminPerm.setResource("admin");
+        adminPerm.setAction("all");
+        Role adminRole = new Role();
+        adminRole.setId(4L);
+        adminRole.setName("admin");
+        HashSet<Permission> perms = new HashSet<>();
+        perms.add(adminPerm);
+        adminRole.setPermissions(perms);
+        User admin = new User();
+        admin.setId(8L);
+        admin.setUsername("admin");
+        admin.setRole(adminRole);
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "admin"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getPurchasesByUser_NotOwner_NoPermission_ThrowsSecurity() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("otheruser")).thenReturn(Optional.of(otherUser));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "otheruser"))
+                .expectErrorMatches(throwable -> throwable instanceof SecurityException
+                        && throwable.getMessage().equals("You do not have permission to view these purchases"))
+                .verify();
+    }
 }

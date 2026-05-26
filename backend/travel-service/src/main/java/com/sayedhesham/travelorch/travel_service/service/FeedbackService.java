@@ -111,6 +111,30 @@ public class FeedbackService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    public Flux<FeedbackResponse> getFeedbacksByReviewer(Long reviewerId, String username) {
+        log.info("getFeedbacksByReviewer - reviewerId: {} requested by: {}", reviewerId, username);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User currentUser = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+
+            boolean isSelf = currentUser.getId().equals(reviewerId);
+            boolean canReadAny = hasPermission(currentUser, "feedbacks", "read")
+                    || hasPermission(currentUser, "admin", "all");
+
+            if (!isSelf && !canReadAny) {
+                log.warn("getFeedbacksByReviewer - User {} denied access to reviewerId: {}", username, reviewerId);
+                throw new SecurityException("You do not have permission to view these reviews");
+            }
+
+            return feedbackRepository.findByReviewerId(reviewerId).stream()
+                    .map(FeedbackResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getFeedbacksByReviewer - Found {} feedbacks for reviewerId: {}", list.size(), reviewerId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     public Mono<FeedbackResponse> updateFeedback(Long feedbackId, String username, FeedbackUpdateRequest request) {
         log.info("updateFeedback - feedbackId: {} by user: {}", feedbackId, username);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
