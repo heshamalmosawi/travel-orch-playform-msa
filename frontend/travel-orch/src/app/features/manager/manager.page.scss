@@ -341,6 +341,12 @@ $font-body: 'Lora', Georgia, serif;
     color: $accent-green;
     &:hover { background: rgba($accent-green, 0.25); }
   }
+
+  &.btn-subscribers {
+    background: rgba($accent-blue, 0.12);
+    color: $accent-blue;
+    &:hover { background: rgba($accent-blue, 0.25); }
+  }
 }
 
 .btn-delete-sm {

@@ -1,0 +1,186 @@
+<div class="subscribers-page">
+  <app-navbar />
+
+  <main class="subscribers-content">
+    <button class="back-link" (click)="goBack()">← Back to packages</button>
+
+    @if (notFound()) {
+      <div class="empty-state">
+        <p>This travel package could not be found.</p>
+      </div>
+    } @else {
+      <div class="subscribers-header">
+        <div>
+          <h2>Subscribers</h2>
+          <p class="subscribers-subtitle">
+            @if (travel()) {
+              People who purchased <strong>{{ travel()!.title }}</strong>
+            } @else {
+              Loading package…
+            }
+          </p>
+        </div>
+        <button class="btn btn-secondary" (click)="load()">Refresh</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value">{{ totalSubscribers() }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card stat-card--active">
+          <span class="stat-value">{{ activeCount() }}</span>
+          <span class="stat-label">Active</span>
+        </div>
+        <div class="stat-card stat-card--refunded">
+          <span class="stat-value">{{ refundedCount() }}</span>
+          <span class="stat-label">Refunded</span>
+        </div>
+      </div>
+
+      <div class="subscribers-section">
+        @if (isLoading()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading subscribers…</p>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <div class="error-state" role="alert">
+            <p>{{ errorMessage() }}</p>
+            <button class="btn btn-primary" (click)="load()">Retry</button>
+          </div>
+        }
+
+        @if (!isLoading() && !errorMessage()) {
+          @if (subscribers().length === 0) {
+            <div class="empty-state">
+              <p>No one has purchased this package yet.</p>
+            </div>
+          } @else {
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Traveler</th>
+                    <th>Email</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Purchased</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (sub of subscribers(); track sub.id) {
+                    <tr>
+                      <td class="td-name">
+                        <button class="buyer-link" (click)="openProfile(sub)" [disabled]="sub.buyerId == null">
+                          <span class="buyer-avatar">{{ initials(buyerLabel(sub)) }}</span>
+                          <span class="buyer-name">{{ buyerLabel(sub) }}</span>
+                        </button>
+                      </td>
+                      <td class="td-email">{{ sub.buyerEmail || '—' }}</td>
+                      <td class="td-price">{{ sub.currency }} {{ sub.amount.toLocaleString() }}</td>
+                      <td>
+                        <span class="badge" [class]="getStatusClass(sub.status)">
+                          {{ getStatusLabel(sub.status) }}
+                        </span>
+                      </td>
+                      <td class="td-date">{{ formatDate(sub.createdAt) }}</td>
+                      <td class="td-actions">
+                        <button class="btn-icon btn-profile" (click)="openProfile(sub)" [disabled]="sub.buyerId == null" title="View profile">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                          </svg>
+                        </button>
+                        @if (canRemove(sub)) {
+                          <button class="btn-icon btn-remove" (click)="openRemoveModal(sub)" title="Remove & refund">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+      </div>
+    }
+  </main>
+</div>
+
+<!-- Traveler Profile Modal -->
+@if (showProfileModal()) {
+  <div class="modal-overlay" (click)="closeProfileModal()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Traveler Profile</h3>
+        <button type="button" class="modal-close" (click)="closeProfileModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (isProfileLoading()) {
+          <div class="loading-state"><div class="spinner"></div></div>
+        } @else if (selectedProfile()) {
+          <div class="profile-head">
+            <span class="profile-avatar">{{ initials(profileFullName()) }}</span>
+            <div>
+              <span class="profile-name">{{ profileFullName() }}</span>
+              <span class="profile-username">@{{ selectedProfile()!.username }}</span>
+            </div>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ selectedProfile()!.email }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ selectedProfile()!.phone || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Role</span>
+              <span class="detail-value">{{ selectedProfile()!.role }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Member Since</span>
+              <span class="detail-value">{{ formatDate(selectedProfile()!.createdAt) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Remove & Refund Modal -->
+@if (removeTarget()) {
+  <div class="modal-overlay" (click)="closeRemoveModal()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Remove &amp; Refund</h3>
+        <button type="button" class="modal-close" (click)="closeRemoveModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">
+          Remove <strong>{{ buyerLabel(removeTarget()!) }}</strong> from this package and refund their
+          {{ removeTarget()!.currency }} {{ removeTarget()!.amount.toLocaleString() }} purchase?
+        </p>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeRemoveModal()" [disabled]="isSubmitting()">
+            Keep
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmRemove()" [disabled]="isSubmitting()">
+            @if (isSubmitting()) { Removing… } @else { Remove &amp; Refund }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
