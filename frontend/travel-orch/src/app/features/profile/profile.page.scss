@@ -291,4 +291,116 @@ $font-body: 'Lora', Georgia, serif;
   color: $mid-gray;
 }
 
+.reviews-section {
+  margin-bottom: 2rem;
+}
+
+.reviews-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+
+  .section-title {
+    margin: 0;
+  }
+}
+
+.reviews-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: $font-body;
+  font-size: 0.9rem;
+  color: $mid-gray;
+
+  .star.filled {
+    color: $accent-orange;
+    font-size: 1rem;
+  }
+}
+
+.reviews-dot {
+  color: $dark-border;
+}
+
+.empty-state {
+  font-family: $font-body;
+  font-size: 0.95rem;
+  color: $mid-gray;
+  margin: 0;
+}
+
+.reviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.review-item {
+  padding: 1.25rem;
+  background: $dark-card;
+  border: 1px solid $dark-border;
+  border-radius: 12px;
+}
+
+.review-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.reviewer-name {
+  font-family: $font-heading;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $light;
+}
+
+.review-package-link {
+  font-family: $font-heading;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: $accent-blue;
+  text-decoration: none;
+  transition: color 0.15s;
+
+  &:hover { color: color.adjust($accent-blue, $lightness: 12%); text-decoration: underline; }
+}
+
+.review-date {
+  font-family: $font-body;
+  font-size: 0.8rem;
+  color: $mid-gray;
+  margin-left: auto;
+}
+
+.star-display {
+  display: flex;
+  gap: 0.1rem;
+  margin-bottom: 0.6rem;
+
+  .star {
+    font-size: 1.05rem;
+    color: $dark-border;
+
+    &.filled { color: $accent-orange; }
+  }
+}
+
+.review-comment {
+  font-family: $font-body;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: $light;
+  margin: 0;
+  white-space: pre-line;
+}
+
 
