@@ -79,6 +79,23 @@ public class FeedbackController {
                 .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
     }
 
+    // GET /feedbacks/user/{userId} — feedbacks raised by a user (admin or self)
+    @GetMapping("/user/{userId}")
+    public Mono<ResponseEntity<Flux<FeedbackResponse>>> getFeedbacksByReviewer(@PathVariable Long userId) {
+        log.info("GET /feedbacks/user/{} - Fetching feedbacks raised by user", userId);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(username -> feedbackService.getFeedbacksByReviewer(userId, username)
+                        .collectList()
+                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /feedbacks/user/{} - Forbidden: {}", userId, e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .<Flux<FeedbackResponse>>body(Flux.empty()));
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<FeedbackResponse>>body(Flux.empty())));
+    }
+
     @PutMapping("/{id}")
     public Mono<ResponseEntity<FeedbackResponse>> updateFeedback(
             @PathVariable Long id,

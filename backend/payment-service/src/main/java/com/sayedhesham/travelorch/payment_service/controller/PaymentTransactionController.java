@@ -139,6 +139,23 @@ public class PaymentTransactionController {
                         .<Flux<PaymentTransactionResponse>>body(Flux.empty())));
     }
 
+    @GetMapping("/buyer/{userId}")
+    public Mono<ResponseEntity<Flux<PaymentTransactionResponse>>> getPurchasesByUser(@PathVariable Long userId) {
+        log.info("GET /transactions/buyer/{} - Fetching purchases made by user", userId);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername ->
+                        paymentTransactionService.getPurchasesByUser(userId, currentUsername)
+                                .collectList()
+                                .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /transactions/buyer/{} - Forbidden: {}", userId, e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .<Flux<PaymentTransactionResponse>>body(Flux.empty()));
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<PaymentTransactionResponse>>body(Flux.empty())));
+    }
+
     @PostMapping("/{id}/cancel")
     public Mono<ResponseEntity<PaymentTransactionResponse>> cancelAndRefund(@PathVariable Long id) {
         log.info("POST /transactions/{}/cancel - Cancelling purchase", id);

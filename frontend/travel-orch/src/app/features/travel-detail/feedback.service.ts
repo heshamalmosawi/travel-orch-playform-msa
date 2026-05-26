@@ -25,6 +25,12 @@ export class FeedbackService {
     );
   }
 
+  getByReviewer(userId: number): Observable<FeedbackResponse[]> {
+    return this.http.get<FeedbackResponse[]>(
+      `${this.apiUrl}/api/travel/feedbacks/user/${userId}`
+    );
+  }
+
   getMine(travelId: number): Observable<FeedbackResponse> {
     return this.http.get<FeedbackResponse>(
       `${this.apiUrl}/api/travel/feedbacks/me?travelId=${travelId}`
