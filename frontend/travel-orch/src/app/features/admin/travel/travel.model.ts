@@ -62,3 +62,17 @@ export interface ManagerStatsResponse {
   totalReviews: number;
   totalReports: number;
 }
+
+export interface ManagerDashboardResponse {
+  totalIncome: number;
+  totalTravels: number;
+  totalTravelers: number;
+}
+
+export interface MonthlyIncomeResponse {
+  year: number;
+  month: number;
+  label: string;
+  totalIncome: number;
+  transactionCount: number;
+}

@@ -15,6 +15,8 @@ import {
   TravelResponse,
   TravelCreateRequest,
   TravelDestinationCreateRequest,
+  ManagerDashboardResponse,
+  MonthlyIncomeResponse,
 } from '../admin/travel/travel.model';
 import {
   DestinationResponse,
@@ -39,6 +41,15 @@ export class ManagerPage {
   readonly errorMessage = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly statusFilter = signal<string>('');
+
+  readonly dashboard = signal<ManagerDashboardResponse | null>(null);
+  readonly income = signal<MonthlyIncomeResponse[]>([]);
+
+  readonly maxIncome = computed(() => {
+    const data = this.income();
+    if (!data.length) return 0;
+    return Math.max(...data.map((m) => m.totalIncome));
+  });
 
   readonly creatingTravel = signal(false);
   readonly availableDestinations = signal<DestinationResponse[]>([]);
@@ -91,6 +102,18 @@ export class ManagerPage {
 
   constructor() {
     this.loadTravels();
+    this.loadDashboard();
+  }
+
+  loadDashboard(): void {
+    this.travelService.getMyDashboard().subscribe({
+      next: (stats) => this.dashboard.set(stats),
+      error: () => this.dashboard.set(null),
+    });
+    this.travelService.getMyIncome(6).subscribe({
+      next: (data) => this.income.set(data),
+      error: () => this.income.set([]),
+    });
   }
 
   loadTravels(): void {
@@ -261,5 +284,20 @@ export class ManagerPage {
   truncate(text: string | null, max: number): string {
     if (!text) return '';
     return text.length > max ? text.substring(0, max) + '...' : text;
+  }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value ?? 0);
+  }
+
+  barWidth(value: number): string {
+    const max = this.maxIncome();
+    if (max === 0) return '0%';
+    return `${(value / max) * 100}%`;
   }
 }

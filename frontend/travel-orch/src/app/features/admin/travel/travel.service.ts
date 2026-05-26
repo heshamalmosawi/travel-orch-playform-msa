@@ -8,6 +8,8 @@ import {
   TravelUpdateRequest,
 
   ManagerStatsResponse,
+  ManagerDashboardResponse,
+  MonthlyIncomeResponse,
 } from './travel.model';
 
 @Injectable({ providedIn: 'root' })
@@ -69,6 +71,19 @@ export class TravelService {
   getManagerStats(managerId: number): Observable<ManagerStatsResponse> {
     return this.http.get<ManagerStatsResponse>(
       `${this.apiUrl}/api/travel/travels/manager/${managerId}/stats`
+    );
+  }
+
+  getMyDashboard(): Observable<ManagerDashboardResponse> {
+    return this.http.get<ManagerDashboardResponse>(
+      `${this.apiUrl}/api/travel/travels/me/dashboard`
+    );
+  }
+
+  getMyIncome(months: number = 6): Observable<MonthlyIncomeResponse[]> {
+    return this.http.get<MonthlyIncomeResponse[]>(
+      `${this.apiUrl}/api/travel/travels/me/income`,
+      { params: { months } }
     );
   }
 }
