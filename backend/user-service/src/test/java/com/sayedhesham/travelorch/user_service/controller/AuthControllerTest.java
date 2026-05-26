@@ -32,6 +32,7 @@ class AuthControllerTest {
     private LoginRequest loginRequest;
     private AuthResponse authResponse;
     private AuthResponse loginResponse;
+    private AuthResponse registerResponse;
 
     @BeforeEach
     void setUp() {
@@ -60,6 +61,13 @@ class AuthControllerTest {
 
         loginResponse = AuthResponse.builder()
                 .message("Login successful")
+                .username("testuser")
+                .email("test@example.com")
+                .token("jwt-token")
+                .build();
+
+        registerResponse = AuthResponse.builder()
+                .message("User registered successfully")
                 .username("testuser")
                 .email("test@example.com")
                 .token("jwt-token")
@@ -205,5 +213,88 @@ class AuthControllerTest {
                 .bodyValue(invalidRequest)
                 .exchange()
                 .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void register_WithTravelManagerRole_Success() {
+        when(authService.register(any(RegistrationRequest.class)))
+                .thenReturn(Mono.just(registerResponse));
+
+        RegistrationRequest requestWithRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("travel_manager")
+                .build();
+
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestWithRole)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assertEquals("User registered successfully", response.getMessage());
+                    assertEquals("testuser", response.getUsername());
+                    assertEquals("test@example.com", response.getEmail());
+                });
+    }
+
+    @Test
+    void register_WithAdminRole_BadRequest() {
+        when(authService.register(any(RegistrationRequest.class)))
+                .thenReturn(Mono.error(new IllegalArgumentException("Invalid role: admin. Only 'user' and 'travel_manager' are allowed for self-registration.")));
+
+        RegistrationRequest requestWithAdminRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("admin")
+                .build();
+
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestWithAdminRole)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assertEquals("Invalid role: admin. Only 'user' and 'travel_manager' are allowed for self-registration.", response.getMessage());
+                });
+    }
+
+    @Test
+    void register_WithInvalidRole_BadRequest() {
+        when(authService.register(any(RegistrationRequest.class)))
+                .thenReturn(Mono.error(new IllegalArgumentException("Invalid role: nonexistent. Only 'user' and 'travel_manager' are allowed for self-registration.")));
+
+        RegistrationRequest requestWithInvalidRole = RegistrationRequest.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
+                .role("nonexistent")
+                .build();
+
+        webTestClient.post()
+                .uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestWithInvalidRole)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(AuthResponse.class)
+                .value(response -> {
+                    assertEquals("Invalid role: nonexistent. Only 'user' and 'travel_manager' are allowed for self-registration.", response.getMessage());
+                });
     }
 }

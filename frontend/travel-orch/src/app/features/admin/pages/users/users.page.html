@@ -72,14 +72,18 @@
                     <td class="td-username">{{ user.username }}</td>
                     <td class="td-email">{{ user.email }}</td>
                     <td>
-                      @for (role of user.roles; track role) {
-                        <span class="badge" [class]="getRoleBadgeClass(user.roles)">
-                          {{ role }}
-                        </span>
-                      }
+                      <span class="badge" [class]="getRoleBadgeClass(user.role)">
+                        {{ user.role }}
+                      </span>
                     </td>
                     <td class="td-date">{{ formatDate(user.createdAt) }}</td>
                     <td class="td-actions">
+                      <button class="btn-icon btn-view" (click)="openDetailModal(user)" title="View travel history & feedbacks">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
                       <button class="btn-icon btn-edit" (click)="openEditModal(user)" title="Edit user">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -149,6 +153,19 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="edit-role">Role</label>
+            <select id="edit-role" formControlName="role">
+              <option value="" disabled>Select a role</option>
+              @for (role of availableRoles; track role) {
+                <option [value]="role">{{ role | titlecase }}</option>
+              }
+            </select>
+            @if (editForm.get('role')?.invalid && editForm.get('role')?.touched) {
+              <span class="field-error">Role is required</span>
+            }
+          </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-cancel" (click)="closeEditModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
@@ -177,6 +194,113 @@
             <button class="btn btn-danger" (click)="onDeleteUser()" [disabled]="isSubmitting()">
               @if (isSubmitting()) { Deleting... } @else { Delete User }
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (viewingUser(); as u) {
+    <div class="modal-overlay" (click)="closeDetailModal()">
+      <div class="modal modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ u.firstName }} {{ u.lastName }} — Activity</h3>
+          <button class="modal-close" (click)="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="detail-sub">{{ u.username }} · {{ u.email }}</p>
+
+          @if (isDetailLoading()) {
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Loading activity...</p>
+            </div>
+          } @else if (detailError()) {
+            <div class="error-state" role="alert">
+              <p>{{ detailError() }}</p>
+            </div>
+          } @else {
+            <!-- Travel history -->
+            <section class="detail-section">
+              <h4 class="detail-title">Travel History ({{ userPurchases().length }})</h4>
+              @if (userPurchases().length === 0) {
+                <p class="detail-empty">No purchases yet.</p>
+              } @else {
+                <div class="detail-table-wrapper">
+                  <table class="detail-table">
+                    <thead>
+                      <tr>
+                        <th>Travel</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Purchased</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (p of pagedPurchases(); track p.id) {
+                        <tr>
+                          <td>
+                            <a class="travel-link" [routerLink]="['/travels', p.travelId]" target="_blank" rel="noopener">
+                              {{ travelLabel(p.travelId) }}
+                            </a>
+                          </td>
+                          <td>{{ p.amount | number:'1.2-2' }} {{ p.currency }}</td>
+                          <td><span class="badge" [class]="getStatusClass(p.status)">{{ getStatusLabel(p.status) }}</span></td>
+                          <td class="td-date">{{ formatDate(p.createdAt) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                @if (purchasesPageCount() > 1) {
+                  <div class="pager">
+                    <button class="btn btn-cancel" (click)="prevPurchasesPage()" [disabled]="purchasesPage() === 0">Prev</button>
+                    <span>Page {{ purchasesPage() + 1 }} of {{ purchasesPageCount() }}</span>
+                    <button class="btn btn-cancel" (click)="nextPurchasesPage()" [disabled]="purchasesPage() >= purchasesPageCount() - 1">Next</button>
+                  </div>
+                }
+              }
+            </section>
+
+            <!-- Feedbacks -->
+            <section class="detail-section">
+              <h4 class="detail-title">Feedbacks ({{ userFeedbacks().length }})</h4>
+              @if (userFeedbacks().length === 0) {
+                <p class="detail-empty">No feedbacks raised.</p>
+              } @else {
+                <div class="feedback-list">
+                  @for (f of pagedFeedbacks(); track f.id) {
+                    <div class="feedback-item">
+                      <div class="feedback-head">
+                        <span class="feedback-stars">
+                          @for (s of stars; track s) {
+                            <span class="star" [class.filled]="s <= f.rating">★</span>
+                          }
+                        </span>
+                        <span class="feedback-meta">
+                          <a class="travel-link" [routerLink]="['/travels', f.travelId]" target="_blank" rel="noopener">{{ travelLabel(f.travelId) }}</a>
+                          · {{ formatDate(f.createdAt) }}
+                        </span>
+                      </div>
+                      @if (f.comment) {
+                        <p class="feedback-comment">{{ f.comment }}</p>
+                      }
+                    </div>
+                  }
+                </div>
+                @if (feedbacksPageCount() > 1) {
+                  <div class="pager">
+                    <button class="btn btn-cancel" (click)="prevFeedbacksPage()" [disabled]="feedbacksPage() === 0">Prev</button>
+                    <span>Page {{ feedbacksPage() + 1 }} of {{ feedbacksPageCount() }}</span>
+                    <button class="btn btn-cancel" (click)="nextFeedbacksPage()" [disabled]="feedbacksPage() >= feedbacksPageCount() - 1">Next</button>
+                  </div>
+                }
+              }
+            </section>
+          }
+
+          <div class="modal-footer">
+            <button class="btn btn-cancel" (click)="closeDetailModal()">Close</button>
           </div>
         </div>
       </div>

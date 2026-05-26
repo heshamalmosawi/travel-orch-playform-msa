@@ -1,7 +1,10 @@
 package com.sayedhesham.travelorch.payment_service.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,15 +24,19 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sayedhesham.travelorch.common.entity.payment.PaymentMethod;
 import com.sayedhesham.travelorch.common.entity.payment.PaymentTransaction;
+import com.sayedhesham.travelorch.common.entity.rbac.Permission;
+import com.sayedhesham.travelorch.common.entity.rbac.Role;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.PaymentProvider;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
+import com.sayedhesham.travelorch.common.repository.neo4j.TravelGraphRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentMethodRepository;
 import com.sayedhesham.travelorch.common.repository.payment.PaymentTransactionRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
 import com.sayedhesham.travelorch.payment_service.dto.PaymentTransactionCreateRequest;
+import com.sayedhesham.travelorch.payment_service.dto.TravelPurchaseRequest;
 import com.stripe.StripeClient;
 import com.stripe.model.PaymentIntent;
 
@@ -56,6 +63,9 @@ class PaymentTransactionServiceTest {
     @Mock(answer = RETURNS_DEEP_STUBS)
     private StripeClient stripeClient;
 
+    @Mock
+    private TravelGraphRepository travelGraphRepository;
+
     @InjectMocks
     private PaymentTransactionService paymentTransactionService;
 
@@ -68,18 +78,26 @@ class PaymentTransactionServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Create default user role
+        Role userRole = new Role();
+        userRole.setId(1L);
+        userRole.setName("user");
+        userRole.setPermissions(new HashSet<>());
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");
+        testUser.setRole(userRole);
 
         otherUser = new User();
         otherUser.setId(2L);
         otherUser.setUsername("otheruser");
+        otherUser.setRole(userRole);
 
         testTravel = new Travel();
         testTravel.setId(1L);
         testTravel.setTitle("Test Trip");
-        testTravel.setUser(testUser);
+        testTravel.setManager(testUser);
 
         testPaymentMethod = new PaymentMethod();
         testPaymentMethod.setId(1L);
@@ -184,7 +202,7 @@ class PaymentTransactionServiceTest {
     void getTransactionsByUser_AsOwner_Success() {
         setupTransactionTemplateInvocation();
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(paymentTransactionRepository.findByTravelUserId(1L)).thenReturn(java.util.List.of(testTransaction));
+        when(paymentTransactionRepository.findByTravelManagerId(1L)).thenReturn(java.util.List.of(testTransaction));
 
         StepVerifier.create(paymentTransactionService.getTransactionsByUser(1L, "testuser"))
                 .expectNextMatches(response -> {
@@ -205,6 +223,89 @@ class PaymentTransactionServiceTest {
                         -> throwable instanceof SecurityException
                 && throwable.getMessage().equals("You do not have permission to view these transactions")
                 )
+                .verify();
+    }
+
+    @Test
+    void getTransactionsByTravel_AsManager_Success() {
+        setupTransactionTemplateInvocation();
+        User buyer = new User();
+        buyer.setId(5L);
+        buyer.setUsername("buyer1");
+        buyer.setFirstName("Bob");
+        buyer.setLastName("Buyer");
+        buyer.setEmail("bob@example.com");
+        testTransaction.setBuyer(buyer);
+
+        // testTravel.manager == testUser (set in setUp), so "testuser" is the manager
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.findByTravelId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getTransactionsByTravel(1L, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(1L, response.getTravelId());
+                    assertEquals(5L, response.getBuyerId());
+                    assertEquals("buyer1", response.getBuyerUsername());
+                    assertEquals("Bob Buyer", response.getBuyerName());
+                    assertEquals("bob@example.com", response.getBuyerEmail());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getTransactionsByTravel_WithPaymentsReadPermission_Success() {
+        setupTransactionTemplateInvocation();
+        Permission readPerm = new Permission();
+        readPerm.setName("payments_read");
+        readPerm.setResource("payments");
+        readPerm.setAction("read");
+        Role staffRole = new Role();
+        staffRole.setId(3L);
+        staffRole.setName("staff");
+        HashSet<Permission> perms = new HashSet<>();
+        perms.add(readPerm);
+        staffRole.setPermissions(perms);
+        User staff = new User();
+        staff.setId(9L);
+        staff.setUsername("staff");
+        staff.setRole(staffRole);
+
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(userRepository.findByUsername("staff")).thenReturn(Optional.of(staff));
+        when(paymentTransactionRepository.findByTravelId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getTransactionsByTravel(1L, "staff"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getTransactionsByTravel_NotManager_NoPermission_ThrowsSecurity() {
+        setupTransactionTemplateInvocation();
+        // otherUser is neither the travel's manager nor has payments:read
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(userRepository.findByUsername("otheruser")).thenReturn(Optional.of(otherUser));
+
+        StepVerifier.create(paymentTransactionService.getTransactionsByTravel(1L, "otheruser"))
+                .expectErrorMatches(throwable -> throwable instanceof SecurityException
+                        && throwable.getMessage().equals("You do not have permission to view these purchases"))
+                .verify();
+    }
+
+    @Test
+    void getTransactionsByTravel_TravelNotFound() {
+        setupTransactionTemplateInvocation();
+        when(travelRepository.findById(99L)).thenReturn(Optional.empty());
+
+        StepVerifier.create(paymentTransactionService.getTransactionsByTravel(99L, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException
+                        && throwable.getMessage().equals("Travel not found with id: 99"))
                 .verify();
     }
 
@@ -341,5 +442,263 @@ class PaymentTransactionServiceTest {
                 .verifyComplete();
 
         verify(paymentMethodRepository).save(any(PaymentMethod.class));
+    }
+
+    private void stubStripeCreate() {
+        try {
+            when(stripeClient.v1().paymentIntents().create(any(com.stripe.param.PaymentIntentCreateParams.class)))
+                    .thenReturn(testPaymentIntent);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void purchaseTravel_Success() {
+        setupTransactionTemplateInvocation();
+        testTravel.setTotalPrice(new BigDecimal("100.00"));
+        testTravel.setStartDate(LocalDate.now().plusDays(10));
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(paymentTransactionRepository.findByBuyerIdAndTravelId(1L, 1L)).thenReturn(List.of());
+        when(paymentMethodRepository.findByProviderAndIsTestMode(PaymentProvider.stripe, true))
+                .thenReturn(Optional.of(testPaymentMethod));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> {
+            PaymentTransaction t = invocation.getArgument(0);
+            t.setId(200L);
+            t.setCreatedAt(LocalDateTime.now());
+            return t;
+        });
+        stubStripeCreate();
+
+        TravelPurchaseRequest request = TravelPurchaseRequest.builder().travelId(1L).build();
+
+        StepVerifier.create(paymentTransactionService.purchaseTravel(request, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(200L, response.getId());
+                    assertEquals(new BigDecimal("100.00"), response.getAmount());
+                    assertEquals(PaymentStatus.completed, response.getStatus());
+                    assertEquals(1L, response.getTravelId());
+                    assertEquals(1L, response.getBuyerId());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(paymentTransactionRepository).save(any(PaymentTransaction.class));
+        verify(travelGraphRepository).recordPurchase(1L, 1L);
+    }
+
+    @Test
+    void purchaseTravel_TooCloseToStart_ThrowsIllegalState() {
+        setupTransactionTemplateInvocation();
+        testTravel.setTotalPrice(new BigDecimal("100.00"));
+        testTravel.setStartDate(LocalDate.now().plusDays(1));
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+
+        TravelPurchaseRequest request = TravelPurchaseRequest.builder().travelId(1L).build();
+
+        StepVerifier.create(paymentTransactionService.purchaseTravel(request, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException
+                        && throwable.getMessage().contains("days before departure"))
+                .verify();
+    }
+
+    @Test
+    void purchaseTravel_AlreadyPurchased_ThrowsIllegalState() {
+        setupTransactionTemplateInvocation();
+        testTravel.setTotalPrice(new BigDecimal("100.00"));
+        testTravel.setStartDate(LocalDate.now().plusDays(10));
+
+        PaymentTransaction existing = new PaymentTransaction();
+        existing.setId(150L);
+        existing.setStatus(PaymentStatus.completed);
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(travelRepository.findById(1L)).thenReturn(Optional.of(testTravel));
+        when(paymentTransactionRepository.findByBuyerIdAndTravelId(1L, 1L)).thenReturn(List.of(existing));
+
+        TravelPurchaseRequest request = TravelPurchaseRequest.builder().travelId(1L).build();
+
+        StepVerifier.create(paymentTransactionService.purchaseTravel(request, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException
+                        && throwable.getMessage().equals("You have already purchased this travel package"))
+                .verify();
+    }
+
+    @Test
+    void getMyPurchases_Success() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getMyPurchases("testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(1L, response.getBuyerId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void cancelAndRefund_AsBuyer_Success() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        testTransaction.setStatus(PaymentStatus.completed);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(PaymentStatus.refunded, response.getStatus());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(paymentTransactionRepository).save(any(PaymentTransaction.class));
+    }
+
+    @Test
+    void cancelAndRefund_AsManager_Success() {
+        setupTransactionTemplateInvocation();
+        // buyer is otherUser; current user "testuser" is the travel's manager (set in setUp)
+        testTransaction.setBuyer(otherUser);
+        testTransaction.setStatus(PaymentStatus.completed);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(PaymentStatus.refunded, response.getStatus());
+                    return true;
+                })
+                .verifyComplete();
+
+        verify(paymentTransactionRepository).save(any(PaymentTransaction.class));
+    }
+
+    @Test
+    void cancelAndRefund_NotBuyer_ThrowsSecurity() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        testTransaction.setStatus(PaymentStatus.completed);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("otheruser")).thenReturn(Optional.of(otherUser));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "otheruser"))
+                .expectErrorMatches(throwable -> throwable instanceof SecurityException
+                        && throwable.getMessage().equals("You do not have permission to cancel this purchase"))
+                .verify();
+    }
+
+    @Test
+    void cancelAndRefund_AlreadyRefunded_ThrowsIllegalState() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        testTransaction.setStatus(PaymentStatus.refunded);
+
+        when(paymentTransactionRepository.findById(100L)).thenReturn(Optional.of(testTransaction));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+
+        StepVerifier.create(paymentTransactionService.cancelAndRefund(100L, "testuser"))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalStateException
+                        && throwable.getMessage().equals("This purchase has already been refunded"))
+                .verify();
+    }
+
+    @Test
+    void getPurchasesByUser_AsOwner_Success() {
+        setupTransactionTemplateInvocation();
+        testTransaction.setBuyer(testUser);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "testuser"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    assertEquals(1L, response.getBuyerId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getPurchasesByUser_WithPaymentsReadPermission_Success() {
+        setupTransactionTemplateInvocation();
+        Permission readPerm = new Permission();
+        readPerm.setResource("payments");
+        readPerm.setAction("read");
+        Role staffRole = new Role();
+        staffRole.setId(3L);
+        staffRole.setName("staff");
+        HashSet<Permission> perms = new HashSet<>();
+        perms.add(readPerm);
+        staffRole.setPermissions(perms);
+        User staff = new User();
+        staff.setId(9L);
+        staff.setUsername("staff");
+        staff.setRole(staffRole);
+
+        when(userRepository.findByUsername("staff")).thenReturn(Optional.of(staff));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "staff"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getPurchasesByUser_WithAdminAllPermission_Success() {
+        setupTransactionTemplateInvocation();
+        // admin role has admin:all but NOT payments:read — exercises the admin.all branch
+        Permission adminPerm = new Permission();
+        adminPerm.setResource("admin");
+        adminPerm.setAction("all");
+        Role adminRole = new Role();
+        adminRole.setId(4L);
+        adminRole.setName("admin");
+        HashSet<Permission> perms = new HashSet<>();
+        perms.add(adminPerm);
+        adminRole.setPermissions(perms);
+        User admin = new User();
+        admin.setId(8L);
+        admin.setUsername("admin");
+        admin.setRole(adminRole);
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(paymentTransactionRepository.findByBuyerId(1L)).thenReturn(List.of(testTransaction));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "admin"))
+                .expectNextMatches(response -> {
+                    assertEquals(100L, response.getId());
+                    return true;
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getPurchasesByUser_NotOwner_NoPermission_ThrowsSecurity() {
+        setupTransactionTemplateInvocation();
+        when(userRepository.findByUsername("otheruser")).thenReturn(Optional.of(otherUser));
+
+        StepVerifier.create(paymentTransactionService.getPurchasesByUser(1L, "otheruser"))
+                .expectErrorMatches(throwable -> throwable instanceof SecurityException
+                        && throwable.getMessage().equals("You do not have permission to view these purchases"))
+                .verify();
     }
 }

@@ -20,10 +20,10 @@ export interface TravelResponse {
   description: string | null;
   startDate: string;
   endDate: string;
-  durationDays: number;
   totalPrice: number | null;
   status: string;
-  userId: number;
+  managerId: number;
+  managerName: string | null;
   destinations: TravelDestinationResponse[];
   createdAt: string;
   updatedAt: string;
@@ -34,9 +34,8 @@ export interface TravelCreateRequest {
   description?: string;
   startDate: string;
   endDate: string;
-  durationDays: number;
   totalPrice?: number;
-  userId: number;
+  managerId?: number;
   destinations?: TravelDestinationCreateRequest[];
 }
 
@@ -53,7 +52,27 @@ export interface TravelUpdateRequest {
   description?: string;
   startDate?: string;
   endDate?: string;
-  durationDays?: number;
   totalPrice?: number;
   status?: string;
+}
+
+export interface ManagerStatsResponse {
+  totalPackages: number;
+  averageRating: number;
+  totalReviews: number;
+  totalReports: number;
+}
+
+export interface ManagerDashboardResponse {
+  totalIncome: number;
+  totalTravels: number;
+  totalTravelers: number;
+}
+
+export interface MonthlyIncomeResponse {
+  year: number;
+  month: number;
+  label: string;
+  totalIncome: number;
+  transactionCount: number;
 }

@@ -1,5 +1,7 @@
 package com.sayedhesham.travelorch.travel_service.controller;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,9 +13,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sayedhesham.travelorch.common.enums.TravelStatus;
+import com.sayedhesham.travelorch.travel_service.dto.ManagerDashboardResponse;
+import com.sayedhesham.travelorch.travel_service.dto.ManagerStatsResponse;
+import com.sayedhesham.travelorch.travel_service.dto.MonthlyIncomeResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelUpdateRequest;
@@ -40,6 +46,56 @@ public class TravelController {
     public Mono<ResponseEntity<Flux<TravelResponse>>> getAllTravels() {
         log.info("GET /travels - Fetching all travels");
         return Mono.just(ResponseEntity.ok(travelService.getAllTravels()));
+    }
+
+    @GetMapping("/me")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getMyTravels() {
+        log.info("GET /travels/me - Fetching current user's travels");
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername
+                        -> travelService.getMyTravels(currentUsername)
+                        .collectList()
+                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
+                )
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /travels/me - Forbidden: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .<Flux<TravelResponse>>body(Flux.empty()));
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<Flux<TravelResponse>>body(Flux.empty())));
+    }
+
+    @GetMapping("/me/dashboard")
+    public Mono<ResponseEntity<ManagerDashboardResponse>> getMyDashboard() {
+        log.info("GET /travels/me/dashboard - Fetching current manager's dashboard stats");
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername
+                        -> travelService.getMyDashboard(currentUsername)
+                        .<ResponseEntity<ManagerDashboardResponse>>map(ResponseEntity::ok)
+                )
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /travels/me/dashboard - Forbidden: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
+    }
+
+    @GetMapping("/me/income")
+    public Mono<ResponseEntity<List<MonthlyIncomeResponse>>> getMyIncome(
+            @RequestParam(defaultValue = "6") int months) {
+        log.info("GET /travels/me/income?months={} - Fetching current manager's monthly income", months);
+        return SecurityUtils.getCurrentUsername()
+                .flatMap(currentUsername
+                        -> travelService.getMyIncome(currentUsername, months)
+                        .collectList()
+                        .<ResponseEntity<List<MonthlyIncomeResponse>>>map(ResponseEntity::ok)
+                )
+                .onErrorResume(SecurityException.class, e -> {
+                    log.warn("GET /travels/me/income - Forbidden: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
     }
 
     @GetMapping("/{id}")
@@ -79,10 +135,42 @@ public class TravelController {
                         .<Flux<TravelResponse>>body(Flux.empty())));
     }
 
+    @GetMapping("/upcoming")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getUpcomingTravels() {
+        log.info("GET /travels/upcoming - Fetching upcoming travels");
+        return travelService.getUpcomingTravels()
+                .collectList()
+                .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
+                .onErrorResume(e -> {
+                    log.error("GET /travels/upcoming - Error: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+                });
+    }
+
+    @GetMapping("/user/{userId}/upcoming")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getUpcomingTravelsByManager(@PathVariable Long userId) {
+        log.info("GET /travels/user/{}/upcoming - Fetching upcoming travels for manager", userId);
+        return Mono.just(ResponseEntity.ok(travelService.getUpcomingByManager(userId)));
+    }
+
+    @GetMapping("/manager/{managerId}/stats")
+    public Mono<ResponseEntity<ManagerStatsResponse>> getManagerStats(@PathVariable Long managerId) {
+        log.info("GET /travels/manager/{}/stats - Fetching manager stats", managerId);
+        return travelService.getManagerStats(managerId)
+                .map(ResponseEntity::ok);
+    }
+
     @GetMapping("/status/{status}")
     public Mono<ResponseEntity<Flux<TravelResponse>>> getTravelsByStatus(@PathVariable TravelStatus status) {
         log.info("GET /travels/status/{} - Fetching travels by status", status);
         return Mono.just(ResponseEntity.ok(travelService.getTravelsByStatus(status)));
+    }
+
+    @GetMapping("/batch")
+    public Mono<ResponseEntity<Flux<TravelResponse>>> getTravelsByIds(
+            @RequestParam List<Long> ids) {
+        log.info("GET /travels/batch - Fetching {} travels", ids.size());
+        return Mono.just(ResponseEntity.ok(travelService.getTravelsByIds(ids)));
     }
 
     @PostMapping

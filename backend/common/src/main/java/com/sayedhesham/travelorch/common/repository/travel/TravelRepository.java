@@ -14,17 +14,25 @@ import java.util.List;
 @Repository
 public interface TravelRepository extends JpaRepository<Travel, Long> {
     
-    List<Travel> findByUser(User user);
-    
-    List<Travel> findByUserAndStatus(User user, TravelStatus status);
-    
+    List<Travel> findByManager(User manager);
+
+    List<Travel> findByManagerAndStatus(User manager, TravelStatus status);
+
     List<Travel> findByStatus(TravelStatus status);
-    
+
     List<Travel> findByStartDateBetween(LocalDate start, LocalDate end);
-    
+
     @Query("SELECT t FROM Travel t LEFT JOIN FETCH t.destinations WHERE t.id = :id")
     Travel findByIdWithDestinations(@Param("id") Long id);
-    
-    @Query("SELECT t FROM Travel t WHERE t.user = :user AND t.startDate >= :date ORDER BY t.startDate ASC")
-    List<Travel> findUpcomingTravels(@Param("user") User user, @Param("date") LocalDate date);
+
+    @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.manager = :manager AND t.startDate >= :date ORDER BY t.startDate ASC")
+    List<Travel> findUpcomingTravels(@Param("manager") User manager, @Param("date") LocalDate date);
+
+    @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.startDate >= :date AND t.status <> :excludedStatus ORDER BY t.startDate ASC")
+    List<Travel> findAllUpcomingTravels(@Param("date") LocalDate date, @Param("excludedStatus") TravelStatus excludedStatus);
+
+    @Query("SELECT DISTINCT t FROM Travel t LEFT JOIN FETCH t.destinations td LEFT JOIN FETCH td.destination WHERE t.manager.id = :managerId AND t.startDate >= :date AND t.status <> :excludedStatus ORDER BY t.startDate ASC")
+    List<Travel> findUpcomingTravelsByManagerId(@Param("managerId") Long managerId, @Param("date") LocalDate date, @Param("excludedStatus") TravelStatus excludedStatus);
+
+    long countByManagerId(Long managerId);
 }

@@ -27,9 +27,9 @@
         <span class="stat-value">{{ confirmedCount() }}</span>
         <span class="stat-label">Confirmed</span>
       </div>
-      <div class="stat-card stat-card--completed">
-        <span class="stat-value">{{ completedCount() }}</span>
-        <span class="stat-label">Completed</span>
+      <div class="stat-card stat-card--cancelled">
+        <span class="stat-value">{{ cancelledCount() }}</span>
+        <span class="stat-label">Cancelled</span>
       </div>
     </div>
 
@@ -79,7 +79,6 @@
                   <th>ID</th>
                   <th>Title</th>
                   <th>Dates</th>
-                  <th>Duration</th>
                   <th>Price</th>
                   <th>Status</th>
                   <th>Destinations</th>
@@ -100,7 +99,6 @@
                     <td class="td-dates">
                       {{ formatDate(travel.startDate) }} — {{ formatDate(travel.endDate) }}
                     </td>
-                    <td class="td-duration">{{ travel.durationDays }}d</td>
                     <td class="td-price">
                       @if (travel.totalPrice !== null) {
                         ${{ travel.totalPrice.toLocaleString() }}
@@ -165,16 +163,12 @@
               <span class="detail-value">{{ formatDate(viewTravel()!.startDate) }} — {{ formatDate(viewTravel()!.endDate) }}</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">Duration</span>
-              <span class="detail-value">{{ viewTravel()!.durationDays }} days</span>
-            </div>
-            <div class="detail-item">
               <span class="detail-label">Total Price</span>
               <span class="detail-value">@if (viewTravel()!.totalPrice !== null) { ${{ viewTravel()!.totalPrice!.toLocaleString() }} } @else { — }</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">User ID</span>
-              <span class="detail-value">#{{ viewTravel()!.userId }}</span>
+              <span class="detail-label">Manager ID</span>
+              <span class="detail-value">#{{ viewTravel()!.managerId }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Created</span>
@@ -232,41 +226,40 @@
             <label for="c-desc">Description</label>
             <textarea id="c-desc" formControlName="description" rows="3" placeholder="Optional trip description..."></textarea>
           </div>
+          <div class="form-group">
+            <label for="c-manager">Manager <span class="required-star">*</span></label>
+            <select id="c-manager" formControlName="managerId">
+              <option [ngValue]="null" disabled selected>Select a manager...</option>
+              @for (m of managers(); track m.id) {
+                <option [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }} ({{ m.username }})</option>
+              }
+            </select>
+            @if (managers().length === 0) {
+              <span class="hint-text">No managers found. Assign the manager role to a user first.</span>
+            }
+            @if (createForm.get('managerId')?.invalid && createForm.get('managerId')?.touched) {
+              <span class="field-error">Manager is required</span>
+            }
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="c-start">Start Date</label>
-              <input id="c-start" type="date" formControlName="startDate" />
+              <input id="c-start" type="date" formControlName="startDate" [min]="minDate" />
               @if (createForm.get('startDate')?.invalid && createForm.get('startDate')?.touched) {
                 <span class="field-error">Start date is required</span>
               }
             </div>
             <div class="form-group">
               <label for="c-end">End Date</label>
-              <input id="c-end" type="date" formControlName="endDate" />
+              <input id="c-end" type="date" formControlName="endDate" [min]="createForm.get('startDate')?.value || minDate" />
               @if (createForm.get('endDate')?.invalid && createForm.get('endDate')?.touched) {
                 <span class="field-error">End date is required</span>
               }
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="c-duration">Duration (days)</label>
-              <input id="c-duration" type="number" min="1" formControlName="durationDays" placeholder="7" />
-              @if (createForm.get('durationDays')?.invalid && createForm.get('durationDays')?.touched) {
-                <span class="field-error">Duration is required</span>
-              }
-            </div>
-            <div class="form-group">
-              <label for="c-price">Total Price ($)</label>
-              <input id="c-price" type="number" step="0.01" min="0" formControlName="totalPrice" placeholder="Optional" />
-            </div>
-          </div>
           <div class="form-group">
-            <label for="c-user">User ID</label>
-            <input id="c-user" type="number" min="1" formControlName="userId" placeholder="Enter the user ID for this travel" />
-            @if (createForm.get('userId')?.invalid && createForm.get('userId')?.touched) {
-              <span class="field-error">User ID is required</span>
-            }
+            <label for="c-price">Total Price ($)</label>
+            <input id="c-price" type="number" step="0.01" min="0" formControlName="totalPrice" placeholder="Optional" />
           </div>
           <div class="form-group">
             <div class="dest-section-header">
@@ -303,6 +296,9 @@
                       type="date"
                       class="dest-date-input"
                       [value]="dest.arrivalDate || ''"
+                      [min]="createForm.get('startDate')?.value || minDate"
+                      [max]="createForm.get('endDate')?.value || ''"
+                      [disabled]="!createForm.get('startDate')?.value || !createForm.get('endDate')?.value"
                       (change)="updatePendingDestination($index, 'arrivalDate', $any($event.target).value)"
                     />
                   </div>
@@ -312,6 +308,9 @@
                       type="date"
                       class="dest-date-input"
                       [value]="dest.departureDate || ''"
+                      [min]="dest.arrivalDate || createForm.get('startDate')?.value || minDate"
+                      [max]="createForm.get('endDate')?.value || ''"
+                      [disabled]="!createForm.get('startDate')?.value || !createForm.get('endDate')?.value"
                       (change)="updatePendingDestination($index, 'departureDate', $any($event.target).value)"
                     />
                   </div>
@@ -352,36 +351,26 @@
           <div class="form-row">
             <div class="form-group">
               <label for="e-start">Start Date</label>
-              <input id="e-start" type="date" formControlName="startDate" />
+              <input id="e-start" type="date" formControlName="startDate" [min]="minDate" />
               @if (editForm.get('startDate')?.invalid && editForm.get('startDate')?.touched) {
                 <span class="field-error">Start date is required</span>
               }
             </div>
             <div class="form-group">
               <label for="e-end">End Date</label>
-              <input id="e-end" type="date" formControlName="endDate" />
+              <input id="e-end" type="date" formControlName="endDate" [min]="editForm.get('startDate')?.value || minDate" />
               @if (editForm.get('endDate')?.invalid && editForm.get('endDate')?.touched) {
                 <span class="field-error">End date is required</span>
               }
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="e-duration">Duration (days)</label>
-              <input id="e-duration" type="number" min="1" formControlName="durationDays" />
-              @if (editForm.get('durationDays')?.invalid && editForm.get('durationDays')?.touched) {
-                <span class="field-error">Duration is required</span>
-              }
-            </div>
-            <div class="form-group">
-              <label for="e-price">Total Price</label>
-              <input id="e-price" type="number" step="0.01" min="0" formControlName="totalPrice" />
-            </div>
+          <div class="form-group">
+            <label for="e-price">Total Price</label>
+            <input id="e-price" type="number" step="0.01" min="0" formControlName="totalPrice" />
           </div>
           <div class="form-group">
             <label for="e-status">Status</label>
             <select id="e-status" formControlName="status">
-              <option value="">No change</option>
               @for (status of statusOptions; track status) {
                 <option [value]="status">{{ getStatusLabel(status) }}</option>
               }

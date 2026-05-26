@@ -6,6 +6,10 @@ import {
   TravelResponse,
   TravelCreateRequest,
   TravelUpdateRequest,
+
+  ManagerStatsResponse,
+  ManagerDashboardResponse,
+  MonthlyIncomeResponse,
 } from './travel.model';
 
 @Injectable({ providedIn: 'root' })
@@ -17,8 +21,20 @@ export class TravelService {
     return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels`);
   }
 
+  getMyTravels(): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/me`);
+  }
+
   getByUser(userId: number): Observable<TravelResponse[]> {
     return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/user/${userId}`);
+  }
+
+  getUpcoming(): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/upcoming`);
+  }
+
+  getRecommendations(): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/recommendations`);
   }
 
   getByStatus(status: string): Observable<TravelResponse[]> {
@@ -27,6 +43,11 @@ export class TravelService {
 
   getById(id: number): Observable<TravelResponse> {
     return this.http.get<TravelResponse>(`${this.apiUrl}/api/travel/travels/${id}`);
+  }
+
+  getByIds(ids: number[]): Observable<TravelResponse[]> {
+    const params = ids.map((id) => `ids=${id}`).join('&');
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/batch?${params}`);
   }
 
   create(data: TravelCreateRequest): Observable<TravelResponse> {
@@ -39,5 +60,30 @@ export class TravelService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/api/travel/travels/${id}`);
+  }
+
+  getUpcomingByManager(managerId: number): Observable<TravelResponse[]> {
+    return this.http.get<TravelResponse[]>(
+      `${this.apiUrl}/api/travel/travels/user/${managerId}/upcoming`
+    );
+  }
+
+  getManagerStats(managerId: number): Observable<ManagerStatsResponse> {
+    return this.http.get<ManagerStatsResponse>(
+      `${this.apiUrl}/api/travel/travels/manager/${managerId}/stats`
+    );
+  }
+
+  getMyDashboard(): Observable<ManagerDashboardResponse> {
+    return this.http.get<ManagerDashboardResponse>(
+      `${this.apiUrl}/api/travel/travels/me/dashboard`
+    );
+  }
+
+  getMyIncome(months: number = 6): Observable<MonthlyIncomeResponse[]> {
+    return this.http.get<MonthlyIncomeResponse[]>(
+      `${this.apiUrl}/api/travel/travels/me/income`,
+      { params: { months } }
+    );
   }
 }

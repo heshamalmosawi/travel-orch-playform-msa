@@ -9,6 +9,7 @@ import {
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { TravelService } from '../../travel/travel.service';
 import { DestinationService } from '../../travel/destination.service';
+import { AdminService } from '../../admin.service';
 import {
   TravelResponse,
   TravelCreateRequest,
@@ -16,6 +17,7 @@ import {
   TravelUpdateRequest,
 } from '../../travel/travel.model';
 import { DestinationResponse } from '../../travel/destination.model';
+import { UserResponse } from '../../admin.model';
 
 @Component({
   selector: 'app-travels-page',
@@ -27,6 +29,7 @@ import { DestinationResponse } from '../../travel/destination.model';
 export class TravelsPage {
   private readonly travelService = inject(TravelService);
   private readonly destinationService = inject(DestinationService);
+  private readonly adminService = inject(AdminService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
@@ -42,6 +45,7 @@ export class TravelsPage {
   readonly creatingTravel = signal(false);
   readonly availableDestinations = signal<DestinationResponse[]>([]);
   readonly pendingDestinations = signal<TravelDestinationCreateRequest[]>([]);
+  readonly managers = signal<UserResponse[]>([]);
   readonly isSubmitting = signal(false);
 
   readonly editForm: FormGroup = this.fb.group({
@@ -49,9 +53,8 @@ export class TravelsPage {
     description: ['', [Validators.maxLength(10000)]],
     startDate: ['', [Validators.required]],
     endDate: ['', [Validators.required]],
-    durationDays: [null, [Validators.required, Validators.min(1)]],
     totalPrice: [null, [Validators.min(0)]],
-    status: [''],
+    status: ['draft'],
   });
 
   readonly createForm: FormGroup = this.fb.group({
@@ -59,9 +62,8 @@ export class TravelsPage {
     description: ['', [Validators.maxLength(10000)]],
     startDate: ['', [Validators.required]],
     endDate: ['', [Validators.required]],
-    durationDays: [null, [Validators.required, Validators.min(1)]],
     totalPrice: [null, [Validators.min(0)]],
-    userId: [null, [Validators.required, Validators.min(1)]],
+    managerId: [null, [Validators.required]],
   });
 
   readonly filteredTravels = computed(() => {
@@ -81,9 +83,9 @@ export class TravelsPage {
   readonly totalTravels = computed(() => this.travels().length);
   readonly draftCount = computed(() => this.travels().filter((t) => t.status === 'draft').length);
   readonly confirmedCount = computed(() => this.travels().filter((t) => t.status === 'confirmed').length);
-  readonly completedCount = computed(() => this.travels().filter((t) => t.status === 'completed').length);
+  readonly cancelledCount = computed(() => this.travels().filter((t) => t.status === 'cancelled').length);
 
-  readonly statusOptions = ['draft', 'planned', 'confirmed', 'in_progress', 'completed', 'cancelled'];
+  readonly statusOptions = ['draft', 'confirmed', 'cancelled'];
 
   constructor() {
     this.loadTravels();
@@ -122,7 +124,6 @@ export class TravelsPage {
       description: travel.description || '',
       startDate: travel.startDate,
       endDate: travel.endDate,
-      durationDays: travel.durationDays,
       totalPrice: travel.totalPrice,
       status: travel.status,
     });
@@ -156,9 +157,8 @@ export class TravelsPage {
       description: this.editForm.value.description || undefined,
       startDate: this.editForm.value.startDate,
       endDate: this.editForm.value.endDate,
-      durationDays: this.editForm.value.durationDays,
       totalPrice: this.editForm.value.totalPrice,
-      status: this.editForm.value.status || undefined,
+      status: this.editForm.value.status,
     };
 
     this.travelService.update(travel.id, data).subscribe({
@@ -212,6 +212,10 @@ export class TravelsPage {
       next: (dests) => this.availableDestinations.set(dests),
       error: () => this.availableDestinations.set([]),
     });
+    this.adminService.getUsersByRole('travel_manager').subscribe({
+      next: (users) => this.managers.set(users),
+      error: () => this.managers.set([]),
+    });
   }
 
   closeCreateModal(): void {
@@ -257,9 +261,8 @@ export class TravelsPage {
       description: this.createForm.value.description || undefined,
       startDate: this.createForm.value.startDate,
       endDate: this.createForm.value.endDate,
-      durationDays: this.createForm.value.durationDays,
-      totalPrice: this.createForm.value.totalPrice || undefined,
-      userId: this.createForm.value.userId,
+      totalPrice: this.createForm.value.totalPrice ?? undefined,
+      managerId: this.createForm.value.managerId,
       destinations: destinations.length > 0 ? destinations : undefined,
     };
 
@@ -277,24 +280,22 @@ export class TravelsPage {
     });
   }
 
+  get minDate(): string {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }
+
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
   }
 
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       draft: 'badge-draft',
-      planned: 'badge-planned',
       confirmed: 'badge-confirmed',
-      in_progress: 'badge-progress',
-      completed: 'badge-completed',
       cancelled: 'badge-cancelled',
     };
     return map[status] || 'badge-draft';

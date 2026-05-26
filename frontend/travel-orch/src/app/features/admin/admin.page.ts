@@ -12,11 +12,13 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
 })
 export class AdminPage {
   readonly navItems = [
+    { label: 'Analytics', path: '/admin/analytics', icon: 'analytics' },
     { label: 'Users', path: '/admin/users', icon: 'users' },
     { label: 'Destinations', path: '/admin/travel', icon: 'travel' },
     { label: 'Travels', path: '/admin/travels', icon: 'travels' },
     { label: 'Payments', path: '/admin/payments', icon: 'payments' },
     { label: 'Bookings', path: '/admin/bookings', icon: 'bookings' },
+    { label: 'Reports', path: '/admin/reports', icon: 'reports' },
     { label: 'Settings', path: '/admin/settings', icon: 'settings' },
   ];
 }

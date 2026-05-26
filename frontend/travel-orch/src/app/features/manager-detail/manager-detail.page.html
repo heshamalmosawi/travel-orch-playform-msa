@@ -1,0 +1,228 @@
+<div class="manager-page">
+  <app-navbar />
+
+  <main class="manager-content">
+    <button type="button" class="back-link" (click)="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Back to packages
+    </button>
+
+    @if (isLoading()) {
+      <div class="state-centered">
+        <div class="spinner"></div>
+        <p>Loading manager profile…</p>
+      </div>
+    } @else if (notFound()) {
+      <div class="state-centered">
+        <p class="state-message">This manager profile could not be found.</p>
+      </div>
+    } @else if (hasError()) {
+      <div class="state-centered">
+        <p class="state-message">Could not load this profile. Please log in and try again.</p>
+      </div>
+    } @else if (manager(); as mgr) {
+
+      <!-- Profile header -->
+      <div class="profile-card">
+        <div class="profile-avatar" aria-hidden="true">
+          {{ managerFullName().charAt(0).toUpperCase() }}
+        </div>
+        <div class="profile-info">
+          <h1 class="profile-name">{{ managerFullName() }}</h1>
+          <p class="profile-email">{{ mgr.email }}</p>
+          @if (memberSince()) {
+            <p class="profile-since">Member since {{ memberSince() }}</p>
+          }
+        </div>
+        @if (canReport()) {
+          <button
+            type="button"
+            class="report-btn"
+            [disabled]="hasReported()"
+            (click)="openReportModal()"
+          >
+            @if (hasReported()) { Reported } @else { Report Manager }
+          </button>
+        }
+      </div>
+
+      <!-- Stats bar -->
+      @if (stats(); as s) {
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-value">{{ s.totalPackages }}</span>
+            <span class="stat-label">Packages</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            @if (s.totalReviews > 0) {
+              <span class="stat-value stat-rating">
+                {{ s.averageRating | number: '1.1-1' }}
+                <span class="stat-star">★</span>
+              </span>
+            } @else {
+              <span class="stat-value">—</span>
+            }
+            <span class="stat-label">Avg. Rating</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-value">{{ s.totalReviews }}</span>
+            <span class="stat-label">Reviews</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-value">{{ s.totalReports }}</span>
+            <span class="stat-label">Reports</span>
+          </div>
+          @if (upcomingPackages().length > 0) {
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ upcomingPackages().length }}</span>
+              <span class="stat-label">Upcoming</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Upcoming packages -->
+      <section class="content-section">
+        <h2 class="section-heading">Upcoming Packages</h2>
+
+        @if (upcomingPackages().length === 0) {
+          <p class="empty-state">No upcoming packages from this manager.</p>
+        } @else {
+          <div class="packages-grid">
+            @for (pkg of upcomingPackages(); track pkg.id) {
+              <div
+                class="package-card"
+                role="button"
+                tabindex="0"
+                [routerLink]="['/travels', pkg.id]"
+                (keydown.enter)="$event.preventDefault()"
+                (keydown.space)="$event.preventDefault()"
+              >
+                <div class="card-header">
+                  <span class="badge" [class]="getStatusClass(pkg.status)">
+                    {{ getStatusLabel(pkg.status) }}
+                  </span>
+                  @if (pkg.totalPrice !== null) {
+                    <span class="card-price">${{ pkg.totalPrice!.toLocaleString() }}</span>
+                  }
+                </div>
+
+                <h3 class="card-title">{{ pkg.title }}</h3>
+
+                @if (pkg.description) {
+                  <p class="card-desc">{{ truncate(pkg.description, 100) }}</p>
+                }
+
+                <div class="card-meta">
+                  <span class="meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    {{ formatDate(pkg.startDate) }} — {{ formatDate(pkg.endDate) }}
+                  </span>
+                  @if (pkg.destinations && pkg.destinations.length > 0) {
+                    <span class="meta-item">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
+                      {{ pkg.destinations.length }} stop{{ pkg.destinations.length !== 1 ? 's' : '' }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Reviews -->
+      <section class="content-section">
+        <h2 class="section-heading">
+          Reviews
+          @if (feedbacks().length > 0) {
+            <span class="review-count">({{ feedbacks().length }})</span>
+          }
+        </h2>
+
+        @if (feedbacks().length === 0) {
+          <p class="empty-state">No reviews for this manager yet.</p>
+        } @else {
+          <ul class="reviews-list">
+            @for (review of feedbacks(); track review.id) {
+              <li class="review-item">
+                <div class="review-header">
+                  <span class="reviewer-name">{{ review.reviewerUsername }}</span>
+                  <a
+                    [routerLink]="['/travels', review.travelId]"
+                    class="review-package-link"
+                    (click)="$event.stopPropagation()"
+                  >
+                    View package →
+                  </a>
+                  <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+                </div>
+                <div class="star-display">
+                  @for (star of stars; track star) {
+                    <span class="star" [class.filled]="star <= review.rating">★</span>
+                  }
+                </div>
+                @if (review.comment) {
+                  <p class="review-comment">{{ review.comment }}</p>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+    }
+  </main>
+
+  @if (showReportModal()) {
+    <div class="modal-overlay" (click)="closeReportModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Report {{ managerFullName() }}</h3>
+          <button type="button" class="modal-close" (click)="closeReportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="report-hint">
+            Reports are reviewed by administrators. Add an optional note describing the issue.
+          </p>
+          <div class="form-group">
+            <label for="report-reason">Reason (optional)</label>
+            <textarea
+              id="report-reason"
+              rows="4"
+              placeholder="Describe the problem…"
+              [value]="reportReason()"
+              (input)="onReasonInput($event)"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-cancel" (click)="closeReportModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="isSubmittingReport()"
+              (click)="submitReport()"
+            >
+              @if (isSubmittingReport()) { Submitting… } @else { Submit Report }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

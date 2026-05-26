@@ -2,6 +2,7 @@ package com.sayedhesham.travelorch.common.entity.payment;
 
 import com.sayedhesham.travelorch.common.entity.base.BaseEntity;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
+import com.sayedhesham.travelorch.common.entity.user.User;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +18,8 @@ import java.math.BigDecimal;
 @Table(name = "payment_transactions", indexes = {
     @Index(name = "idx_payment_transactions_travel", columnList = "travel_id"),
     @Index(name = "idx_payment_transactions_status", columnList = "status"),
-    @Index(name = "idx_payment_transactions_provider", columnList = "provider_transaction_id")
+    @Index(name = "idx_payment_transactions_provider", columnList = "provider_transaction_id"),
+    @Index(name = "idx_payment_transactions_buyer", columnList = "buyer_id")
 })
 @Getter
 @Setter
@@ -27,6 +29,10 @@ public class PaymentTransaction extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "travel_id", nullable = false)
     private Travel travel;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "buyer_id")
+    private User buyer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_method_id", nullable = false)

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sayedhesham.travelorch.travel_service.dto.DestinationCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.DestinationResponse;
 import com.sayedhesham.travelorch.travel_service.dto.DestinationUpdateRequest;
+import com.sayedhesham.travelorch.travel_service.service.DestinationSearchService;
 import com.sayedhesham.travelorch.travel_service.service.DestinationService;
 
 import jakarta.validation.Valid;
@@ -30,9 +31,19 @@ public class DestinationController {
     private static final Logger log = LoggerFactory.getLogger(DestinationController.class);
 
     private final DestinationService destinationService;
+    private final DestinationSearchService searchService;
 
-    public DestinationController(DestinationService destinationService) {
+    public DestinationController(DestinationService destinationService,
+                                 DestinationSearchService searchService) {
         this.destinationService = destinationService;
+        this.searchService = searchService;
+    }
+
+    @GetMapping("/autocomplete")
+    public Mono<ResponseEntity<Flux<DestinationResponse>>> autocompleteDestinations(
+            @RequestParam String q) {
+        log.info("GET /destinations/autocomplete - q: {}", q);
+        return Mono.just(ResponseEntity.ok(searchService.autocomplete(q)));
     }
 
     @GetMapping

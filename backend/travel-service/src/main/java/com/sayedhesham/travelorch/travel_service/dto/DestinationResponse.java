@@ -1,5 +1,6 @@
 package com.sayedhesham.travelorch.travel_service.dto;
 
+import com.sayedhesham.travelorch.common.document.DestinationDocument;
 import com.sayedhesham.travelorch.common.entity.travel.Destination;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,21 @@ public class DestinationResponse {
                 .imageBase64(destination.getImageBase64())
                 .createdAt(destination.getCreatedAt())
                 .updatedAt(destination.getUpdatedAt())
+                .build();
+    }
+
+    public static DestinationResponse fromDocument(DestinationDocument doc) {
+        return DestinationResponse.builder()
+                .id(doc.getId())
+                .name(doc.getName())
+                .description(doc.getDescription())
+                .country(doc.getCountry())
+                .city(doc.getCity())
+                .region(doc.getRegion())
+                .latitude(doc.getLatitude())
+                .longitude(doc.getLongitude())
+                .createdAt(doc.getCreatedAt())
+                .updatedAt(doc.getUpdatedAt())
                 .build();
     }
 }

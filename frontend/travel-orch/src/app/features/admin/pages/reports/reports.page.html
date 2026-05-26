@@ -1,0 +1,69 @@
+<div class="admin-page">
+  <main class="admin-content">
+    <div class="admin-header">
+      <h2>Manager Reports</h2>
+      <p class="admin-subtitle">Reports filed against travel managers by users</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value">{{ totalReports() }}</span>
+        <span class="stat-label">Total Reports</span>
+      </div>
+    </div>
+
+    <div class="reports-section">
+      <div class="reports-toolbar">
+        <button class="btn btn-secondary" (click)="loadReports()">Refresh</button>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading reports...</p>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="error-state" role="alert">
+          <p>{{ errorMessage() }}</p>
+          <button class="btn btn-primary" (click)="loadReports()">Retry</button>
+        </div>
+      }
+
+      @if (!isLoading() && !errorMessage()) {
+        @if (reports().length === 0) {
+          <div class="empty-state">
+            <p>No reports have been filed.</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="reports-table">
+              <thead>
+                <tr>
+                  <th>Reporter</th>
+                  <th>Manager</th>
+                  <th>Reason</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (report of reports(); track report.id) {
+                  <tr>
+                    <td class="td-reporter">{{ report.reporterUsername || '—' }}</td>
+                    <td class="td-manager">
+                      <span class="manager-name">{{ report.managerName || 'Unknown' }}</span>
+                      <span class="manager-id">#{{ report.managerId }}</span>
+                    </td>
+                    <td class="td-reason">{{ report.reason || '—' }}</td>
+                    <td class="td-date">{{ formatDate(report.createdAt) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </div>
+  </main>
+</div>

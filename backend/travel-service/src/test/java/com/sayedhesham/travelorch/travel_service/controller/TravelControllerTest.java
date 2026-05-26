@@ -76,10 +76,9 @@ class TravelControllerTest {
                 .description("A summer vacation")
                 .startDate(LocalDate.of(2026, 6, 1))
                 .endDate(LocalDate.of(2026, 6, 15))
-                .durationDays(14)
                 .totalPrice(new BigDecimal("5000.00"))
                 .status(TravelStatus.draft)
-                .userId(1L)
+                .managerId(1L)
                 .destinations(List.of(tdResponse))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -159,7 +158,7 @@ class TravelControllerTest {
                 .expectStatus().isOk()
                 .expectBodyList(TravelResponse.class)
                 .hasSize(1)
-                .value(responses -> assertEquals(1L, responses.getFirst().getUserId()));
+                .value(responses -> assertEquals(1L, responses.getFirst().getManagerId()));
     }
 
     @Test
@@ -182,9 +181,7 @@ class TravelControllerTest {
                 .description("A winter getaway")
                 .startDate(LocalDate.of(2026, 12, 1))
                 .endDate(LocalDate.of(2026, 12, 10))
-                .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
-                .userId(1L)
                 .build();
 
         TravelResponse createdResponse = TravelResponse.builder()
@@ -193,10 +190,9 @@ class TravelControllerTest {
                 .description("A winter getaway")
                 .startDate(LocalDate.of(2026, 12, 1))
                 .endDate(LocalDate.of(2026, 12, 10))
-                .durationDays(9)
                 .totalPrice(new BigDecimal("3000.00"))
                 .status(TravelStatus.draft)
-                .userId(1L)
+                .managerId(1L)
                 .destinations(List.of())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -215,7 +211,7 @@ class TravelControllerTest {
                 .value(response -> {
                     assertEquals(101L, response.getId());
                     assertEquals("Winter Trip", response.getTitle());
-                    assertEquals(1L, response.getUserId());
+                    assertEquals(1L, response.getManagerId());
                 });
     }
 
@@ -232,10 +228,9 @@ class TravelControllerTest {
                 .description("A summer vacation")
                 .startDate(LocalDate.of(2026, 6, 1))
                 .endDate(LocalDate.of(2026, 6, 15))
-                .durationDays(14)
                 .totalPrice(new BigDecimal("5000.00"))
                 .status(TravelStatus.confirmed)
-                .userId(1L)
+                .managerId(1L)
                 .destinations(List.of())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -343,5 +338,192 @@ class TravelControllerTest {
                 .uri("/travels/200")
                 .exchange()
                 .expectStatus().isForbidden();
+    }
+
+    @Test
+    void getUpcomingTravels_Success() {
+        TravelResponse upcomingResponse = TravelResponse.builder()
+                .id(200L)
+                .title("Beach Getaway")
+                .description("A relaxing beach trip")
+                .startDate(LocalDate.now().plusDays(10))
+                .endDate(LocalDate.now().plusDays(17))
+                .totalPrice(new BigDecimal("2000.00"))
+                .status(TravelStatus.confirmed)
+                .managerId(1L)
+                .destinations(List.of())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(travelService.getUpcomingTravels()).thenReturn(Flux.just(upcomingResponse, travelResponse));
+
+        webTestClient.get()
+                .uri("/travels/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(2)
+                .value(responses -> {
+                    assertEquals(200L, responses.get(0).getId());
+                    assertEquals("Beach Getaway", responses.get(0).getTitle());
+                    assertEquals(TravelStatus.confirmed, responses.get(0).getStatus());
+                    assertEquals(100L, responses.get(1).getId());
+                });
+    }
+
+    @Test
+    void getUpcomingTravels_EmptyList() {
+        when(travelService.getUpcomingTravels()).thenReturn(Flux.empty());
+
+        webTestClient.get()
+                .uri("/travels/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(0);
+    }
+
+    // -------------------------------------------------------------------------
+    // GET /travels/user/{userId}/upcoming
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getUpcomingTravelsByManager_ReturnsOk() {
+        TravelResponse upcomingForManager = TravelResponse.builder()
+                .id(300L)
+                .title("Safari Adventure")
+                .description("An African safari")
+                .startDate(LocalDate.now().plusDays(20))
+                .endDate(LocalDate.now().plusDays(27))
+                .totalPrice(new BigDecimal("8000.00"))
+                .status(TravelStatus.confirmed)
+                .managerId(1L)
+                .destinations(List.of())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(travelService.getUpcomingByManager(1L)).thenReturn(Flux.just(upcomingForManager));
+
+        webTestClient.get()
+                .uri("/travels/user/1/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(1)
+                .value(list -> {
+                    assertEquals(300L, list.get(0).getId());
+                    assertEquals("Safari Adventure", list.get(0).getTitle());
+                    assertEquals(TravelStatus.confirmed, list.get(0).getStatus());
+                });
+    }
+
+    @Test
+    void getUpcomingTravelsByManager_EmptyList_ReturnsOk() {
+        when(travelService.getUpcomingByManager(1L)).thenReturn(Flux.empty());
+
+        webTestClient.get()
+                .uri("/travels/user/1/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(0);
+    }
+
+    @Test
+    void getUpcomingTravelsByManager_MultiplePackages_ReturnsAll() {
+        TravelResponse r1 = TravelResponse.builder()
+                .id(301L).title("Alps Ski Trip")
+                .startDate(LocalDate.now().plusDays(10)).endDate(LocalDate.now().plusDays(17))
+                .totalPrice(new BigDecimal("4000.00")).status(TravelStatus.confirmed)
+                .managerId(1L).destinations(List.of())
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+
+        TravelResponse r2 = TravelResponse.builder()
+                .id(302L).title("Island Escape")
+                .startDate(LocalDate.now().plusDays(30)).endDate(LocalDate.now().plusDays(37))
+                .totalPrice(new BigDecimal("3500.00")).status(TravelStatus.draft)
+                .managerId(1L).destinations(List.of())
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+
+        when(travelService.getUpcomingByManager(1L)).thenReturn(Flux.just(r1, r2));
+
+        webTestClient.get()
+                .uri("/travels/user/1/upcoming")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TravelResponse.class)
+                .hasSize(2)
+                .value(list -> {
+                    assertEquals(301L, list.get(0).getId());
+                    assertEquals(302L, list.get(1).getId());
+                });
+    }
+
+    // -------------------------------------------------------------------------
+    // GET /travels/manager/{managerId}/stats
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getManagerStats_ReturnsOk() {
+        ManagerStatsResponse stats = ManagerStatsResponse.builder()
+                .totalPackages(5L)
+                .averageRating(4.2)
+                .totalReviews(10L)
+                .build();
+
+        when(travelService.getManagerStats(1L)).thenReturn(Mono.just(stats));
+
+        webTestClient.get()
+                .uri("/travels/manager/1/stats")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ManagerStatsResponse.class)
+                .value(r -> {
+                    assertEquals(5L, r.getTotalPackages());
+                    assertEquals(4.2, r.getAverageRating(), 0.001);
+                    assertEquals(10L, r.getTotalReviews());
+                });
+    }
+
+    @Test
+    void getManagerStats_NoPackages_ReturnsZeros() {
+        ManagerStatsResponse stats = ManagerStatsResponse.builder()
+                .totalPackages(0L)
+                .averageRating(0.0)
+                .totalReviews(0L)
+                .build();
+
+        when(travelService.getManagerStats(99L)).thenReturn(Mono.just(stats));
+
+        webTestClient.get()
+                .uri("/travels/manager/99/stats")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ManagerStatsResponse.class)
+                .value(r -> {
+                    assertEquals(0L, r.getTotalPackages());
+                    assertEquals(0.0, r.getAverageRating(), 0.001);
+                    assertEquals(0L, r.getTotalReviews());
+                });
+    }
+
+    @Test
+    void getManagerStats_PerfectRatings_ReturnsAverageFive() {
+        ManagerStatsResponse stats = ManagerStatsResponse.builder()
+                .totalPackages(2L)
+                .averageRating(5.0)
+                .totalReviews(4L)
+                .build();
+
+        when(travelService.getManagerStats(1L)).thenReturn(Mono.just(stats));
+
+        webTestClient.get()
+                .uri("/travels/manager/1/stats")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ManagerStatsResponse.class)
+                .value(r -> assertEquals(5.0, r.getAverageRating(), 0.001));
     }
 }

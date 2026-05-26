@@ -70,8 +70,8 @@ $font-body: 'Lora', Georgia, serif;
     border-top-color: $accent-green;
   }
 
-  &--completed {
-    border-top-color: $mid-gray;
+  &--cancelled {
+    border-top-color: #e53e3e;
   }
 
   .stat-value {
@@ -287,21 +287,9 @@ $font-body: 'Lora', Georgia, serif;
     background: rgba($accent-blue, 0.15);
     color: $accent-blue;
   }
-  &-planned {
-    background: rgba(#a78bfa, 0.15);
-    color: #a78bfa;
-  }
   &-confirmed {
     background: rgba($accent-green, 0.15);
     color: $accent-green;
-  }
-  &-progress {
-    background: rgba($accent-orange, 0.15);
-    color: $accent-orange;
-  }
-  &-completed {
-    background: rgba($mid-gray, 0.15);
-    color: $mid-gray;
   }
   &-cancelled {
     background: rgba(#e53e3e, 0.15);
@@ -484,6 +472,11 @@ $font-body: 'Lora', Georgia, serif;
   font-size: 0.72rem;
   color: #e53e3e;
   font-family: $font-body;
+}
+
+.required-star {
+  color: #e53e3e;
+  margin-left: 2px;
 }
 
 .modal-footer {

@@ -2,10 +2,18 @@
   <h1 class="navbar-brand" (click)="goHome()">TravelOrch</h1>
   @if (isAuthenticated) {
     <div class="navbar-actions">
+      <button class="btn btn-secondary" (click)="goToProfile()">My Profile</button>
       @if (isAdmin) {
         <button class="btn btn-secondary" (click)="goToAdmin()">Admin Dashboard</button>
       }
+      @if (isTravelManager && !isAdmin) {
+        <button class="btn btn-secondary" (click)="goToManager()">Manager Dashboard</button>
+      }
       <button class="btn btn-primary" (click)="logout()">Logout</button>
+    </div>
+  } @else {
+    <div class="navbar-actions">
+      <button class="btn btn-primary" (click)="goToLogin()">Login</button>
     </div>
   }
 </header>
