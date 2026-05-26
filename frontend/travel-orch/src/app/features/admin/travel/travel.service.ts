@@ -43,6 +43,11 @@ export class TravelService {
     return this.http.get<TravelResponse>(`${this.apiUrl}/api/travel/travels/${id}`);
   }
 
+  getByIds(ids: number[]): Observable<TravelResponse[]> {
+    const params = ids.map((id) => `ids=${id}`).join('&');
+    return this.http.get<TravelResponse[]>(`${this.apiUrl}/api/travel/travels/batch?${params}`);
+  }
+
   create(data: TravelCreateRequest): Observable<TravelResponse> {
     return this.http.post<TravelResponse>(`${this.apiUrl}/api/travel/travels`, data);
   }
