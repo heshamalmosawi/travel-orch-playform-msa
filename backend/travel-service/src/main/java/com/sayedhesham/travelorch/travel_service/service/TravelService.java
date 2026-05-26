@@ -350,6 +350,19 @@ public class TravelService {
                 .then();
     }
 
+    @PreAuthorize("hasPermission('travels', 'read')")
+    public Flux<TravelResponse> getTravelsByIds(List<Long> ids) {
+        log.info("getTravelsByIds - Fetching {} travels", ids.size());
+        return Mono.fromCallable(() -> transactionTemplate.execute(status
+                -> travelRepository.findAllById(ids).stream()
+                        .map(TravelResponse::fromEntity)
+                        .toList()
+        ))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getTravelsByIds - Found {} travels", list.size()))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     private boolean hasPermission(User user, String resource, String action) {
         return user.getRole() != null && user.getRole().getPermissions().stream()
                 .anyMatch(permission

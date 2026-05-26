@@ -52,7 +52,7 @@ export class UsersPage {
   readonly stars = [1, 2, 3, 4, 5];
 
   // Resolved travel titles, keyed by travelId (purchases/feedbacks only carry the id)
-  readonly travelNames = signal<Record<number, string>>({});
+  readonly travelNames = signal<Record<number, string | null>>({});
 
   private detailVersion = 0;
 
@@ -370,19 +370,45 @@ export class UsersPage {
     const ids = Array.from(
       new Set(travelIds.filter((id): id is number => id != null))
     );
-    for (const id of ids) {
-      if (this.travelNames()[id] !== undefined) continue;
-      this.travelService.getById(id).subscribe({
-        next: (t) => {
-          if (version != null && this.detailVersion !== version) return;
-          this.travelNames.update((m) => ({ ...m, [id]: t.title }));
-        },
-        error: () => {},
-      });
+    const missing = ids.filter((id) => this.travelNames()[id] === undefined);
+    if (missing.length === 0) return;
+
+    const names = this.travelNames();
+    const updated = { ...names };
+    for (const id of missing) {
+      updated[id] = `Travel #${id}`;
     }
+    this.travelNames.set(updated);
+
+    this.travelService.getByIds(missing).subscribe({
+      next: (travels) => {
+        if (version != null && this.detailVersion !== version) return;
+        this.travelNames.update((m) => {
+          const copy = { ...m };
+          for (const t of travels) {
+            copy[t.id] = t.title;
+          }
+          return copy;
+        });
+      },
+      error: () => {
+        if (version != null && this.detailVersion !== version) return;
+        this.travelNames.update((m) => {
+          const copy = { ...m };
+          for (const id of missing) {
+            if (copy[id] === `Travel #${id}`) {
+              copy[id] = null;
+            }
+          }
+          return copy;
+        });
+      },
+    });
   }
 
   travelLabel(travelId: number): string {
-    return this.travelNames()[travelId] ?? `Travel #${travelId}`;
+    const name = this.travelNames()[travelId];
+    if (name === null) return `Travel #${travelId} (unavailable)`;
+    return name ?? `Travel #${travelId}`;
   }
 }
