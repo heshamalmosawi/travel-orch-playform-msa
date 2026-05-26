@@ -7,5 +7,8 @@ export interface PurchaseResponse {
   paymentIntentId: string | null;
   travelId: number;
   buyerId: number | null;
+  buyerUsername?: string | null;
+  buyerName?: string | null;
+  buyerEmail?: string | null;
   createdAt: string;
 }

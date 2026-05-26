@@ -32,8 +32,8 @@ public class RateLimiterFilter implements WebFilter, Ordered {
     private final Duration duration;
 
     public RateLimiterFilter(
-            @Value("${rate.limit.capacity:5}") int capacity,
-            @Value("${rate.limit.duration:10}") int durationSeconds) {
+            @Value("${rate.limit.capacity:100}") int capacity,
+            @Value("${rate.limit.duration:60}") int durationSeconds) {
         this.capacity = capacity;
         this.duration = Duration.ofSeconds(durationSeconds);
         log.info("RateLimiter initialized: capacity={}, duration={}s", capacity, durationSeconds);

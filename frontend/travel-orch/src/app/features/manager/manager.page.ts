@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: 'app-manager-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, NavbarComponent],
   templateUrl: './manager.page.html',
   styleUrl: './manager.page.scss',
 })
