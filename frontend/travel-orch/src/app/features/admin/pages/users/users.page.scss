@@ -702,6 +702,17 @@ $font-body: 'Lora', Georgia, serif;
   color: $mid-gray;
 }
 
+.travel-link {
+  color: $accent-blue;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: $accent-blue-hover;
+    text-decoration: underline;
+  }
+}
+
 .feedback-comment {
   font-family: $font-body;
   font-size: 0.85rem;
