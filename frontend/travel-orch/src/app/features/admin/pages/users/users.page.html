@@ -239,7 +239,11 @@
                     <tbody>
                       @for (p of pagedPurchases(); track p.id) {
                         <tr>
-                          <td>{{ travelLabel(p.travelId) }}</td>
+                          <td>
+                            <a class="travel-link" [routerLink]="['/travels', p.travelId]" target="_blank" rel="noopener">
+                              {{ travelLabel(p.travelId) }}
+                            </a>
+                          </td>
                           <td>{{ p.amount | number:'1.2-2' }} {{ p.currency }}</td>
                           <td><span class="badge" [class]="getStatusClass(p.status)">{{ getStatusLabel(p.status) }}</span></td>
                           <td class="td-date">{{ formatDate(p.createdAt) }}</td>
@@ -273,7 +277,10 @@
                             <span class="star" [class.filled]="s <= f.rating">★</span>
                           }
                         </span>
-                        <span class="feedback-meta">{{ travelLabel(f.travelId) }} · {{ formatDate(f.createdAt) }}</span>
+                        <span class="feedback-meta">
+                          <a class="travel-link" [routerLink]="['/travels', f.travelId]" target="_blank" rel="noopener">{{ travelLabel(f.travelId) }}</a>
+                          · {{ formatDate(f.createdAt) }}
+                        </span>
                       </div>
                       @if (f.comment) {
                         <p class="feedback-comment">{{ f.comment }}</p>
