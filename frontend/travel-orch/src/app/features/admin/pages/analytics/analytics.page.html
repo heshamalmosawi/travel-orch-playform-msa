@@ -1,0 +1,238 @@
+<div class="admin-page">
+  <main class="admin-content">
+    <div class="admin-header">
+      <h2>Analytics Dashboard</h2>
+      <p class="admin-subtitle">Platform performance overview</p>
+    </div>
+
+    <!-- Overview KPIs -->
+    @if (isLoadingOverview()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading overview...</p>
+      </div>
+    }
+    @if (overviewError()) {
+      <div class="error-state" role="alert">
+        <p>{{ overviewError() }}</p>
+        <button class="btn btn-primary" (click)="loadOverview()">Retry</button>
+      </div>
+    }
+    @if (overview(); as ov) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value">{{ formatCurrency(ov.totalIncome) }}</span>
+          <span class="stat-label">Total Income</span>
+        </div>
+        <div class="stat-card stat-card--admin">
+          <span class="stat-value">{{ ov.totalBookings }}</span>
+          <span class="stat-label">Total Bookings</span>
+        </div>
+        <div class="stat-card stat-card--recent">
+          <span class="stat-value">{{ ov.totalManagers }}</span>
+          <span class="stat-label">Travel Managers</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ ov.totalOrganizedTravels }}</span>
+          <span class="stat-label">Organized Travels</span>
+        </div>
+        <div class="stat-card stat-card--admin">
+          <span class="stat-value">{{ formatCurrency(ov.lastMonthIncome) }}</span>
+          <span class="stat-label">This Month Income</span>
+        </div>
+      </div>
+    }
+
+    <!-- Income Chart -->
+    @if (isLoadingIncome()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading income data...</p>
+      </div>
+    }
+    @if (incomeError()) {
+      <div class="error-state" role="alert">
+        <p>{{ incomeError() }}</p>
+      </div>
+    }
+    @if (income().length > 0) {
+      <div class="section">
+        <h3 class="section-title">Monthly Income</h3>
+        <div class="income-chart">
+          @for (month of income(); track month.label) {
+            <div class="income-bar-group">
+              <div class="income-bar-track">
+                <div class="income-bar-fill" [style.width]="barWidth(month.totalIncome)"></div>
+              </div>
+              <div class="income-bar-label">
+                <span class="income-bar-amount">{{ formatCurrency(month.totalIncome) }}</span>
+                <span class="income-bar-month">{{ month.label }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Top Managers -->
+    <div class="section">
+      <h3 class="section-title">Top Managers</h3>
+      @if (isLoadingManagers()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading managers...</p>
+        </div>
+      }
+      @if (managersError()) {
+        <div class="error-state" role="alert">
+          <p>{{ managersError() }}</p>
+          <button class="btn btn-primary" (click)="loadManagers()">Retry</button>
+        </div>
+      }
+      @if (managers(); as mgr) {
+        @if (mgr.content.length === 0) {
+          <div class="empty-state">
+            <p>No travel managers found</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Travels</th>
+                  <th>Bookings</th>
+                  <th>Revenue</th>
+                  <th>Avg Rating</th>
+                  <th>Reviews</th>
+                  <th>Reports</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of mgr.content; track m.managerId; let i = $index) {
+                  <tr>
+                    <td>{{ managersPage() * 5 + i + 1 }}</td>
+                    <td>
+                      <div class="cell-name">{{ m.name }}</div>
+                      <div class="cell-sub">{{ m.email }}</div>
+                    </td>
+                    <td>{{ m.organizedTravels }}</td>
+                    <td>{{ m.totalBookings }}</td>
+                    <td>{{ formatCurrency(m.totalRevenue) }}</td>
+                    <td>
+                      <span class="rating-display">
+                        @for (s of stars; track s) {
+                          <span class="star" [class.star--filled]="s <= m.averageRating">&#9733;</span>
+                        }
+                        <span class="rating-num">{{ m.averageRating.toFixed(1) }}</span>
+                      </span>
+                    </td>
+                    <td>{{ m.totalReviews }}</td>
+                    <td>
+                      @if (m.totalReports > 0) {
+                        <span class="badge badge--red">{{ m.totalReports }}</span>
+                      } @else {
+                        <span class="badge badge--green">0</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="badge" [class]="scoreBadgeClass(m.performanceScore)">
+                        {{ m.performanceScore.toFixed(1) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (mgr.totalPages > 1) {
+            <div class="pager">
+              <button class="btn btn-secondary btn-sm" [disabled]="managersPage() === 0" (click)="prevManagers()">Prev</button>
+              <span>Page {{ managersPage() + 1 }} of {{ mgr.totalPages }}</span>
+              <button class="btn btn-secondary btn-sm" [disabled]="managersPage() >= mgr.totalPages - 1" (click)="nextManagers()">Next</button>
+            </div>
+          }
+        }
+      }
+    </div>
+
+    <!-- Top Travels -->
+    <div class="section">
+      <h3 class="section-title">Top Travels</h3>
+      @if (isLoadingTravels()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading travels...</p>
+        </div>
+      }
+      @if (travelsError()) {
+        <div class="error-state" role="alert">
+          <p>{{ travelsError() }}</p>
+          <button class="btn btn-primary" (click)="loadTravels()">Retry</button>
+        </div>
+      }
+      @if (travels(); as tvl) {
+        @if (tvl.content.length === 0) {
+          <div class="empty-state">
+            <p>No travels found</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Title</th>
+                  <th>Manager</th>
+                  <th>Bookings</th>
+                  <th>Revenue</th>
+                  <th>Avg Rating</th>
+                  <th>Reviews</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of tvl.content; track t.travelId; let i = $index) {
+                  <tr>
+                    <td>{{ travelsPage() * 5 + i + 1 }}</td>
+                    <td>{{ t.title }}</td>
+                    <td>{{ t.managerName }}</td>
+                    <td>{{ t.bookings }}</td>
+                    <td>{{ formatCurrency(t.revenue) }}</td>
+                    <td>
+                      <span class="rating-display">
+                        @for (s of stars; track s) {
+                          <span class="star" [class.star--filled]="s <= t.averageRating">&#9733;</span>
+                        }
+                        <span class="rating-num">{{ t.averageRating.toFixed(1) }}</span>
+                      </span>
+                    </td>
+                    <td>{{ t.totalReviews }}</td>
+                    <td>
+                      <span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span>
+                    </td>
+                    <td>
+                      <span class="badge" [class]="scoreBadgeClass(t.performanceScore)">
+                        {{ t.performanceScore.toFixed(1) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (tvl.totalPages > 1) {
+            <div class="pager">
+              <button class="btn btn-secondary btn-sm" [disabled]="travelsPage() === 0" (click)="prevTravels()">Prev</button>
+              <span>Page {{ travelsPage() + 1 }} of {{ tvl.totalPages }}</span>
+              <button class="btn btn-secondary btn-sm" [disabled]="travelsPage() >= tvl.totalPages - 1" (click)="nextTravels()">Next</button>
+            </div>
+          }
+        }
+      }
+    </div>
+  </main>
+</div>

@@ -39,6 +39,13 @@ export const routes: Routes = [
         redirectTo: 'users',
       },
       {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/admin/pages/analytics/analytics.page').then(
+            (m) => m.AnalyticsPage
+          ),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/admin/pages/users/users.page').then(

@@ -12,6 +12,7 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
 })
 export class AdminPage {
   readonly navItems = [
+    { label: 'Analytics', path: '/admin/analytics', icon: 'analytics' },
     { label: 'Users', path: '/admin/users', icon: 'users' },
     { label: 'Destinations', path: '/admin/travel', icon: 'travel' },
     { label: 'Travels', path: '/admin/travels', icon: 'travels' },
