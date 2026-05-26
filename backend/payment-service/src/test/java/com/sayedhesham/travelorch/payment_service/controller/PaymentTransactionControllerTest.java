@@ -152,6 +152,44 @@ class PaymentTransactionControllerTest {
     }
 
     @Test
+    void getTransactionsByTravel_Success() {
+        when(paymentTransactionService.getTransactionsByTravel(1L, "admin")).thenReturn(Flux.just(transactionResponse));
+
+        webTestClient.get()
+                .uri("/transactions/travel/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(PaymentTransactionResponse.class)
+                .hasSize(1)
+                .value(responses -> {
+                    assertEquals(100L, responses.getFirst().getId());
+                    assertEquals(1L, responses.getFirst().getTravelId());
+                });
+    }
+
+    @Test
+    void getTransactionsByTravel_Forbidden() {
+        when(paymentTransactionService.getTransactionsByTravel(2L, "admin"))
+                .thenReturn(Flux.error(new SecurityException("You do not have permission to view these purchases")));
+
+        webTestClient.get()
+                .uri("/transactions/travel/2")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void getTransactionsByTravel_NotFound() {
+        when(paymentTransactionService.getTransactionsByTravel(99L, "admin"))
+                .thenReturn(Flux.error(new IllegalArgumentException("Travel not found with id: 99")));
+
+        webTestClient.get()
+                .uri("/transactions/travel/99")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
     void createTransaction_Success() {
         PaymentTransactionCreateRequest request = PaymentTransactionCreateRequest.builder()
                 .amount(new BigDecimal("100.00"))

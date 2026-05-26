@@ -22,6 +22,12 @@ export class PurchaseService {
     );
   }
 
+  getByTravel(travelId: number): Observable<PurchaseResponse[]> {
+    return this.http.get<PurchaseResponse[]>(
+      `${this.apiUrl}/api/payment/transactions/travel/${travelId}`
+    );
+  }
+
   cancelRefund(id: number): Observable<PurchaseResponse> {
     return this.http.post<PurchaseResponse>(
       `${this.apiUrl}/api/payment/transactions/${id}/cancel`,

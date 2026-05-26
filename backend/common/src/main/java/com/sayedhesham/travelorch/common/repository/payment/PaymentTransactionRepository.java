@@ -3,6 +3,7 @@ package com.sayedhesham.travelorch.common.repository.payment;
 import com.sayedhesham.travelorch.common.entity.payment.PaymentTransaction;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.enums.PaymentStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,7 +14,12 @@ import java.util.Optional;
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
     
     List<PaymentTransaction> findByTravel(Travel travel);
-    
+
+    // Subscriber list maps each row via PaymentTransactionResponse.fromEntity, which reads
+    // buyer fields (username/email/name); fetch buyer (and travel) up front to avoid N+1.
+    @EntityGraph(attributePaths = {"buyer", "travel"})
+    List<PaymentTransaction> findByTravelId(Long travelId);
+
     List<PaymentTransaction> findByStatus(PaymentStatus status);
     
     Optional<PaymentTransaction> findByProviderTransactionId(String providerTransactionId);
