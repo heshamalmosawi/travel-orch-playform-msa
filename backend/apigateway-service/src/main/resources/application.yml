@@ -43,7 +43,7 @@ server:
 # Rate Limiting Configuration (optional, defaults provided)
 rate:
   limit:
-    capacity: ${RATE_LIMIT_CAPACITY:10}
+    capacity: ${RATE_LIMIT_CAPACITY:100}
     duration: ${RATE_LIMIT_DURATION:60}
 
 management:
