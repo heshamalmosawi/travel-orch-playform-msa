@@ -599,4 +599,81 @@ class FeedbackServiceTest {
 
         verify(feedbackRepository).delete(orphan);
     }
+
+    // -------------------------------------------------------------------------
+    // getFeedbacksByReviewer
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getFeedbacksByReviewer_AsSelf_Success() {
+        setupTransaction();
+        when(userRepository.findByUsername("reviewer")).thenReturn(Optional.of(reviewer));
+        when(feedbackRepository.findByReviewerId(10L)).thenReturn(List.of(feedback));
+
+        StepVerifier.create(feedbackService.getFeedbacksByReviewer(10L, "reviewer"))
+                .expectNextMatches(r -> r.getId().equals(1L) && r.getReviewerId().equals(10L))
+                .verifyComplete();
+    }
+
+    @Test
+    void getFeedbacksByReviewer_AsAdminWithAdminAll_Success() {
+        setupTransaction();
+        // adminUser has feedbacks:write + admin:all but NOT feedbacks:read — exercises the admin.all branch
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(adminUser));
+        when(feedbackRepository.findByReviewerId(10L)).thenReturn(List.of(feedback));
+
+        StepVerifier.create(feedbackService.getFeedbacksByReviewer(10L, "admin"))
+                .expectNextMatches(r -> r.getId().equals(1L))
+                .verifyComplete();
+    }
+
+    @Test
+    void getFeedbacksByReviewer_WithFeedbacksReadPermission_Success() {
+        setupTransaction();
+        Permission readPerm = new Permission();
+        readPerm.setResource("feedbacks");
+        readPerm.setAction("read");
+        Role staffRole = new Role();
+        staffRole.setId(9L);
+        staffRole.setName("staff");
+        Set<Permission> perms = new HashSet<>();
+        perms.add(readPerm);
+        staffRole.setPermissions(perms);
+        User staff = new User();
+        staff.setId(40L);
+        staff.setUsername("staff");
+        staff.setRole(staffRole);
+
+        when(userRepository.findByUsername("staff")).thenReturn(Optional.of(staff));
+        when(feedbackRepository.findByReviewerId(10L)).thenReturn(List.of(feedback));
+
+        StepVerifier.create(feedbackService.getFeedbacksByReviewer(10L, "staff"))
+                .expectNextMatches(r -> r.getId().equals(1L))
+                .verifyComplete();
+    }
+
+    @Test
+    void getFeedbacksByReviewer_NotSelf_NoPermission_ThrowsSecurity() {
+        setupTransaction();
+        // manager has empty permissions and is not the reviewer
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
+
+        StepVerifier.create(feedbackService.getFeedbacksByReviewer(10L, "manager"))
+                .expectErrorMatches(ex -> ex instanceof SecurityException
+                        && ex.getMessage().equals("You do not have permission to view these reviews"))
+                .verify();
+
+        verify(feedbackRepository, never()).findByReviewerId(any());
+    }
+
+    @Test
+    void getFeedbacksByReviewer_UserNotFound_ThrowsIllegalArgument() {
+        setupTransaction();
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        StepVerifier.create(feedbackService.getFeedbacksByReviewer(10L, "ghost"))
+                .expectErrorMatches(ex -> ex instanceof IllegalArgumentException
+                        && ex.getMessage().equals("User not found: ghost"))
+                .verify();
+    }
 }

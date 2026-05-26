@@ -431,4 +431,36 @@ class FeedbackControllerTest {
                 .exchange()
                 .expectStatus().isForbidden();
     }
+
+    // -------------------------------------------------------------------------
+    // GET /feedbacks/user/{userId}
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getFeedbacksByReviewer_ReturnsOk() {
+        when(feedbackService.getFeedbacksByReviewer(eq(10L), eq("reviewer")))
+                .thenReturn(Flux.just(feedbackResponse, anotherFeedbackResponse));
+
+        webTestClient.get()
+                .uri("/feedbacks/user/10")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(FeedbackResponse.class)
+                .hasSize(2)
+                .value(list -> {
+                    assertEquals(10L, list.get(0).getReviewerId());
+                    assertEquals(10L, list.get(1).getReviewerId());
+                });
+    }
+
+    @Test
+    void getFeedbacksByReviewer_Forbidden() {
+        when(feedbackService.getFeedbacksByReviewer(eq(10L), eq("reviewer")))
+                .thenReturn(Flux.error(new SecurityException("You do not have permission to view these reviews")));
+
+        webTestClient.get()
+                .uri("/feedbacks/user/10")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
 }

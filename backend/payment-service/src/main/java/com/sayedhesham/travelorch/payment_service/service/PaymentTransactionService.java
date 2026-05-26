@@ -260,6 +260,30 @@ public class PaymentTransactionService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    public Flux<PaymentTransactionResponse> getPurchasesByUser(Long userId, String currentUsername) {
+        log.info("getPurchasesByUser - Fetching purchases for userId: {} requested by: {}", userId, currentUsername);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+
+            boolean isOwner = currentUser.getId().equals(userId);
+            boolean canReadAny = hasPermission(currentUser, "payments", "read")
+                    || hasPermission(currentUser, "admin", "all");
+
+            if (!isOwner && !canReadAny) {
+                log.warn("getPurchasesByUser - User {} denied access to userId: {}", currentUsername, userId);
+                throw new SecurityException("You do not have permission to view these purchases");
+            }
+
+            return paymentTransactionRepository.findByBuyerId(userId).stream()
+                    .map(PaymentTransactionResponse::fromEntity)
+                    .toList();
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(list -> log.info("getPurchasesByUser - Found {} purchases for userId: {}", list.size(), userId))
+                .flatMapMany(Flux::fromIterable);
+    }
+
     public Mono<PaymentTransactionResponse> cancelAndRefund(Long id, String currentUsername) {
         log.info("cancelAndRefund - User {} cancelling transaction id: {}", currentUsername, id);
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {

@@ -28,6 +28,12 @@ export class PurchaseService {
     );
   }
 
+  getByUser(userId: number): Observable<PurchaseResponse[]> {
+    return this.http.get<PurchaseResponse[]>(
+      `${this.apiUrl}/api/payment/transactions/buyer/${userId}`
+    );
+  }
+
   cancelRefund(id: number): Observable<PurchaseResponse> {
     return this.http.post<PurchaseResponse>(
       `${this.apiUrl}/api/payment/transactions/${id}/cancel`,

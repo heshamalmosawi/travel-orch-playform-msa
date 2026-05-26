@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -9,11 +10,16 @@ import {
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { AdminService } from '../../admin.service';
 import { UserResponse, UserUpdateRequest, RoleUpdateRequest } from '../../admin.model';
+import { PurchaseService } from '../../../travel-detail/purchase.service';
+import { PurchaseResponse } from '../../../travel-detail/purchase.model';
+import { FeedbackService } from '../../../travel-detail/feedback.service';
+import { FeedbackResponse } from '../../../travel-detail/feedback.model';
+import { TravelService } from '../../travel/travel.service';
 
 @Component({
   selector: 'app-users-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './users.page.html',
   styleUrl: './users.page.scss',
 })
@@ -21,6 +27,9 @@ export class UsersPage {
   private readonly adminService = inject(AdminService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
+  private readonly purchaseService = inject(PurchaseService);
+  private readonly feedbackService = inject(FeedbackService);
+  private readonly travelService = inject(TravelService);
 
   readonly users = signal<UserResponse[]>([]);
   readonly isLoading = signal(true);
@@ -30,6 +39,37 @@ export class UsersPage {
   readonly editingUser = signal<UserResponse | null>(null);
   readonly deletingUser = signal<UserResponse | null>(null);
   readonly isSubmitting = signal(false);
+
+  // User-details (travel history + feedbacks) modal
+  readonly viewingUser = signal<UserResponse | null>(null);
+  readonly userPurchases = signal<PurchaseResponse[]>([]);
+  readonly userFeedbacks = signal<FeedbackResponse[]>([]);
+  readonly isDetailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
+  readonly purchasesPage = signal(0);
+  readonly feedbacksPage = signal(0);
+  readonly pageSize = 5;
+  readonly stars = [1, 2, 3, 4, 5];
+
+  // Resolved travel titles, keyed by travelId (purchases/feedbacks only carry the id)
+  readonly travelNames = signal<Record<number, string | null>>({});
+
+  private detailVersion = 0;
+
+  readonly pagedPurchases = computed(() => {
+    const start = this.purchasesPage() * this.pageSize;
+    return this.userPurchases().slice(start, start + this.pageSize);
+  });
+  readonly purchasesPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.userPurchases().length / this.pageSize))
+  );
+  readonly pagedFeedbacks = computed(() => {
+    const start = this.feedbacksPage() * this.pageSize;
+    return this.userFeedbacks().slice(start, start + this.pageSize);
+  });
+  readonly feedbacksPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.userFeedbacks().length / this.pageSize))
+  );
 
   // Available roles: admins can't promote to ADMIN, only to TRAVEL_MANAGER or USER
   readonly availableRoles = ['user', 'travel_manager'];
@@ -223,5 +263,152 @@ export class UsersPage {
 
   getRoleBadgeClass(role: string): string {
     return role?.toUpperCase() === 'ADMIN' ? 'badge-admin' : 'badge-user';
+  }
+
+  openDetailModal(user: UserResponse): void {
+    const version = ++this.detailVersion;
+
+    this.viewingUser.set(user);
+    this.userPurchases.set([]);
+    this.userFeedbacks.set([]);
+    this.purchasesPage.set(0);
+    this.feedbacksPage.set(0);
+    this.detailError.set(null);
+    this.travelNames.set({});
+    this.isDetailLoading.set(true);
+
+    let pending = 2;
+    const done = () => {
+      if (--pending === 0) this.isDetailLoading.set(false);
+    };
+
+    this.purchaseService.getByUser(user.id).subscribe({
+      next: (list) => {
+        if (this.detailVersion !== version) return;
+        this.userPurchases.set(list);
+        this.loadTravelNames(list.map((p) => p.travelId), version);
+        done();
+      },
+      error: (err) => {
+        if (this.detailVersion !== version) return;
+        done();
+        if (err.status === 403) {
+          this.detailError.set("You do not have permission to view this user's data.");
+        } else if (err.status !== 404) {
+          this.toastService.error('Failed to load travel history');
+        }
+      },
+    });
+
+    this.feedbackService.getByReviewer(user.id).subscribe({
+      next: (list) => {
+        if (this.detailVersion !== version) return;
+        this.userFeedbacks.set(list);
+        this.loadTravelNames(list.map((f) => f.travelId), version);
+        done();
+      },
+      error: (err) => {
+        if (this.detailVersion !== version) return;
+        done();
+        if (err.status === 403) {
+          this.detailError.set("You do not have permission to view this user's data.");
+        } else if (err.status !== 404) {
+          this.toastService.error('Failed to load feedbacks');
+        }
+      },
+    });
+  }
+
+  closeDetailModal(): void {
+    this.detailVersion++;
+    this.viewingUser.set(null);
+    this.userPurchases.set([]);
+    this.userFeedbacks.set([]);
+    this.detailError.set(null);
+  }
+
+  nextPurchasesPage(): void {
+    if (this.purchasesPage() < this.purchasesPageCount() - 1) {
+      this.purchasesPage.update((p) => p + 1);
+    }
+  }
+
+  prevPurchasesPage(): void {
+    if (this.purchasesPage() > 0) {
+      this.purchasesPage.update((p) => p - 1);
+    }
+  }
+
+  nextFeedbacksPage(): void {
+    if (this.feedbacksPage() < this.feedbacksPageCount() - 1) {
+      this.feedbacksPage.update((p) => p + 1);
+    }
+  }
+
+  prevFeedbacksPage(): void {
+    if (this.feedbacksPage() > 0) {
+      this.feedbacksPage.update((p) => p - 1);
+    }
+  }
+
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      pending: 'badge-pending',
+      processing: 'badge-pending',
+      completed: 'badge-completed',
+      failed: 'badge-failed',
+      refunded: 'badge-refunded',
+    };
+    return map[status] || 'badge-pending';
+  }
+
+  getStatusLabel(status: string): string {
+    return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  private loadTravelNames(travelIds: Array<number | null | undefined>, version?: number): void {
+    const ids = Array.from(
+      new Set(travelIds.filter((id): id is number => id != null))
+    );
+    const missing = ids.filter((id) => this.travelNames()[id] === undefined);
+    if (missing.length === 0) return;
+
+    const names = this.travelNames();
+    const updated = { ...names };
+    for (const id of missing) {
+      updated[id] = `Travel #${id}`;
+    }
+    this.travelNames.set(updated);
+
+    this.travelService.getByIds(missing).subscribe({
+      next: (travels) => {
+        if (version != null && this.detailVersion !== version) return;
+        this.travelNames.update((m) => {
+          const copy = { ...m };
+          for (const t of travels) {
+            copy[t.id] = t.title;
+          }
+          return copy;
+        });
+      },
+      error: () => {
+        if (version != null && this.detailVersion !== version) return;
+        this.travelNames.update((m) => {
+          const copy = { ...m };
+          for (const id of missing) {
+            if (copy[id] === `Travel #${id}`) {
+              copy[id] = null;
+            }
+          }
+          return copy;
+        });
+      },
+    });
+  }
+
+  travelLabel(travelId: number): string {
+    const name = this.travelNames()[travelId];
+    if (name === null) return `Travel #${travelId} (unavailable)`;
+    return name ?? `Travel #${travelId}`;
   }
 }

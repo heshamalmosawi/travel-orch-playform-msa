@@ -558,3 +558,179 @@ $font-body: 'Lora', Georgia, serif;
     }
   }
 }
+
+// --- View-details action button ---
+.btn-icon.btn-view {
+  background: rgba($accent-green, 0.15);
+  color: $accent-green;
+
+  &:hover {
+    background: rgba($accent-green, 0.28);
+  }
+}
+
+// --- User-details modal ---
+.modal.modal-lg {
+  max-width: 640px;
+}
+
+.detail-sub {
+  font-family: $font-heading;
+  font-size: 0.8rem;
+  color: $mid-gray;
+  margin: 0;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.detail-title {
+  font-family: $font-heading;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $light;
+  margin: 0;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid $dark-border;
+}
+
+.detail-empty {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: $mid-gray;
+  margin: 0;
+}
+
+.detail-table-wrapper {
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    font-family: $font-heading;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: $mid-gray;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 0.5rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid $dark-border;
+  }
+
+  td {
+    padding: 0.55rem 0.6rem;
+    font-family: $font-body;
+    font-size: 0.82rem;
+    color: $light;
+    border-bottom: 1px solid $dark-border;
+    vertical-align: middle;
+  }
+
+  .td-date {
+    color: $mid-gray;
+    white-space: nowrap;
+  }
+}
+
+// Status badges (payment statuses)
+.badge {
+  &-pending {
+    background: rgba($accent-blue, 0.15);
+    color: $accent-blue;
+  }
+
+  &-completed {
+    background: rgba($accent-green, 0.18);
+    color: $accent-green;
+  }
+
+  &-refunded {
+    background: rgba($mid-gray, 0.18);
+    color: $mid-gray;
+  }
+
+  &-failed {
+    background: rgba(#e53e3e, 0.15);
+    color: #e53e3e;
+  }
+}
+
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feedback-item {
+  background: $dark-input;
+  border: 1px solid $dark-border;
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.feedback-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.feedback-stars {
+  .star {
+    color: $dark-border;
+    font-size: 0.95rem;
+
+    &.filled {
+      color: $accent-orange;
+    }
+  }
+}
+
+.feedback-meta {
+  font-family: $font-heading;
+  font-size: 0.72rem;
+  color: $mid-gray;
+}
+
+.travel-link {
+  color: $accent-blue;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: $accent-blue-hover;
+    text-decoration: underline;
+  }
+}
+
+.feedback-comment {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: $light;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+
+  span {
+    font-family: $font-heading;
+    font-size: 0.75rem;
+    color: $mid-gray;
+  }
+}

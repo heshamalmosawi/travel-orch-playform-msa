@@ -312,4 +312,28 @@ class PaymentTransactionControllerTest {
                 .exchange()
                 .expectStatus().isForbidden();
     }
+
+    @Test
+    void getPurchasesByUser_Success() {
+        when(paymentTransactionService.getPurchasesByUser(5L, "admin")).thenReturn(Flux.just(transactionResponse));
+
+        webTestClient.get()
+                .uri("/transactions/buyer/5")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(PaymentTransactionResponse.class)
+                .hasSize(1)
+                .value(responses -> assertEquals(100L, responses.getFirst().getId()));
+    }
+
+    @Test
+    void getPurchasesByUser_Forbidden() {
+        when(paymentTransactionService.getPurchasesByUser(5L, "admin"))
+                .thenReturn(Flux.error(new SecurityException("You do not have permission to view these purchases")));
+
+        webTestClient.get()
+                .uri("/transactions/buyer/5")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
 }
