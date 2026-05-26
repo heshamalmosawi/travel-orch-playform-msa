@@ -52,4 +52,18 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     @Query("SELECT pt.travel.id, COALESCE(SUM(pt.amount),0), COUNT(pt) FROM PaymentTransaction pt " +
            "WHERE pt.status = :status GROUP BY pt.travel.id")
     List<Object[]> aggregateRevenueByTravel(@Param("status") PaymentStatus status);
+
+    @Query("SELECT COALESCE(SUM(pt.amount),0) FROM PaymentTransaction pt " +
+           "WHERE pt.travel.manager.id = :managerId AND pt.status = :status")
+    BigDecimal sumAmountByManagerAndStatus(@Param("managerId") Long managerId, @Param("status") PaymentStatus status);
+
+    long countByTravelManagerIdAndStatus(Long managerId, PaymentStatus status);
+
+    @Query("SELECT EXTRACT(YEAR FROM pt.createdAt), EXTRACT(MONTH FROM pt.createdAt), " +
+           "COALESCE(SUM(pt.amount),0), COUNT(pt) FROM PaymentTransaction pt " +
+           "WHERE pt.travel.manager.id = :managerId AND pt.status = :status AND pt.createdAt >= :since " +
+           "GROUP BY EXTRACT(YEAR FROM pt.createdAt), EXTRACT(MONTH FROM pt.createdAt)")
+    List<Object[]> findMonthlyIncomeByManagerSince(@Param("managerId") Long managerId,
+                                                   @Param("status") PaymentStatus status,
+                                                   @Param("since") LocalDateTime since);
 }

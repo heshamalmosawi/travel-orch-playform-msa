@@ -10,6 +10,42 @@
       <button class="btn btn-secondary" (click)="loadTravels()">Refresh</button>
     </div>
 
+    <!-- Dashboard KPIs: income, trips, travelers -->
+    <div class="kpi-grid">
+      <div class="stat-card stat-card--income">
+        <span class="stat-value">{{ dashboard() ? formatCurrency(dashboard()!.totalIncome) : '—' }}</span>
+        <span class="stat-label">Total Income</span>
+      </div>
+      <div class="stat-card stat-card--trips">
+        <span class="stat-value">{{ dashboard()?.totalTravels ?? totalTravels() }}</span>
+        <span class="stat-label">Trips</span>
+      </div>
+      <div class="stat-card stat-card--travelers">
+        <span class="stat-value">{{ dashboard()?.totalTravelers ?? 0 }}</span>
+        <span class="stat-label">Travelers</span>
+      </div>
+    </div>
+
+    <!-- Monthly income trend -->
+    @if (income().length > 0) {
+      <div class="dashboard-section">
+        <h3 class="section-title">Income (last 6 months)</h3>
+        <div class="income-chart">
+          @for (month of income(); track month.label) {
+            <div class="income-bar-group">
+              <div class="income-bar-track">
+                <div class="income-bar-fill" [style.width]="barWidth(month.totalIncome)"></div>
+              </div>
+              <div class="income-bar-label">
+                <span class="income-bar-amount">{{ formatCurrency(month.totalIncome) }}</span>
+                <span class="income-bar-month">{{ month.label }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <div class="stats-grid">
       <div class="stat-card">
         <span class="stat-value">{{ totalTravels() }}</span>

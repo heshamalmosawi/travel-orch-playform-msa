@@ -1,7 +1,14 @@
 package com.sayedhesham.travelorch.travel_service.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,17 +21,21 @@ import com.sayedhesham.travelorch.common.entity.travel.Destination;
 import com.sayedhesham.travelorch.common.entity.travel.Travel;
 import com.sayedhesham.travelorch.common.entity.travel.TravelDestination;
 import com.sayedhesham.travelorch.common.entity.user.User;
+import com.sayedhesham.travelorch.common.enums.PaymentStatus;
 import com.sayedhesham.travelorch.common.enums.TravelStatus;
 import com.sayedhesham.travelorch.common.repository.accommodation.TravelAccommodationRepository;
 import com.sayedhesham.travelorch.common.repository.activity.TravelActivityRepository;
 import com.sayedhesham.travelorch.common.repository.feedback.TravelFeedbackRepository;
+import com.sayedhesham.travelorch.common.repository.payment.PaymentTransactionRepository;
 import com.sayedhesham.travelorch.common.repository.report.ManagerReportRepository;
 import com.sayedhesham.travelorch.common.repository.transportation.TransportationSegmentRepository;
 import com.sayedhesham.travelorch.common.repository.travel.DestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelDestinationRepository;
 import com.sayedhesham.travelorch.common.repository.travel.TravelRepository;
 import com.sayedhesham.travelorch.common.repository.user.UserRepository;
+import com.sayedhesham.travelorch.travel_service.dto.ManagerDashboardResponse;
 import com.sayedhesham.travelorch.travel_service.dto.ManagerStatsResponse;
+import com.sayedhesham.travelorch.travel_service.dto.MonthlyIncomeResponse;
 import com.sayedhesham.travelorch.travel_service.dto.TravelCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelDestinationCreateRequest;
 import com.sayedhesham.travelorch.travel_service.dto.TravelResponse;
@@ -41,8 +52,11 @@ public class TravelService {
 
     private static final Logger log = LoggerFactory.getLogger(TravelService.class);
 
+    private static final DateTimeFormatter MONTH_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MMM yyyy");
+
     private final TravelRepository travelRepository;
     private final TravelFeedbackRepository travelFeedbackRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final ManagerReportRepository managerReportRepository;
     private final TravelDestinationRepository travelDestinationRepository;
     private final TravelActivityRepository travelActivityRepository;
@@ -197,6 +211,88 @@ public class TravelService {
                     .build();
         }))
                 .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<ManagerDashboardResponse> getMyDashboard(String currentUsername) {
+        log.info("getMyDashboard - Fetching dashboard stats for current user: {}", currentUsername);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User currentUser = requireManager(currentUsername);
+            Long managerId = currentUser.getId();
+
+            long totalTravels = travelRepository.countByManagerId(managerId);
+            BigDecimal totalIncome = paymentTransactionRepository
+                    .sumAmountByManagerAndStatus(managerId, PaymentStatus.completed);
+            long totalTravelers = paymentTransactionRepository
+                    .countByTravelManagerIdAndStatus(managerId, PaymentStatus.completed);
+
+            log.info("getMyDashboard - managerId={} income={} travels={} travelers={}",
+                    managerId, totalIncome, totalTravels, totalTravelers);
+            return ManagerDashboardResponse.builder()
+                    .totalIncome(totalIncome != null ? totalIncome : BigDecimal.ZERO)
+                    .totalTravels(totalTravels)
+                    .totalTravelers(totalTravelers)
+                    .build();
+        }))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Flux<MonthlyIncomeResponse> getMyIncome(String currentUsername, int months) {
+        int safeMonths = months < 1 ? 6 : months;
+        log.info("getMyIncome - currentUser={} months={}", currentUsername, safeMonths);
+        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+            User currentUser = requireManager(currentUsername);
+            Long managerId = currentUser.getId();
+
+            YearMonth current = YearMonth.now();
+            YearMonth startMonth = current.minusMonths(safeMonths - 1);
+            LocalDateTime since = startMonth.atDay(1).atStartOfDay();
+
+            List<Object[]> raw = paymentTransactionRepository
+                    .findMonthlyIncomeByManagerSince(managerId, PaymentStatus.completed, since);
+
+            Map<String, Object[]> dataMap = new LinkedHashMap<>();
+            for (Object[] row : raw) {
+                int year = ((Number) row[0]).intValue();
+                int month = ((Number) row[1]).intValue();
+                dataMap.put(year + "-" + month, row);
+            }
+
+            List<MonthlyIncomeResponse> result = new ArrayList<>();
+            for (int i = safeMonths - 1; i >= 0; i--) {
+                YearMonth ym = current.minusMonths(i);
+                Object[] row = dataMap.get(ym.getYear() + "-" + ym.getMonthValue());
+                BigDecimal total = row != null ? toBigDecimal(row[2]) : BigDecimal.ZERO;
+                long count = row != null ? ((Number) row[3]).longValue() : 0L;
+                result.add(MonthlyIncomeResponse.builder()
+                        .year(ym.getYear())
+                        .month(ym.getMonthValue())
+                        .label(ym.format(MONTH_LABEL_FORMATTER))
+                        .totalIncome(total)
+                        .transactionCount(count)
+                        .build());
+            }
+            return result;
+        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    private User requireManager(String currentUsername) {
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUsername));
+        boolean isManager = currentUser.getRole() != null
+                && "travel_manager".equalsIgnoreCase(currentUser.getRole().getName());
+        if (!isManager) {
+            log.warn("requireManager - User {} is not a travel manager", currentUsername);
+            throw new SecurityException("Only travel managers can access this endpoint");
+        }
+        return currentUser;
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        if (value instanceof BigDecimal bd) return bd;
+        if (value instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+        return BigDecimal.ZERO;
     }
 
     public Mono<TravelResponse> createTravel(TravelCreateRequest request, String currentUsername) {
