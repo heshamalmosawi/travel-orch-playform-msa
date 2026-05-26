@@ -82,22 +82,20 @@ public class TravelController {
     }
 
     @GetMapping("/me/income")
-    public Mono<ResponseEntity<Flux<MonthlyIncomeResponse>>> getMyIncome(
+    public Mono<ResponseEntity<List<MonthlyIncomeResponse>>> getMyIncome(
             @RequestParam(defaultValue = "6") int months) {
         log.info("GET /travels/me/income?months={} - Fetching current manager's monthly income", months);
         return SecurityUtils.getCurrentUsername()
                 .flatMap(currentUsername
                         -> travelService.getMyIncome(currentUsername, months)
                         .collectList()
-                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list)))
+                        .<ResponseEntity<List<MonthlyIncomeResponse>>>map(ResponseEntity::ok)
                 )
                 .onErrorResume(SecurityException.class, e -> {
                     log.warn("GET /travels/me/income - Forbidden: {}", e.getMessage());
-                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .<Flux<MonthlyIncomeResponse>>body(Flux.empty()));
+                    return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
                 })
-                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .<Flux<MonthlyIncomeResponse>>body(Flux.empty())));
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
     }
 
     @GetMapping("/{id}")
